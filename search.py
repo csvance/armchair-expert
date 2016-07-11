@@ -29,4 +29,4 @@ class GoogleImageSearchDownloader(object):
                 shutil.copyfileobj(r, out_file)
             break
 
-        return filename
+        return "%s/%s" % (directory,filename)

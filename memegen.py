@@ -9,29 +9,49 @@ def r_path(f):
 def d_path(f):
     return "%s/%s" % (CONFIG_DOWNLOAD_DIR, f)
 
-def memegen_computer(meme_search):
 
-    presenter = None
-
-    if random.randrange(0,2) == 0:
-        presenter = Image(filename=r_path('datboi.png'))
-    else:
-        presenter = Image(filename=r_path('sanic.png'))
-        presenter.flop()
-        presenter.transform(resize="50%")
-
-    computer = Image(filename=r_path('retrocomputer.jpg'))
-
-    image_file = GoogleImageSearchDownloader(meme_search,CONFIG_KEY,CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR)
-
-    meme = Image(filename=d_path(image_file))
-    meme.resize(400,350)
-    meme.rotate(-5)
-    computer.composite(meme,250,130)
-    computer.composite(presenter,500,500)
-    computer.compression_quality = random.randrange(0,8)
-    computer.convert('jpg')
-    computer.save(filename='output.jpg')
+class MemeScene(object):
+    def __init__(self,background="background.png",presenter="presenter.png",resource="resource.png"):
+        self.background = background
+        self.presenter = presenter
+        self.resource = resource
 
 
-memegen_computer('vaporwave')
+class ComputerMemeScene(MemeScene):
+    BACKGROUND = 'retrocomputer.jpg'
+
+    def __init__(self,background=None,presenter=None,resource=None):
+        super().__init__(background=r_path(ComputerMemeScene.BACKGROUND),
+                         presenter=None,resource=resource)
+
+
+    def generate(self):
+
+        #Select a presenter at random
+        presenter = None
+
+        if random.randrange(0, 2) == 0:
+            presenter = Image(filename=r_path('datboi.png'))
+        else:
+            presenter = Image(filename=r_path('sanic.png'))
+            presenter.flop()
+            presenter.transform(resize="50%")
+
+        self.presenter = presenter
+
+        computer = Image(filename=self.background)
+
+        image_file = self.resource
+
+        meme = Image(filename=image_file)
+        meme.resize(400, 350)
+        meme.rotate(-5)
+        computer.composite(meme, 250, 130)
+        computer.composite(self.presenter, 500, 500)
+        computer.compression_quality = random.randrange(0, 8)
+        computer.convert('jpg')
+        computer.save(filename='output.jpg')
+
+resource = GoogleImageSearchDownloader('sanic', CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR)
+ComputerMemeScene(resource=resource).generate()
+
