@@ -3,7 +3,7 @@ import urllib3
 import shutil
 
 
-class GoogleImageSearchDownloader(object):
+class GoogleImages(object):
     def __init__(self,search,key,cx):
         self.query = search
         self.key = key
