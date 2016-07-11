@@ -1,7 +1,7 @@
 from googleapiclient.discovery import build
 import urllib3
 import shutil
-
+import random
 
 class GoogleImages(object):
     def __init__(self,search,key,cx):
@@ -9,7 +9,7 @@ class GoogleImages(object):
         self.key = key
         self.cx = cx
 
-    def execute(self,directory,random=False,random_count=10):
+    def execute(self,directory,rand=False,random_count=10):
         service = build("customsearch", "v1",
                         developerKey=self.key)
 
@@ -18,14 +18,14 @@ class GoogleImages(object):
         res = service.cse().list(
             q=self.query,
             cx=self.cx,
-            num=1,
+            num=num,
             searchType="image",
             safe='off'
         ).execute()
 
         http = urllib3.PoolManager()
 
-        index = random.randrange(0,random_count) if random and len(res['items'] >= random_count) else 0
+        index = random.randrange(0,random_count) if rand and len(res['items']) >= random_count else 0
 
         item = res['items'][index]
         filename = item['link'].split("/")[-1]

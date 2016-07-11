@@ -52,6 +52,6 @@ class ComputerMemeScene(MemeScene):
         computer.convert('jpg')
         computer.save(filename='output.jpg')
 
-resource = GoogleImages('sanic', CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR)
+resource = GoogleImages('sanic', CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR,rand=True)
 ComputerMemeScene(resource=resource).generate()
 
