@@ -9,9 +9,11 @@ class GoogleImages(object):
         self.key = key
         self.cx = cx
 
-    def execute(self,directory):
+    def execute(self,directory,random=False,random_count=10):
         service = build("customsearch", "v1",
                         developerKey=self.key)
+
+        num = 1 if not random else random_count
 
         res = service.cse().list(
             q=self.query,
@@ -22,11 +24,12 @@ class GoogleImages(object):
         ).execute()
 
         http = urllib3.PoolManager()
-        for item in res['items']:
-            filename = item['link'].split("/")[-1]
 
-            with http.request('GET', item['link'], preload_content=False) as r, open("%s/%s" % (directory,filename), 'wb') as out_file:
-                shutil.copyfileobj(r, out_file)
-            break
+        index = random.randrange(0,random_count) if random and len(res['items'] >= random_count) else 0
+
+        item = res['items'][index]
+        filename = item['link'].split("/")[-1]
+        with http.request('GET', item['link'], preload_content=False) as r, open("%s/%s" % (directory,filename), 'wb') as out_file:
+            shutil.copyfileobj(r, out_file)
 
         return "%s/%s" % (directory,filename)

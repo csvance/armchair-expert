@@ -20,8 +20,7 @@ class ComputerMemeScene(MemeScene):
     BACKGROUND = 'retrocomputer.jpg'
 
     def __init__(self,background=None,presenter=None,resource=None):
-        super().__init__(background=r_path(ComputerMemeScene.BACKGROUND),
-                         presenter=None,resource=resource)
+        super().__init__(background=r_path(ComputerMemeScene.BACKGROUND),resource=resource)
 
     def _select_presenter(self):
         #Select a presenter at random
@@ -33,6 +32,8 @@ class ComputerMemeScene(MemeScene):
             presenter = Image(filename=r_path('sanic.png'))
             presenter.flop()
             presenter.transform(resize="50%")
+
+        return presenter
 
     def generate(self):
 
