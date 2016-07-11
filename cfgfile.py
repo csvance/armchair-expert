@@ -55,7 +55,7 @@ def _load_config(filename):
             s = s[:s.rfind("\n")] + lecture
             line = line + 1
 
-        s = string.split(s, "=")
+        s = s.split("=")
         try:
             stuff[string.strip(s[0])] = eval(string.strip(string.join(s[1:], "=")))
         except:

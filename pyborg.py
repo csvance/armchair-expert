@@ -308,7 +308,7 @@ class pyborg:
 
             try:
 
-                f = open("version", "rb")
+                f = open("version", "r")
                 s = f.read()
                 f.close()
                 if s != self.saves_version:
@@ -437,7 +437,12 @@ class pyborg:
                     wordlist.append([key, len(self.words[key])])
                 except:
                     pass
-            wordlist.sort(lambda x, y: cmp(x[1], y[1]))
+
+            def keyfunc(item):
+                return item[1]
+
+            #wordlist.sort(lambda x, y: cmp(x[1], y[1]))
+            wordlist.sort(key=keyfunc)
             list(map((lambda x: f.write(str(x[0]) + "\n\r")), wordlist))
             f.close()
 
@@ -447,7 +452,8 @@ class pyborg:
             # Sort the list before to export
             for key in list(self.unfilterd.keys()):
                 wordlist.append([key, self.unfilterd[key]])
-            wordlist.sort(lambda x, y: cmp(y[1], x[1]))
+            #wordlist.sort(lambda x, y: cmp(y[1], x[1]))
+            wordlist.sort(key=keyfunc)
             list(map((lambda x: f.write(str(x[0]) + "\n")), wordlist))
             f.close()
 
@@ -1124,7 +1130,8 @@ class pyborg:
                 self.settings.num_words = self.settings.num_words - 1
 
     def reply(self, body):
-        try:
+        #try:
+        if True:
             """
             Reply to a line of text.
             """
@@ -1203,7 +1210,12 @@ class pyborg:
 
                 # Sort the words
                 liste = list(pre_words.items())
-                liste.sort(lambda x, y: cmp(y[1], x[1]))
+
+                def keyfunc(item):
+                    return item[1]
+
+                #liste.sort(lambda x, y: cmp(y[1], x[1]))
+                liste.sort(key=keyfunc)
 
                 numbers = [liste[0][1]]
                 for x in range(1, len(liste)):
@@ -1272,7 +1284,11 @@ class pyborg:
                         post_words[""] += num_context
                 # Sort the words
                 liste = list(post_words.items())
-                liste.sort(lambda x, y: cmp(y[1], x[1]))
+
+                def keyfunc(item):
+                    return item[1]
+                #liste.sort(lambda x, y: cmp(y[1], x[1]))
+                liste.sort(key=keyfunc)
                 numbers = [liste[0][1]]
 
                 for x in range(1, len(liste)):
@@ -1319,8 +1335,8 @@ class pyborg:
 
             # return as string..
             return "".join(sentence)
-        except:
-            return ""
+        #except TypeError as e:
+        #    return ""
 
     def learn(self, body, num_context=1):
         """
