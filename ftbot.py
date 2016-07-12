@@ -8,7 +8,7 @@ class FTBot(object):
 
     def __init__(self):
         self.pyborg = pyborg()
-        self.replyrate = 100
+        self.replyrate = CONFIG_DEFAULT_REPLYRATE
         self.reply = None
         self.shutup = False
 
@@ -18,6 +18,7 @@ class FTBot(object):
         self.reply = {'channel': args['channel'],'message': msg}
 
     def process_message(self,message,args,is_owner=False):
+        #Always reply when we are mentioned
         if(message.startswith('@FTBot') and self.shutup == False):
             self.pyborg.process_msg(self, message, 100, 1, args, not_quiet=1, owner=is_owner)
         elif(self.shutup == False):
