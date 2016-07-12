@@ -1,32 +1,24 @@
 from config import *
 from search import *
 from memegen import *
+
 from pyborg import pyborg
-import sys
 
 class FTBot(object):
 
     def __init__(self):
         self.pyborg = pyborg()
+        self.replyrate = 100
+        self.reply = None
 
     def output(self,msg,args):
-        print("Message: %s" % msg)
-        print("Args: %s" % args)
+        #resource = GoogleImages(msg, CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
+        #ComputerMemeScene(resource=resource).generate()
+        self.reply = {'channel': args['channel'],'message': msg}
+
+    def process_message(self,message,args):
+        self.pyborg.process_msg(self, message, self.replyrate, 1, args, not_quiet=1)
 
 
-    def run(self):
-        while(True):
-            msg = input('FTBot> ')
-            if(msg == 'quit'):
-                return
-            self.pyborg.process_msg(self,msg,100,1,None,owner=1,not_quiet=1)
-        sys.exit(0)
 
 
-if False:
-    resource = GoogleImages('viper rapper', CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR,rand=True)
-    ComputerMemeScene(resource=resource).generate()
-
-
-bot = FTBot()
-bot.run()

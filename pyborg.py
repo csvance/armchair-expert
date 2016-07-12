@@ -4,6 +4,7 @@
 #
 # Copyright (c) 2000, 2006 Tom Morton, Sebastien Dailly
 # Bug Fixes and improvements by Brenton Scott
+# Ported to Python3 by Carroll Vance
 #
 # This bot was inspired by the PerlBorg, by Eric Bock.
 #
@@ -529,6 +530,7 @@ class pyborg:
         If owner==1 allow owner commands.
         If not_quiet==0 Only respond with taught responses
         """
+
         try:
             if self.settings.process_with == "megahal": import mh_python
         except:
