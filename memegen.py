@@ -48,7 +48,7 @@ class ComputerMemeScene(MemeScene):
         meme.rotate(-5)
         computer.composite(meme, 250, 130)
         computer.composite(presenter, 500, 500)
-        computer.compression_quality = random.randrange(0, 8)
+        computer.compression_quality = random.randrange(4, 10)
         computer.convert('jpg')
         computer.save(filename=filename)
 
