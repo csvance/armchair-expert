@@ -38,10 +38,11 @@ def on_message(message):
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
     else:
-        ftbot.process_message(message.content,{'channel': message.channel})
-        if (ftbot.reply != None):
-            yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-            ftbot.reply = None
+        for msg in message.content.split("\n"):
+            ftbot.process_message(msg,{'channel': message.channel})
+            if (ftbot.reply != None):
+                yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
+                ftbot.reply = None
 
 print("Starting FTBot")
 ftbot = FTBot()
