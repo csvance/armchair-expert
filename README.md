@@ -1,5 +1,5 @@
 # Dependencies
-- discord
+- discord.py
 - googleapiclient
 - wand
 
