@@ -45,8 +45,8 @@ class ComputerMemeScene(MemeScene):
 
         meme = Image(filename=image_file)
         meme.resize(400, 350)
-        meme.rotate(-5)
-        computer.composite(meme, 250, 130)
+        meme.rotate(-4)
+        computer.composite(meme, 230, 130)
         computer.composite(presenter, 500, 500)
         computer.compression_quality = random.randrange(4, 10)
         computer.convert('jpg')

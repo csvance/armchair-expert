@@ -17,7 +17,7 @@ class FTBot(object):
 
     def memegen(self,msg,args):
         filename = "%s/meme_%s.jpg" % (CONFIG_SERVE_DIR,random.randint(0,9999999))
-        resource = GoogleImages(msg, CONFIG_GOOGLE_KEY, CONFIG_GOOGLE_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
+        resource = GoogleImages(msg, CONFIG_GOOGLE_KEY, CONFIG_GOOGLE_CX).execute(CONFIG_DOWNLOAD_DIR)
         ComputerMemeScene(resource=resource).generate(filename)
         self.output("http://%s/%s" % (CONFIG_MY_IP,filename.split("/")[1]),args)
 
