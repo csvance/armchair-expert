@@ -13,9 +13,13 @@ class FTBot(object):
         self.shutup = False
 
     def output(self,msg,args):
-        #resource = GoogleImages(msg, CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
-        #ComputerMemeScene(resource=resource).generate()
         self.reply = {'channel': args['channel'],'message': msg}
+
+    def memegen(self,msg,args):
+        filename = "%s/meme_%s.jpg" % (CONFIG_SERVE_DIR,random.randint(0,9999999))
+        resource = GoogleImages(msg, CONFIG_GOOGLE_KEY, CONFIG_GOOGLE_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
+        ComputerMemeScene(resource=resource).generate(filename)
+        self.output("http://%s/%s" % (CONFIG_MY_IP,filename.split("/")[1]),args)
 
     def process_message(self,message,args,is_owner=False):
         #Always reply when we are mentioned
@@ -25,7 +29,6 @@ class FTBot(object):
             self.pyborg.process_msg(self, message, self.replyrate, 1, args, not_quiet=1, owner=is_owner)
         else:
             self.pyborg.process_msg(self, message, 0, 1, args, not_quiet=1, owner=is_owner)
-
 
 
 

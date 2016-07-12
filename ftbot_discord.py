@@ -29,6 +29,18 @@ def on_message(message):
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
+        elif message.content.startswith("!meme"):
+            try:
+                meme = message.content.split("!meme")[1]
+                if(len(meme) > 2):
+                    ftbot.memegen(meme, {'channel': message.channel})
+                    if(ftbot.reply != None):
+                        yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
+                        ftbot.reply = None
+                else:
+                    yield from client.send_message(message.channel, 'Command Syntax error.')
+            except KeyError:
+                yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
             if(str(message.author) == CONFIG_DISCORD_OWNER):
                 ftbot.process_message(message.content, {'channel': message.channel},is_owner=True)

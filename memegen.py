@@ -35,7 +35,7 @@ class ComputerMemeScene(MemeScene):
 
         return presenter
 
-    def generate(self):
+    def generate(self,filename):
 
         presenter = self._select_presenter()
 
@@ -50,7 +50,7 @@ class ComputerMemeScene(MemeScene):
         computer.composite(presenter, 500, 500)
         computer.compression_quality = random.randrange(0, 8)
         computer.convert('jpg')
-        computer.save(filename='output.jpg')
+        computer.save(filename=filename)
 
 
 
