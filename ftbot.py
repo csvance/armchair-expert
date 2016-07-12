@@ -11,13 +11,11 @@ class FTBot(object):
         self.replyrate = 100
         self.reply = None
         self.shutup = False
-        self.echo = None
 
     def output(self,msg,args):
         #resource = GoogleImages(msg, CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
         #ComputerMemeScene(resource=resource).generate()
         self.reply = {'channel': args['channel'],'message': msg}
-        self.echo = self.reply['message']
 
     def process_message(self,message,args,is_owner=False):
         if(message.startswith('@FTBot') and self.shutup == False):

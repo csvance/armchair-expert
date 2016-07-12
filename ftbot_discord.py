@@ -10,13 +10,11 @@ def discord_client_run():
 @client.event
 @asyncio.coroutine
 def on_message(message):
-    #Handle Comands
 
-    #Suppress Echoes
-    if(message.content == ftbot.echo):
-        ftbot.echo = None
+    if(str(message.author) == CONFIG_DISCORD_ME):
         return
 
+    #Handle Comands
     if message.content.startswith("!"):
         if message.content.startswith('!shutup'):
             ftbot.shutup = True
