@@ -11,6 +11,12 @@ def discord_client_run():
 @asyncio.coroutine
 def on_message(message):
     #Handle Comands
+
+    #Suppress Echoes
+    if(message.content == ftbot.echo):
+        ftbot.echo = None
+        return
+
     if message.content.startswith("!"):
         if message.content.startswith('!shutup'):
             ftbot.shutup = True
@@ -26,7 +32,10 @@ def on_message(message):
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
-            ftbot.process_message(message.content, {'channel': message.channel})
+            if(str(message.author) == CONFIG_DISCORD_OWNER):
+                ftbot.process_message(message.content, {'channel': message.channel},is_owner=True)
+            else:
+                ftbot.process_message(message.content, {'channel': message.channel},is_owner=False)
             if(ftbot.reply != None):
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None

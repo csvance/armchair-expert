@@ -10,14 +10,22 @@ class FTBot(object):
         self.pyborg = pyborg()
         self.replyrate = 100
         self.reply = None
+        self.shutup = False
+        self.echo = None
 
     def output(self,msg,args):
         #resource = GoogleImages(msg, CONFIG_KEY, CONFIG_CX).execute(CONFIG_DOWNLOAD_DIR, rand=True)
         #ComputerMemeScene(resource=resource).generate()
         self.reply = {'channel': args['channel'],'message': msg}
+        self.echo = self.reply['message']
 
-    def process_message(self,message,args):
-        self.pyborg.process_msg(self, message, self.replyrate, 1, args, not_quiet=1)
+    def process_message(self,message,args,is_owner=False):
+        if(message.startswith('@FTBot') and self.shutup == False):
+            self.pyborg.process_msg(self, message, 100, 1, args, not_quiet=1, owner=is_owner)
+        elif(self.shutup == False):
+            self.pyborg.process_msg(self, message, self.replyrate, 1, args, not_quiet=1, owner=is_owner)
+        else:
+            self.pyborg.process_msg(self, message, 0, 1, args, not_quiet=1, owner=is_owner)
 
 
 
