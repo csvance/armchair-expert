@@ -29,7 +29,7 @@ class MarkovAI(object):
         self.clean_db(CONFIG_MARKOV_CLEANUP_TICKRATE,CONFIG_MARKOV_TICK_RATING_REDUCE)
 
 
-    #@run_async
+    @run_async
     def rebuild_db(self):
 
         if (self.rebuilding):
@@ -171,8 +171,70 @@ class MarkovAI(object):
 
         return result
 
-    def reply(self,words):
-        pass
+    def reply(self, words):
+        session = Session()
+
+        # Find the rarest word over 4 chars
+        w = [word for word in words if len(word) >= 4]
+
+        if(len(w) == 0):
+            return None
+
+        the_word = session.query(Word.id,Word.text,func.count(WordRelation.id).label('relations')).join(WordRelation, WordRelation.a == Word.id).\
+            filter(Word.text.in_(w)).\
+            group_by(Word.id,Word.text).\
+            order_by(func.count(WordRelation.id).desc()).first()
+
+
+        #Generate Backwards
+        backwards_words = []
+        f_id = the_word.id
+        back_count = random.randrange(0,5)
+        count = 0
+        while(count < back_count):
+
+            results = session.query(WordRelation.a,Word.text).\
+                join(Word,WordRelation.a == Word.id).\
+                filter(WordRelation.b == f_id).all()
+
+            if len(results) == 0:
+                break
+
+            #Pick a random result
+            r = results[random.randrange(0,len(results))]
+
+            f_id = r.a
+            backwards_words.insert(0,r.text)
+
+            count += 1
+
+        #Generate Forwards
+        forward_words = []
+        f_id = the_word.id
+        forward_count = random.randrange(0,5)
+        count = 0
+        while(count < forward_count):
+
+            results = session.query(WordRelation.b,Word.text).\
+                join(Word,WordRelation.b == Word.id).\
+                filter(WordRelation.a == f_id).all()
+
+            if len(results) == 0:
+                break
+
+            #Pick a random result
+            r = results[random.randrange(0,len(results))]
+
+            f_id = r.b
+            forward_words.append(r.text)
+
+        reply = []
+
+        reply += backwards_words
+        reply += [the_word.text]
+        reply += forward_words
+
+        return " ".join(reply)
 
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False):
 
