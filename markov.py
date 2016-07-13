@@ -1,15 +1,20 @@
 from markov_schema import *
 from sqlalchemy import and_,or_
 from sqlalchemy import func
-import threading
 import re
 import random
 
+def run_async(func):
+    from threading import Thread
+    from functools import wraps
 
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
+    @wraps(func)
+    def async_func(*args, **kwargs):
+        func_hl = Thread(target = func, args = args, kwargs = kwargs)
+        func_hl.start()
+        return func_hl
+
+    return async_func
 
 
 class MarkovAI(object):
@@ -20,7 +25,7 @@ class MarkovAI(object):
         self.rebuilding_thread = None
         pass
 
-    @threaded
+    @run_async
     def rebuild_db(self):
 
         if (self.rebuilding):
@@ -135,6 +140,10 @@ class MarkovAI(object):
 
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False):
 
+        #Ignore external I/O while rebuilding
+        if self.rebuilding == True and not rebuild_db:
+            return
+
         if(txt.strip() == ''):
             return
 
@@ -160,9 +169,9 @@ class MarkovAI(object):
         for sentence in sentences:
             self.learn(sentence)
 
-            #if not rebuild_db:
-            #    if reply_sentence == sentence_index and replyrate > random.randrange(0,100):
-            #        io_module.output(self.reply(sentence),args)
+            if not rebuild_db:
+                if reply_sentence == sentence_index and replyrate > random.randrange(0,100):
+                    io_module.output(self.reply(sentence),args)
 
             sentence_index += 1
 
