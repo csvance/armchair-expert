@@ -22,7 +22,7 @@ class WordRelation(Base):
     a = Column(Integer, ForeignKey('word.id'), nullable=False)
     b = Column(Integer, ForeignKey('word.id'), nullable=False)
     count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, default=0, nullable=False)
+    rating = Column(Integer, default=7, nullable=False)
 
 
 class Line(Base):

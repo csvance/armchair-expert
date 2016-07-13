@@ -1,8 +1,10 @@
 from markov_schema import *
+from config import *
 from sqlalchemy import and_,or_
-from sqlalchemy import func
+from sqlalchemy import func, update, delete
 import re
 import random
+import time
 
 def run_async(func):
     from threading import Thread
@@ -23,9 +25,11 @@ class MarkovAI(object):
     def __init__(self):
         self.rebuilding = False
         self.rebuilding_thread = None
-        pass
 
-    @run_async
+        self.clean_db(CONFIG_MARKOV_CLEANUP_TICKRATE,CONFIG_MARKOV_TICK_RATING_REDUCE)
+
+
+    #@run_async
     def rebuild_db(self):
 
         if (self.rebuilding):
@@ -42,6 +46,38 @@ class MarkovAI(object):
             self.process_msg(None, line.text, rebuild_db=True)
 
         self.rebuilding = False
+
+    @run_async
+    def clean_db(self,tick_rate,rating_reduce):
+
+        while True:
+            time.sleep(tick_rate)
+
+            session = Session()
+
+            # Subtract Rating by 1
+            session.execute(update(WordRelation, values={WordRelation.rating: WordRelation.rating - rating_reduce}))
+            session.commit()
+
+            # Remove all forwards associations with no score
+            session.query(WordRelation).filter(WordRelation.rating <= 0).delete()
+            session.commit()
+
+            # Check if we have any forward associations left
+            results = session.query(Word.id). \
+                outerjoin(WordRelation, WordRelation.a == Word.id). \
+                group_by(Word.id). \
+                having(func.count(WordRelation.id) == 0).all()
+
+            # Go through each word with no forward associations left
+            for result in results:
+                # First delete all associations backwards from this word to other words
+                session.query(WordRelation).filter(WordRelation.b == result.id).delete()
+                # Next delete the word
+                session.query(Word).filter(Word.id == result.id).delete()
+
+            session.commit()
+            session.close()
 
 
     def filter(self,txt):
@@ -100,13 +136,13 @@ class MarkovAI(object):
                     session.commit()
                     last_b_added = word_b
 
-                session.commit()
-
+                #Add Association
                 relation = session.query(WordRelation).filter(and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).first()
                 if relation == None:
                     session.add(WordRelation(a=word_a.id,b=word_b.id))
                 else:
                     relation.count += 1
+                    relation.rating += 1
 
             word_index += 1
 

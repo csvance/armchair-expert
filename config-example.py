@@ -14,5 +14,9 @@ CONFIG_MY_IP = "127.0.0.1"
 
 CONFIG_DEFAULT_REPLYRATE = 1
 
+# Once a day
+CONFIG_MARKOV_CLEANUP_TICKRATE = 24 * 60 * 60
+CONFIG_MARKOV_TICK_RATING_REDUCE = 1
+
 CONFIG_MESSAGE_WAKEUP = "Im awake as @Devices is a cuck"
 CONFIG_MESSAGE_SHUTUP = "I can't wait for you to shut me up"
