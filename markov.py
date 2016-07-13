@@ -171,7 +171,7 @@ class MarkovAI(object):
 
         return result
 
-    def reply(self, words):
+    def reply(self, words, args):
         session = Session()
 
         # Find the rarest word over 4 chars
@@ -255,6 +255,8 @@ class MarkovAI(object):
         reply += [the_word.text]
         reply += forward_words
 
+        reply = [word.replace('nick',args['author_mention']) for word in reply]
+
         return " ".join(reply)
 
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False):
@@ -290,7 +292,7 @@ class MarkovAI(object):
 
             if not rebuild_db:
                 if reply_sentence == sentence_index and replyrate > random.randrange(0,100):
-                    io_module.output(self.reply(sentence),args)
+                    io_module.output(self.reply(sentence,args),args)
 
             sentence_index += 1
 

@@ -25,6 +25,7 @@ def on_message(message):
 
     args = {'channel': channel,
             'author': str(author),
+            'author_mention': "<@%s>" % author.id,
             'server': server}
 
     #Handle Comands
