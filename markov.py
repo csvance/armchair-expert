@@ -26,7 +26,7 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
 
-        self.clean_db(CONFIG_MARKOV_CLEANUP_TICKRATE,CONFIG_MARKOV_TICK_RATING_REDUCE)
+        self.clean_db_task(CONFIG_MARKOV_CLEANUP_TICKRATE,CONFIG_MARKOV_TICK_RATING_REDUCE)
 
 
     @run_async
