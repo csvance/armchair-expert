@@ -56,7 +56,7 @@ def on_message(message):
         for msg in message.content.split("\n"):
 
             mentioned = False
-            if msg.find(CONFIG_DISCORD_MENTION_ME) != 1:
+            if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
                 mentioned = True
 
             ftbot.process_message(msg,{'channel': message.channel},mentioned=mentioned)
