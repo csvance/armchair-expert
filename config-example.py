@@ -17,7 +17,9 @@ CONFIG_DEFAULT_REPLYRATE = 1
 # Once a day
 CONFIG_MARKOV_CLEANUP_TICKRATE = 24 * 60 * 60
 CONFIG_MARKOV_TICK_RATING_REDUCE = 1
-CONFIG_MARKOV_RARE_FILTER = ['nick']
+CONFIG_MARKOV_RARE_FILTER = ['nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
+                             'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t']
+CONFIG_MARKOV_RARE_WORD_MIN_LENGTH = 3
 CONFIG_MARKOV_CHAIN_ATTEMPTS = 10
 CONFIG_MARKOV_VECTOR_LENGTH = 7
 
