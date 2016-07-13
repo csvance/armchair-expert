@@ -17,17 +17,13 @@ class MarkovAI(object):
         # Convert everything to lowercase
         s = txt.lower()
 
-        s.replace(",","")
-        s.replace('"',"")
-        s.replace(";","")
-        s.replace(">","")
-        s.replace("<","")
+        s = re.sub(r",|\"|;|>|<|\(|\)|\[|\]|{|}","",s)
 
         sentences = []
         # Split by lines
         for line in txt.split("\n"):
             # Split by sentence
-            for sentence in re.split('\.|!|\?', line):
+            for sentence in re.split(r'\.|!|\?', line):
                 # Split by words
                 pre_words = sentence.split(" ")
                 post_words = []
@@ -83,7 +79,7 @@ class MarkovAI(object):
 
         session.commit()
 
-    def stats(self):
+    def cmd_stats(self):
         session = Session()
         words = session.query(Word.id).count()
         lines = session.query(Line.id).count()
@@ -95,7 +91,7 @@ class MarkovAI(object):
         result = None
 
         if txt.startswith("!words"):
-            result = self.stats()
+            result = self.cmd_stats()
 
         return result
 
