@@ -31,9 +31,9 @@ class FTBot(object):
         self.shutup = False
         self.output(CONFIG_MESSAGE_WAKEUP, args)
 
-    def process_message(self,message,args,is_owner=False):
+    def process_message(self,message,args,is_owner=False,mentioned=False):
         #Always reply when we are mentioned
-        if(message.find(CONFIG_DISCORD_MENTION_ME) != -1 and self.shutup == False):
+        if(mentioned and self.shutup == False):
             self.pyborg.process_msg(self, message, 100, 1, args, not_quiet=1, owner=is_owner)
             self.ai.process_msg(self, message, 100, args)
         elif(self.shutup == False):

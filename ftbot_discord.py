@@ -2,6 +2,7 @@ from ftbot import *
 import discord
 import asyncio
 from config import *
+import re
 client = discord.Client()
 
 def discord_client_run():
@@ -11,7 +12,7 @@ def discord_client_run():
 @asyncio.coroutine
 def on_message(message):
 
-    if(str(message.author) == CONFIG_DISCORD_ME):
+    if str(message.author) == CONFIG_DISCORD_ME:
         return
 
     #Handle Comands
@@ -44,17 +45,22 @@ def on_message(message):
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
-            if(str(message.author) == CONFIG_DISCORD_OWNER):
+            if str(message.author) == CONFIG_DISCORD_OWNER:
                 ftbot.process_message(message.content, {'channel': message.channel},is_owner=True)
             else:
                 ftbot.process_message(message.content, {'channel': message.channel},is_owner=False)
-            if(ftbot.reply != None):
+            if ftbot.reply != None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
     else:
         for msg in message.content.split("\n"):
-            ftbot.process_message(msg,{'channel': message.channel})
-            if (ftbot.reply != None):
+
+            mentioned = False
+            if msg.find(CONFIG_DISCORD_MENTION_ME) != 1:
+                mentioned = True
+
+            ftbot.process_message(msg,{'channel': message.channel},mentioned=mentioned)
+            if ftbot.reply != None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
 
