@@ -47,7 +47,7 @@ class MarkovAI(object):
 
         sentences = []
         # Split by lines
-        for line in txt.split("\n"):
+        for line in s.split("\n"):
             # Split by sentence
             for sentence in re.split(r'\.|!|\?', line):
                 # Split by words
