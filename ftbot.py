@@ -13,6 +13,10 @@ class FTBot(object):
         self.shutup = False
 
     def output(self,msg,args):
+        if msg is None:
+            self.reply = None
+            return
+        
         self.reply = {'channel': args['channel'],'message': msg}
 
     def memegen(self,msg,args):

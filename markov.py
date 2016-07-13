@@ -186,13 +186,15 @@ class MarkovAI(object):
             group_by(Word.id,Word.text).\
             order_by(func.count(WordRelation.id).desc()).first()
 
+        if the_word is None:
+            return None
 
         r = None
 
         #Generate Backwards
         backwards_words = []
         f_id = the_word.id
-        back_count = random.randrange(0,5)
+        back_count = random.randrange(0,CONFIG_MARKOV_VECTOR_LENGTH)
         count = 0
         while(count < back_count):
 
@@ -221,7 +223,7 @@ class MarkovAI(object):
         #Generate Forwards
         forward_words = []
         f_id = the_word.id
-        forward_count = random.randrange(0,5)
+        forward_count = random.randrange(0,CONFIG_MARKOV_VECTOR_LENGTH)
         count = 0
         while(count < forward_count):
 
@@ -244,6 +246,8 @@ class MarkovAI(object):
                 f_id = r.b
                 forward_words.insert(0, r.text)
                 break
+
+            count += 1
 
         reply = []
 
