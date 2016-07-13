@@ -17,11 +17,13 @@ def on_message(message):
     #Handle Comands
     if message.content.startswith("!"):
         if message.content.startswith('!shutup'):
-            ftbot.shutup = True
-            yield from client.send_message(message.channel, "I can't wait for you to shut me up")
+            ftbot.shutup()
+            yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
+            ftbot.reply = None
         elif message.content.startswith('!wakeup'):
-            ftbot.shutup = False
-            yield from client.send_message(message.channel, "Im awake as @Devices is a cuck")
+            ftbot.wakeup()
+            yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
+            ftbot.reply = None
         elif message.content.startswith('!replyrate'):
             newrate = 0
             try:

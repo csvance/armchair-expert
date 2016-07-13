@@ -16,6 +16,8 @@ class MarkovAI(object):
         s = txt.lower()
 
         s.replace(",","")
+        s.replace('"',"")
+        s.replace(":","")
 
         sentences = []
         # Split by lines
@@ -74,17 +76,23 @@ class MarkovAI(object):
                 else:
                     relation.count += 1
 
-                session.add(WordRelation(a=word_a.id,b=word_b.id))
-
             word_index += 1
+
+        session.commit()
 
 
     def reply(self,words):
         pass
 
-    def input(self,txt,io_module,replyrate=1,args=None):
+    def process_msg(self,io_module,txt,replyrate=1,args=None,is_owner=False):
+
+        session = Session()
+        session.add(Line(text=txt))
+        session.commit()
 
         sentences = self.filter(txt)
+        if(len(sentences) == 0):
+            return
 
         sentence_index = 0
         reply_sentence = random.randrange(0,len(sentences))
