@@ -17,7 +17,7 @@ class MarkovAI(object):
         # Convert everything to lowercase
         s = txt.lower()
 
-        s = re.sub(r",|\"|;|>|<|\(|\)|\[|\]|{|}","",s)
+        s = re.sub(r',|"|;|>|<|\(|\)|\[|\]|{|}|%|@|#|$|\^|&|\*|_|\\|/', "", s)
 
         sentences = []
         # Split by lines
