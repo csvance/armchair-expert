@@ -48,11 +48,12 @@ class MarkovAI(object):
         self.rebuilding = False
 
     @run_async
-    def clean_db(self,tick_rate,rating_reduce):
-
+    def clean_db_task(self,tick_rate,rating_reduce):
         while True:
             time.sleep(tick_rate)
+            self.clean_db(tick_rate,rating_reduce)
 
+    def clean_db(self,tick_rate,rating_reduce):
             session = Session()
 
             # Subtract Rating by 1
@@ -168,6 +169,8 @@ class MarkovAI(object):
         #Admin Only Commands
         if txt.startswith("!rebuild"):
             self.rebuild_db()
+        if txt.startswith("!clean"):
+            self.clean_db()
 
         return result
 
@@ -175,7 +178,7 @@ class MarkovAI(object):
         session = Session()
 
         # Find the rarest word over 4 chars
-        w = [word for word in words if len(word) >= 4]
+        w = [word for word in words if len(word) >= CONFIG_MARKOV_RARE_WORD_MIN_LENGTH]
         w = [word for word in w if word not in CONFIG_MARKOV_RARE_FILTER]
 
         if(len(w) == 0):
