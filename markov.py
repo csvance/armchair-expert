@@ -176,6 +176,7 @@ class MarkovAI(object):
 
         # Find the rarest word over 4 chars
         w = [word for word in words if len(word) >= 4]
+        w = [word for word in w if word not in CONFIG_MARKOV_RARE_FILTER]
 
         if(len(w) == 0):
             return None
@@ -185,6 +186,8 @@ class MarkovAI(object):
             group_by(Word.id,Word.text).\
             order_by(func.count(WordRelation.id).desc()).first()
 
+
+        r = None
 
         #Generate Backwards
         backwards_words = []
@@ -200,11 +203,18 @@ class MarkovAI(object):
             if len(results) == 0:
                 break
 
-            #Pick a random result
-            r = results[random.randrange(0,len(results))]
+            chain_attempts = 0
+            while(chain_attempts < CONFIG_MARKOV_CHAIN_ATTEMPTS):
+                #Pick a random result
+                r = results[random.randrange(0,len(results))]
 
-            f_id = r.a
-            backwards_words.insert(0,r.text)
+                if(f_id == r.a):
+                    chain_attempts += 1
+                    continue
+
+                f_id = r.a
+                backwards_words.insert(0,r.text)
+                break
 
             count += 1
 
@@ -222,11 +232,18 @@ class MarkovAI(object):
             if len(results) == 0:
                 break
 
-            #Pick a random result
-            r = results[random.randrange(0,len(results))]
+            chain_attempts = 0
+            while (chain_attempts < CONFIG_MARKOV_CHAIN_ATTEMPTS):
+                # Pick a random result
+                r = results[random.randrange(0, len(results))]
 
-            f_id = r.b
-            forward_words.append(r.text)
+                if (f_id == r.b):
+                    chain_attempts += 1
+                    continue
+
+                f_id = r.b
+                forward_words.insert(0, r.text)
+                break
 
         reply = []
 
