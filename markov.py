@@ -1,5 +1,7 @@
 from markov_schema import *
 from sqlalchemy import and_,or_
+from sqlalchemy import func
+
 import re
 import random
 
@@ -17,7 +19,7 @@ class MarkovAI(object):
 
         s.replace(",","")
         s.replace('"',"")
-        s.replace(":","")
+        s.replace(";","")
         s.replace(">","")
         s.replace("<","")
 
@@ -34,8 +36,7 @@ class MarkovAI(object):
                     if word != '':
                         post_words.append(word)
 
-                #Sentences contain 2+ words
-                if(len(post_words) >= 2):
+                if(len(post_words) >= 1):
                     sentences.append(post_words)
 
         return sentences
@@ -82,15 +83,40 @@ class MarkovAI(object):
 
         session.commit()
 
+    def stats(self):
+        session = Session()
+        words = session.query(Word.id).count()
+        lines = session.query(Line.id).count()
+        assoc = session.query(WordRelation).count()
+        return "I know %d words (%d contexts, %02f per word), %d lines." % (words,assoc,float(assoc)/float(words),lines)
+
+    def command(self,txt,args=None,is_owner=False):
+
+        result = None
+
+        if txt.startswith("!words"):
+            result = self.stats()
+
+        return result
 
     def reply(self,words):
         pass
 
     def process_msg(self,io_module,txt,replyrate=1,args=None,is_owner=False):
 
+        if(txt.strip() == ''):
+            return
+
         session = Session()
-        session.add(Line(text=txt))
+        session.add(Line(text=txt,author=args['author'],server_id=args['server'],channel=str(args['channel'])))
         session.commit()
+
+        #Check for command
+        if txt.startswith("!"):
+            result = self.command(txt,args,is_owner)
+            if result:
+                io_module.output(result,args)
+            return
 
         sentences = self.filter(txt)
         if(len(sentences) == 0):
@@ -102,9 +128,9 @@ class MarkovAI(object):
         for sentence in sentences:
             self.learn(sentence)
 
-            if reply_sentence == sentence_index:
-                if replyrate > random.randrange(0,100):
-                    io_module.output(self.reply(sentence))
+            #if reply_sentence == sentence_index:
+            #    if replyrate > random.randrange(0,100):
+            #        io_module.output(self.reply(sentence),args)
 
             sentence_index += 1
 

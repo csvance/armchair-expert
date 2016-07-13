@@ -15,6 +15,18 @@ def on_message(message):
     if str(message.author) == CONFIG_DISCORD_ME:
         return
 
+    channel = message.channel
+    author = message.author
+    try:
+        server = message.channel.server.id
+    except AttributeError:
+        #Private Message
+        server = 0
+
+    args = {'channel': channel,
+            'author': str(author),
+            'server': server}
+
     #Handle Comands
     if message.content.startswith("!"):
         if message.content.startswith('!shutup'):
@@ -46,9 +58,9 @@ def on_message(message):
                 yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
             if str(message.author) == CONFIG_DISCORD_OWNER:
-                ftbot.process_message(message.content, {'channel': message.channel},is_owner=True)
+                ftbot.process_message(message.content, args,is_owner=True)
             else:
-                ftbot.process_message(message.content, {'channel': message.channel},is_owner=False)
+                ftbot.process_message(message.content, args,is_owner=False)
             if ftbot.reply != None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
@@ -59,7 +71,10 @@ def on_message(message):
             if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
                 mentioned = True
 
-            ftbot.process_message(msg,{'channel': message.channel},mentioned=mentioned)
+            #Treat mentioning another user as a single word
+            msg = re.sub(r'<@[0-9]+>','#nick',msg)
+
+            ftbot.process_message(msg,args,mentioned=mentioned)
             if ftbot.reply != None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None

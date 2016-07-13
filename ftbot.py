@@ -33,7 +33,7 @@ class FTBot(object):
 
     def process_message(self,message,args,is_owner=False,mentioned=False):
         #Always reply when we are mentioned
-        if(mentioned and self.shutup == False):
+        if mentioned and self.shutup == False:
             self.pyborg.process_msg(self, message, 100, 1, args, not_quiet=1, owner=is_owner)
             self.ai.process_msg(self, message, 100, args)
         elif(self.shutup == False):
