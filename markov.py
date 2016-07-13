@@ -18,6 +18,8 @@ class MarkovAI(object):
         s.replace(",","")
         s.replace('"',"")
         s.replace(":","")
+        s.replace(">","")
+        s.replace("<","")
 
         sentences = []
         # Split by lines
