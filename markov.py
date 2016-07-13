@@ -1,17 +1,43 @@
 from markov_schema import *
 from sqlalchemy import and_,or_
 from sqlalchemy import func
-
+import threading
 import re
 import random
 
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
+    return wrapper
 
 
 class MarkovAI(object):
     ALPHANUMERIC = "abcdefghijklmnopqrstuvqxyz123456789"
 
     def __init__(self):
+        self.rebuilding = False
+        self.rebuilding_thread = None
         pass
+
+    @threaded
+    def rebuild_db(self):
+
+        if (self.rebuilding):
+            return
+
+        self.rebuilding = True
+        session = Session()
+        session.query(WordRelation).delete()
+        session.query(Word).delete()
+        session.commit()
+
+        lines = session.query(Line).order_by(Line.timestamp.asc()).all()
+        for line in lines:
+            self.process_msg(None, line.text, rebuild_db=True)
+
+        self.rebuilding = False
+
 
     def filter(self,txt):
         # Convert everything to lowercase
@@ -54,6 +80,7 @@ class MarkovAI(object):
             if word_a == None:
                 word_a = Word(text=word)
                 session.add(word_a)
+                session.commit()
             elif last_b_added == None or word != last_b_added.text:
                 word_a.count += 1
 
@@ -65,6 +92,7 @@ class MarkovAI(object):
                 if(word_b == None):
                     word_b = Word(text=words[word_index+1])
                     session.add(word_b)
+                    session.commit()
                     last_b_added = word_b
 
                 session.commit()
@@ -84,7 +112,7 @@ class MarkovAI(object):
         words = session.query(Word.id).count()
         lines = session.query(Line.id).count()
         assoc = session.query(WordRelation).count()
-        return "I know %d words (%d contexts, %02f per word), %d lines." % (words,assoc,float(assoc)/float(words),lines)
+        return "I know %d words (%d contexts, %8.2f per word), %d lines." % (words,assoc,float(assoc)/float(words),lines)
 
     def command(self,txt,args=None,is_owner=False):
 
@@ -93,26 +121,34 @@ class MarkovAI(object):
         if txt.startswith("!words"):
             result = self.cmd_stats()
 
+        if is_owner == False:
+            return result
+
+        #Admin Only Commands
+        if txt.startswith("!rebuild"):
+            self.rebuild_db()
+
         return result
 
     def reply(self,words):
         pass
 
-    def process_msg(self,io_module,txt,replyrate=1,args=None,is_owner=False):
+    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False):
 
         if(txt.strip() == ''):
             return
 
-        session = Session()
-        session.add(Line(text=txt,author=args['author'],server_id=args['server'],channel=str(args['channel'])))
-        session.commit()
+        if not rebuild_db:
+            session = Session()
+            session.add(Line(text=txt,author=args['author'],server_id=args['server'],channel=str(args['channel'])))
+            session.commit()
 
-        #Check for command
-        if txt.startswith("!"):
-            result = self.command(txt,args,is_owner)
-            if result:
-                io_module.output(result,args)
-            return
+            #Check for command
+            if txt.startswith("!"):
+                result = self.command(txt, args, owner)
+                if result:
+                    io_module.output(result,args)
+                return
 
         sentences = self.filter(txt)
         if(len(sentences) == 0):
@@ -124,8 +160,8 @@ class MarkovAI(object):
         for sentence in sentences:
             self.learn(sentence)
 
-            #if reply_sentence == sentence_index:
-            #    if replyrate > random.randrange(0,100):
+            #if not rebuild_db:
+            #    if reply_sentence == sentence_index and replyrate > random.randrange(0,100):
             #        io_module.output(self.reply(sentence),args)
 
             sentence_index += 1

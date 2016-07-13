@@ -30,6 +30,8 @@ class GoogleImages(object):
         item = res['items'][index]
         filename = item['link'].split("/")[-1]
         with http.request('GET', item['link'], preload_content=False) as r, open("%s/%s" % (directory,filename), 'wb') as out_file:
+            if r.status != 200:
+                return None
             shutil.copyfileobj(r, out_file)
 
         return "%s/%s" % (directory,filename)

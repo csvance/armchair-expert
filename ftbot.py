@@ -20,6 +20,8 @@ class FTBot(object):
     def memegen(self,msg,args):
         filename = "%s/meme_%s.jpg" % (CONFIG_SERVE_DIR,random.randint(0,9999999))
         resource = GoogleImages(msg, CONFIG_GOOGLE_KEY, CONFIG_GOOGLE_CX).execute(CONFIG_DOWNLOAD_DIR)
+        if(resource == None):
+            self.output("Out of memes try again tommorow.", args)
         ComputerMemeScene(resource=resource).generate(filename)
         self.output("http://%s/%s" % (CONFIG_MY_IP,filename.split("/")[1]),args)
 
@@ -38,7 +40,7 @@ class FTBot(object):
             self.ai.process_msg(self, message, 100, args)
         elif(self.shutup == False):
             self.pyborg.process_msg(self, message, self.replyrate, 1, args, not_quiet=1, owner=is_owner)
-            self.ai.process_msg(self, message, self.replyrate, args)
+            self.ai.process_msg(self, message, self.replyrate, args, owner=is_owner)
         else:
             self.pyborg.process_msg(self, message, 0, 1, args, not_quiet=1, owner=is_owner)
             self.ai.process_msg(self, message, 0, args)
