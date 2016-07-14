@@ -173,12 +173,14 @@ class MarkovAI(object):
             w = [word for word in w if word not in CONFIG_MARKOV_TOPIC_FILTER]
         # Otherwise find the longest word that makes it through the filter
         else:
-            longest_word = ""
+            longest_word = ''
 
             for word in words:
                 if word not in CONFIG_MARKOV_TOPIC_FILTER and len(word) > len(longest_word):
                     longest_word = word
-            w = [longest_word]
+
+            if longest_word != '':
+                w = [longest_word]
 
         # If we couldn't find any words, use 'nick' instead
         if len(w) == 0:
