@@ -169,16 +169,16 @@ class MarkovAI(object):
 
         w = []
 
-        # Find the rarest word over 4 chars if we have two or more words.
+        # Find a topic word to base the sentence on. Will be over 4 chars if we have two or more words.
         if(len(words)>=3):
-            w = [word for word in words if len(word) >= CONFIG_MARKOV_RARE_WORD_MIN_LENGTH]
-            w = [word for word in w if word not in CONFIG_MARKOV_RARE_FILTER]
-        #Otherwise find the longest word
+            w = [word for word in words if len(word) >= CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH]
+            w = [word for word in w if word not in CONFIG_MARKOV_TOPIC_FILTER]
+        # Otherwise find the longest word that makes it through the filter
         else:
             longest_word = ""
 
             for word in words:
-                if word not in CONFIG_MARKOV_RARE_FILTER and len(word) > len(longest_word):
+                if word not in CONFIG_MARKOV_TOPIC_FILTER and len(word) > len(longest_word):
                     longest_word = word
             w = [longest_word]
 
