@@ -1,8 +1,23 @@
 from config import *
 from search import *
 from memegen import *
+import schedule
+import time
 
 from markov import MarkovAI
+
+def run_async(func):
+    from threading import Thread
+    from functools import wraps
+
+    @wraps(func)
+    def async_func(*args, **kwargs):
+        func_hl = Thread(target = func, args = args, kwargs = kwargs)
+        func_hl.start()
+        return func_hl
+
+    return async_func
+
 
 class FTBot(object):
 
@@ -11,6 +26,15 @@ class FTBot(object):
         self.replyrate = CONFIG_DEFAULT_REPLYRATE
         self.reply = None
         self.shutup = False
+
+        #Start background thread
+        self._worker()
+
+    @run_async
+    def _worker(self):
+        while(True):
+            schedule.run_pending()
+            time.sleep(1)
 
     def output(self,msg,args):
         if msg is None:

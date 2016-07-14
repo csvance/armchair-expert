@@ -3,20 +3,9 @@ from config import *
 from sqlalchemy import and_,or_
 from sqlalchemy import func, update, delete
 import re
+import schedule
 import random
 import time
-
-def run_async(func):
-    from threading import Thread
-    from functools import wraps
-
-    @wraps(func)
-    def async_func(*args, **kwargs):
-        func_hl = Thread(target = func, args = args, kwargs = kwargs)
-        func_hl.start()
-        return func_hl
-
-    return async_func
 
 
 class MarkovAI(object):
@@ -26,10 +15,10 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
 
-        self.clean_db_task(CONFIG_MARKOV_CLEANUP_TICKRATE,CONFIG_MARKOV_TICK_RATING_REDUCE)
+        #Schedule Cleanup Task
+        schedule.every.day.do(MarkovAI.clean_db)
 
 
-    @run_async
     def rebuild_db(self):
 
         if (self.rebuilding):
@@ -47,17 +36,12 @@ class MarkovAI(object):
 
         self.rebuilding = False
 
-    @run_async
-    def clean_db_task(self,tick_rate,rating_reduce):
-        while True:
-            time.sleep(tick_rate)
-            self.clean_db(tick_rate,rating_reduce)
-
-    def clean_db(self,tick_rate,rating_reduce):
+    @staticmethod
+    def clean_db():
             session = Session()
 
             # Subtract Rating by 1
-            session.execute(update(WordRelation, values={WordRelation.rating: WordRelation.rating - rating_reduce}))
+            session.execute(update(WordRelation, values={WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_REDUCE}))
             session.commit()
 
             # Remove all forwards associations with no score
@@ -167,10 +151,8 @@ class MarkovAI(object):
             return result
 
         #Admin Only Commands
-        if txt.startswith("!rebuild"):
-            self.rebuild_db()
         if txt.startswith("!clean"):
-            self.clean_db()
+            self.clean_db(CONFIG_MARKOV_TICK_RATING_REDUCE)
 
         return result
 

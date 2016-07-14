@@ -2,6 +2,7 @@
 - discord.py
 - googleapiclient
 - wand
+- schedule
 
 # Configuration
 
