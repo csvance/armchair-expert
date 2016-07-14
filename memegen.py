@@ -3,15 +3,17 @@ import random
 from search import GoogleImages
 from config import *
 
+
 def r_path(f):
-    return "%s/%s" % (CONFIG_RES_DIR,f)
+    return "%s/%s" % (CONFIG_RES_DIR, f)
+
 
 def d_path(f):
     return "%s/%s" % (CONFIG_DOWNLOAD_DIR, f)
 
 
 class MemeScene(object):
-    def __init__(self,background="background.png",resource="resource.png"):
+    def __init__(self, background="background.png", resource="resource.png"):
         self.background = background
         self.resource = resource
 
@@ -19,11 +21,11 @@ class MemeScene(object):
 class ComputerMemeScene(MemeScene):
     BACKGROUND = 'retrocomputer.jpg'
 
-    def __init__(self,background=None,presenter=None,resource=None):
-        super().__init__(background=r_path(ComputerMemeScene.BACKGROUND),resource=resource)
+    def __init__(self, background=None, presenter=None, resource=None):
+        super().__init__(background=r_path(ComputerMemeScene.BACKGROUND), resource=resource)
 
     def _select_presenter(self):
-        #Select a presenter at random
+        # Select a presenter at random
         presenter = None
 
         if random.randrange(0, 2) == 0:
@@ -35,7 +37,7 @@ class ComputerMemeScene(MemeScene):
 
         return presenter
 
-    def generate(self,filename):
+    def generate(self, filename):
 
         presenter = self._select_presenter()
 
@@ -51,6 +53,3 @@ class ComputerMemeScene(MemeScene):
         computer.compression_quality = random.randrange(4, 10)
         computer.convert('jpg')
         computer.save(filename=filename)
-
-
-

@@ -3,15 +3,17 @@ import discord
 import asyncio
 from config import *
 import re
+
 client = discord.Client()
+
 
 def discord_client_run():
     client.run(CONFIG_DISCORD_TOKEN)
 
+
 @client.event
 @asyncio.coroutine
 def on_message(message):
-
     if str(message.author) == CONFIG_DISCORD_ME:
         return
 
@@ -20,7 +22,7 @@ def on_message(message):
     try:
         server = message.channel.server.id
     except AttributeError:
-        #Private Message
+        # Private Message
         server = 0
 
     args = {'channel': channel,
@@ -28,18 +30,17 @@ def on_message(message):
             'author_mention': "<@%s>" % author.id,
             'server': server}
 
-    #Handle Comands
+    # Handle Comands
     if message.content.startswith("!"):
         if message.content.startswith('!shutup'):
             ftbot.shutup()
             yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
             ftbot.reply = None
         elif message.content.startswith('!wakeup'):
-            ftbot.wakeup()
+            ftbot.wakeup(args)
             yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
             ftbot.reply = None
         elif message.content.startswith('!replyrate'):
-            newrate = 0
             try:
                 ftbot.replyrate = int(message.content.split(" ")[1])
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
@@ -48,9 +49,9 @@ def on_message(message):
         elif message.content.startswith("!meme"):
             try:
                 meme = message.content.split("!meme")[1]
-                if(len(meme) > 2):
+                if len(meme) > 2:
                     ftbot.memegen(meme, {'channel': message.channel})
-                    if(ftbot.reply != None):
+                    if ftbot.reply is not None:
                         yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                         ftbot.reply = None
                 else:
@@ -59,10 +60,10 @@ def on_message(message):
                 yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
             if str(message.author) == CONFIG_DISCORD_OWNER:
-                ftbot.process_message(message.content, args,is_owner=True)
+                ftbot.process_message(message.content, args, is_owner=True)
             else:
-                ftbot.process_message(message.content, args,is_owner=False)
-            if ftbot.reply != None:
+                ftbot.process_message(message.content, args, is_owner=False)
+            if ftbot.reply is not None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
     else:
@@ -72,13 +73,14 @@ def on_message(message):
             if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
                 mentioned = True
 
-            #Treat mentioning another user as a single word
-            msg = re.sub(r'<@[0-9]+>','#nick',msg)
+            # Treat mentioning another user as a single word
+            msg = re.sub(r'<@[0-9]+>', '#nick', msg)
 
-            ftbot.process_message(msg,args,mentioned=mentioned)
-            if ftbot.reply != None:
+            ftbot.process_message(msg, args, mentioned=mentioned)
+            if ftbot.reply is not None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None
+
 
 print("Starting FTBot")
 ftbot = FTBot()
