@@ -16,13 +16,15 @@ class MarkovAI(object):
         self.rebuilding_thread = None
 
         #Schedule Cleanup Task
-        schedule.every.day.do(MarkovAI.clean_db)
+        schedule.every().day.do(MarkovAI.clean_db)
 
 
     def rebuild_db(self):
 
         if (self.rebuilding):
             return
+
+        print("Rebuilding DB...")
 
         self.rebuilding = True
         session = Session()
@@ -36,8 +38,12 @@ class MarkovAI(object):
 
         self.rebuilding = False
 
+        print("Rebuilding DB Complete!")
+
     @staticmethod
     def clean_db():
+
+            print("Cleaning DB...")
             session = Session()
 
             # Subtract Rating by 1
@@ -63,6 +69,8 @@ class MarkovAI(object):
 
             session.commit()
             session.close()
+
+            print("Cleaning DB Complete!")
 
 
     def filter(self,txt):
