@@ -1,4 +1,8 @@
+# Requirements
+- python 3.4.3+
+
 # Dependencies
+- sqlalchemy
 - discord.py
 - googleapiclient
 - wand
