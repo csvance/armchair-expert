@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy import create_engine
 import datetime
 
@@ -40,5 +40,6 @@ class Line(Base):
 engine = create_engine('sqlite:///markov.db')
 Base.metadata.create_all(engine)
 
-Session = sessionmaker(autoflush=False)
-Session.configure(bind=engine)
+session_factory = sessionmaker(autoflush=False)
+session_factory.configure(bind=engine)
+Session = scoped_session(session_factory)
