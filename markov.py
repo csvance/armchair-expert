@@ -160,18 +160,30 @@ class MarkovAI(object):
 
         #Admin Only Commands
         if txt.startswith("!clean"):
-            self.clean_db(CONFIG_MARKOV_TICK_RATING_REDUCE)
+            self.clean_db(CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE)
 
         return result
 
     def reply(self, words, args):
         session = Session()
 
-        # Find the rarest word over 4 chars
-        w = [word for word in words if len(word) >= CONFIG_MARKOV_RARE_WORD_MIN_LENGTH]
-        w = [word for word in w if word not in CONFIG_MARKOV_RARE_FILTER]
+        w = []
 
-        if(len(w) == 0):
+        # Find the rarest word over 4 chars if we have two or more words.
+        if(len(words)>=3):
+            w = [word for word in words if len(word) >= CONFIG_MARKOV_RARE_WORD_MIN_LENGTH]
+            w = [word for word in w if word not in CONFIG_MARKOV_RARE_FILTER]
+        #Otherwise find the longest word
+        else:
+            longest_word = ""
+
+            for word in words:
+                if word not in CONFIG_MARKOV_RARE_FILTER and len(word) > len(longest_word):
+                    longest_word = word
+            w = [longest_word]
+
+
+        if len(w) == 0:
             return None
 
         the_word = session.query(Word.id,Word.text,func.count(WordRelation.id).label('relations')).join(WordRelation, WordRelation.a == Word.id).\
