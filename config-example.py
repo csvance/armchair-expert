@@ -15,9 +15,10 @@ CONFIG_MY_IP = "127.0.0.1"
 CONFIG_DEFAULT_REPLYRATE = 1
 
 # Once a day
-CONFIG_MARKOV_TICK_RATING_REDUCE = 1
+CONFIG_MARKOV_TICK_RATING_DEFAULT = 7
+CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE = 1
 CONFIG_MARKOV_RARE_FILTER = ['nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
-                             'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t']
+                             'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats']
 CONFIG_MARKOV_RARE_WORD_MIN_LENGTH = 3
 CONFIG_MARKOV_CHAIN_ATTEMPTS = 10
 CONFIG_MARKOV_VECTOR_LENGTH = 7

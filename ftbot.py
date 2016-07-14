@@ -34,7 +34,7 @@ class FTBot(object):
     def _worker(self):
         while(True):
             schedule.run_pending()
-            time.sleep(1)
+            time.sleep(60)
 
     def output(self,msg,args):
         if msg is None:

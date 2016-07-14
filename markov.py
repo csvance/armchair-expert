@@ -47,7 +47,7 @@ class MarkovAI(object):
             session = Session()
 
             # Subtract Rating by 1
-            session.execute(update(WordRelation, values={WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_REDUCE}))
+            session.execute(update(WordRelation, values={WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE}))
             session.commit()
 
             # Remove all forwards associations with no score
