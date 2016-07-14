@@ -180,8 +180,9 @@ class MarkovAI(object):
                     longest_word = word
             w = [longest_word]
 
+        # If we couldn't find any words, use 'nick' instead
         if len(w) == 0:
-            return None
+            w = ['nick']
 
         the_word = session.query(Word.id, Word.text, func.count(WordRelation.id).label('relations')).\
             join(WordRelation, WordRelation.a == Word.id). \
