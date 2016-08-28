@@ -16,7 +16,7 @@ class MarkovAI(object):
         self.rebuilding_thread = None
 
         # Schedule Cleanup Task
-        schedule.every().day.do(MarkovAI.clean_db)
+        # schedule.every().day.at('00:00').do(MarkovAI.clean_db)
 
     def rebuild_db(self):
 
@@ -259,6 +259,7 @@ class MarkovAI(object):
         reply += [the_word.text]
         reply += forward_words
 
+        # Replace any mention in response with a mention to the name of the message we are responding too
         reply = [word.replace('nick', args['author_mention']) for word in reply]
 
         return " ".join(reply)
