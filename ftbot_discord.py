@@ -2,6 +2,7 @@ from ftbot import *
 import discord
 import asyncio
 from config import *
+import extras
 import re
 
 client = discord.Client()
@@ -58,6 +59,8 @@ def on_message(message):
                     yield from client.send_message(message.channel, 'Command Syntax error.')
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
+        elif message.content.startswith("!"):
+            yield from client.send_message(message.channel, extras.command_router(message.content))
         else:
             if str(message.author) == CONFIG_DISCORD_OWNER:
                 ftbot.process_message(message.content, args, is_owner=True)
