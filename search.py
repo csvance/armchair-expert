@@ -3,6 +3,8 @@ import urllib3
 import shutil
 import random
 
+from config import *
+
 
 class GoogleImages(object):
     def __init__(self, search, key, cx):
@@ -21,7 +23,7 @@ class GoogleImages(object):
             cx=self.cx,
             num=num,
             searchType="image",
-            safe='off'
+            safe=CONFIG_GOOGLE_SAFESEARCH
         ).execute()
 
         http = urllib3.PoolManager()
