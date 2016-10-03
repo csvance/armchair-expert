@@ -253,6 +253,8 @@ class MarkovAI(object):
 
             count += 1
 
+        forward_words.reverse()
+
         reply = []
 
         reply += backwards_words
