@@ -33,20 +33,26 @@ def on_message(message):
 
     # Handle Comands
     if message.content.startswith("!"):
+
+        processed = False
+
         if message.content.startswith('!shutup'):
             ftbot.shutup()
             yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
             ftbot.reply = None
+            processed = True
         elif message.content.startswith('!wakeup'):
             ftbot.wakeup(args)
             yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
             ftbot.reply = None
+            processed = True
         elif message.content.startswith('!replyrate'):
             try:
                 ftbot.replyrate = int(message.content.split(" ")[1])
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
+            processed = True
         elif message.content.startswith("!meme"):
             try:
                 meme = message.content.split("!meme")[1]
@@ -59,9 +65,14 @@ def on_message(message):
                     yield from client.send_message(message.channel, 'Command Syntax error.')
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
+            processed = True
         elif message.content.startswith("!"):
-            yield from client.send_message(message.channel, extras.command_router(message.content))
-        else:
+            ret_msg = extras.command_router(message.content)
+            if ret_msg != "No such command!":
+                processed = True
+                yield from client.send_message(message.channel, ret_msg)
+
+        if not processed:
             if str(message.author) == CONFIG_DISCORD_OWNER:
                 ftbot.process_message(message.content, args, is_owner=True)
             else:
