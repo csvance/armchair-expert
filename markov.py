@@ -184,7 +184,7 @@ class MarkovAI(object):
 
         # If we couldn't find any words, use 'nick' instead
         if len(w) == 0:
-            w = ['nick']
+            w = ['#nick']
 
         the_word = session.query(Word.id, Word.text, func.count(WordRelation.id).label('relations')).\
             join(WordRelation, WordRelation.a == Word.id). \
@@ -262,7 +262,7 @@ class MarkovAI(object):
         reply += forward_words
 
         # Replace any mention in response with a mention to the name of the message we are responding too
-        reply = [word.replace('nick', args['author_mention']) for word in reply]
+        reply = [word.replace('#nick', args['author_mention']) for word in reply]
 
         return " ".join(reply)
 

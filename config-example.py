@@ -18,7 +18,7 @@ CONFIG_DEFAULT_REPLYRATE = 1
 # Once a day
 CONFIG_MARKOV_TICK_RATING_DEFAULT = 7
 CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE = 1
-CONFIG_MARKOV_TOPIC_FILTER = ['nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
+CONFIG_MARKOV_TOPIC_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
                               'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats',
                               'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
 CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH = 3
