@@ -5,6 +5,7 @@ from sqlalchemy import func, update, delete
 import re
 import random
 import time
+import numpy as np
 
 
 class MarkovAI(object):
@@ -224,8 +225,10 @@ class MarkovAI(object):
             if len(results) == 0:
                 break
 
-            # Pick a random result
-            r = results[random.randrange(0, len(results))]
+            #Pick a random result
+            r_index = int(np.random.beta(0.5, 0.5) * len(results))
+
+            r = results[r_index]
 
             f_id = r.a
             backwards_words.insert(0, r.text)
@@ -248,7 +251,9 @@ class MarkovAI(object):
                 break
 
             # Pick a random result
-            r = results[random.randrange(0, len(results))]
+            r_index = int(np.random.beta(0.5,0.5) * len(results))
+
+            r = results[r_index]
 
             f_id = r.b
             forward_words.append(r.text)
