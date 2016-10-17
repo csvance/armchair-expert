@@ -49,11 +49,11 @@ class FTBot(object):
         self.shutup = False
         self.output(CONFIG_MESSAGE_WAKEUP, args)
 
-    def process_message(self, message, args, is_owner=False, mentioned=False):
+    def process_message(self, message, args, is_owner=False, mentioned=False, learning=True):
         # Always reply when we are mentioned
         if mentioned and self.shutup is False:
-            self.ai.process_msg(self, message, 100, args)
+            self.ai.process_msg(self, message, 100, args, learning=learning)
         elif self.shutup is False:
-            self.ai.process_msg(self, message, self.replyrate, args, owner=is_owner)
+            self.ai.process_msg(self, message, self.replyrate, args, owner=is_owner, learning=learning)
         else:
-            self.ai.process_msg(self, message, 0, args)
+            self.ai.process_msg(self, message, 0, args, learning=learning)
