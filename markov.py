@@ -23,6 +23,7 @@ class MarkovAI(object):
 
         self.rebuilding = True
         session = Session()
+        session.execute("VACUUM")
         session.query(URL).delete()
         session.query(WordRelation).delete()
         session.query(Word).delete()
@@ -30,11 +31,14 @@ class MarkovAI(object):
 
         lines = session.query(Line).filter(Line.channel not in ignore).order_by(Line.timestamp.asc()).all()
         for line in lines:
-            print(line.text)
-            self.process_msg(None, line.text, rebuild_db=True, timestamp=line.timestamp)
+            text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
+            print(text)
+
+            self.process_msg(None, text, rebuild_db=True, timestamp=line.timestamp)
 
         self.rebuilding = False
 
+        session.execute("VACUUM")
         print("Rebuilding DB Complete!")
 
     @staticmethod
@@ -81,7 +85,7 @@ class MarkovAI(object):
         # Convert everything to lowercase
         s = txt.lower()
 
-        s = re.sub(r':|,|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
+        s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
 
         sentences = []
         # Split by lines
