@@ -1,7 +1,6 @@
 from config import *
 from search import *
 from memegen import *
-import schedule
 import time
 
 from markov import MarkovAI
@@ -26,15 +25,6 @@ class FTBot(object):
         self.replyrate = CONFIG_DEFAULT_REPLYRATE
         self.reply = None
         self.shutup = False
-
-        # Start background thread
-        self._worker()
-
-    @run_async
-    def _worker(self):
-        while True:
-            schedule.run_pending()
-            time.sleep(60)
 
     def output(self, msg, args):
         if msg is None:
