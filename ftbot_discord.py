@@ -94,7 +94,12 @@ def on_message(message):
             # Treat mentioning another user as a single word
             msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
 
-            ftbot.process_message(msg, args, mentioned=mentioned)
+            # Don't learn from private messages
+            if message.server != 0:
+                ftbot.process_message(msg, args, mentioned=mentioned, learning=True)
+            else:
+                ftbot.process_message(msg, args, mentioned=mentioned, learning=False)
+
             if ftbot.reply is not None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
                 ftbot.reply = None

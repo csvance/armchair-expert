@@ -32,8 +32,11 @@ class MarkovAI(object):
         lines = session.query(Line).order_by(Line.timestamp.asc()).all()
         for line in lines:
             if str(line.channel) in ignore:
-                print("--NSFW FILTER--")
+                print("!!!NSFW FILTER!!!")
                 continue
+            elif line.server_id == 0:
+                continue
+
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
             print(text)
 
@@ -281,7 +284,7 @@ class MarkovAI(object):
 
         return " ".join(reply)
 
-    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
+    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None, learning=True):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
@@ -302,23 +305,24 @@ class MarkovAI(object):
                     io_module.output(result, args)
                 return
 
-        # Get all URLs
-        urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
-        if len(urls) >= 0:
-            session = Session()
-            for url in urls:
+        if learning:
+            # Get all URLs
+            urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
+            if len(urls) >= 0:
+                session = Session()
+                for url in urls:
 
-                the_url = session.query(URL).filter(URL.text == url).first()
+                    the_url = session.query(URL).filter(URL.text == url).first()
 
-                if the_url is not None:
-                    the_url.count += 1
-                else:
-                    if (timestamp):
-                        session.add(URL(text=url, timestamp=timestamp))
+                    if the_url is not None:
+                        the_url.count += 1
                     else:
-                        session.add(URL(text=url))
+                        if timestamp:
+                            session.add(URL(text=url, timestamp=timestamp))
+                        else:
+                            session.add(URL(text=url))
 
-            session.commit()
+                session.commit()
 
         sentences = self.filter(txt)
         if len(sentences) == 0:
@@ -328,7 +332,8 @@ class MarkovAI(object):
         reply_sentence = random.randrange(0, len(sentences))
 
         for sentence in sentences:
-            self.learn(sentence)
+            if learning:
+                self.learn(sentence)
 
             if not rebuild_db:
                 if reply_sentence == sentence_index and replyrate > random.randrange(0, 100):
