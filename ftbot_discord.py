@@ -19,6 +19,7 @@ def on_message(message):
         return
 
     if str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
+        print("--NSFW FILTER--")
         return
 
     channel = message.channel

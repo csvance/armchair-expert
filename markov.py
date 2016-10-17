@@ -29,8 +29,11 @@ class MarkovAI(object):
         session.query(Word).delete()
         session.commit()
 
-        lines = session.query(Line).filter(Line.channel not in ignore).order_by(Line.timestamp.asc()).all()
+        lines = session.query(Line).order_by(Line.timestamp.asc()).all()
         for line in lines:
+            if str(line.channel) in ignore:
+                print("--NSFW FILTER--")
+                continue
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
             print(text)
 
@@ -272,9 +275,9 @@ class MarkovAI(object):
 
         # Add a random URL
         if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
-            url = session.query(URL).order_by(func.rand()).first()
+            url = session.query(URL).order_by(func.random()).first()
             if url is not None:
-                reply += url.text
+                reply.append(url.text)
 
         return " ".join(reply)
 
