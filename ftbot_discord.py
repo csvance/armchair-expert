@@ -95,10 +95,10 @@ def on_message(message):
             msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
 
             # Don't learn from private messages
-            if message.server != 0:
+            if message.server is not None:
                 ftbot.process_message(msg, args, mentioned=mentioned, learning=True)
             else:
-                ftbot.process_message(msg, args, mentioned=mentioned, learning=False)
+                ftbot.process_message(msg, args, mentioned=True, learning=False)
 
             if ftbot.reply is not None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
