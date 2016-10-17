@@ -49,5 +49,5 @@ engine = create_engine('sqlite:///markov.db')
 Base.metadata.create_all(engine)
 
 session_factory = sessionmaker(autoflush=False)
-session_factory.configure(bind=engine,expire_on_commit=False)
+session_factory.configure(bind=engine, expire_on_commit=False)
 Session = scoped_session(session_factory)

@@ -14,7 +14,7 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
 
-    def rebuild_db(self,ignore=[]):
+    def rebuild_db(self, ignore=[]):
 
         if self.rebuilding:
             return
@@ -190,7 +190,7 @@ class MarkovAI(object):
         if len(w) == 0:
             w = ['#nick']
 
-        the_word = session.query(Word.id, Word.text, func.count(WordRelation.id).label('relations')).\
+        the_word = session.query(Word.id, Word.text, func.count(WordRelation.id).label('relations')). \
             join(WordRelation, WordRelation.a == Word.id). \
             filter(Word.text.in_(w)). \
             group_by(Word.id, Word.text). \
@@ -296,9 +296,8 @@ class MarkovAI(object):
                 return
 
         # Get all URLs
-        urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',txt)
+        urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
         if len(urls) >= 0:
-            print(urls)
             session = Session()
             for url in urls:
 
@@ -307,8 +306,8 @@ class MarkovAI(object):
                 if the_url is not None:
                     the_url.count += 1
                 else:
-                    if(timestamp):
-                        session.add(URL(text=url,timestamp=timestamp))
+                    if (timestamp):
+                        session.add(URL(text=url, timestamp=timestamp))
                     else:
                         session.add(URL(text=url))
 

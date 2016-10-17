@@ -15,7 +15,6 @@ def discord_client_run():
 @client.event
 @asyncio.coroutine
 def on_message(message):
-
     if str(message.author) == CONFIG_DISCORD_ME:
         return
 
