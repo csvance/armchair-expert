@@ -94,3 +94,5 @@ ENV/
 config.py
 *.bak
 *.db
+
+markov.db-journal
