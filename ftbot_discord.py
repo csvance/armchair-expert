@@ -15,7 +15,11 @@ def discord_client_run():
 @client.event
 @asyncio.coroutine
 def on_message(message):
+
     if str(message.author) == CONFIG_DISCORD_ME:
+        return
+
+    if str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
         return
 
     channel = message.channel

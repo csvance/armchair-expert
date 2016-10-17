@@ -3,7 +3,6 @@ from config import *
 from sqlalchemy import and_, or_
 from sqlalchemy import func, update, delete
 import re
-import schedule
 import random
 import time
 
@@ -15,10 +14,7 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
 
-        # Schedule Cleanup Task
-        # schedule.every().day.at('00:00').do(MarkovAI.clean_db)
-
-    def rebuild_db(self):
+    def rebuild_db(self,ignore=[]):
 
         if self.rebuilding:
             return
@@ -27,13 +23,15 @@ class MarkovAI(object):
 
         self.rebuilding = True
         session = Session()
+        session.query(URL).delete()
         session.query(WordRelation).delete()
         session.query(Word).delete()
         session.commit()
 
-        lines = session.query(Line).order_by(Line.timestamp.asc()).all()
+        lines = session.query(Line).filter(Line.channel not in ignore).order_by(Line.timestamp.asc()).all()
         for line in lines:
-            self.process_msg(None, line.text, rebuild_db=True)
+            print(line.text)
+            self.process_msg(None, line.text, rebuild_db=True, timestamp=line.timestamp)
 
         self.rebuilding = False
 
@@ -73,10 +71,17 @@ class MarkovAI(object):
         print("Cleaning DB Complete!")
 
     def filter(self, txt):
+
+        s = txt
+
+        # Strip all URL
+        s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                   '', s, flags=re.MULTILINE)
+
         # Convert everything to lowercase
         s = txt.lower()
 
-        s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
+        s = re.sub(r':|,|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
 
         sentences = []
         # Split by lines
@@ -104,7 +109,6 @@ class MarkovAI(object):
 
         word_index = 0
         for word in words:
-
             # Add word if it doesn't exist
             word_a = session.query(Word).filter(Word.text == word).first()
             if word_a is None:
@@ -248,12 +252,10 @@ class MarkovAI(object):
                     continue
 
                 f_id = r.b
-                forward_words.insert(0, r.text)
+                forward_words.append(r.text)
                 break
 
             count += 1
-
-        forward_words.reverse()
 
         reply = []
 
@@ -264,9 +266,15 @@ class MarkovAI(object):
         # Replace any mention in response with a mention to the name of the message we are responding too
         reply = [word.replace('#nick', args['author_mention']) for word in reply]
 
+        # Add a random URL
+        if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
+            url = session.query(URL).order_by(func.rand()).first()
+            if url is not None:
+                reply += url.text
+
         return " ".join(reply)
 
-    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False):
+    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
@@ -286,6 +294,25 @@ class MarkovAI(object):
                 if result:
                     io_module.output(result, args)
                 return
+
+        # Get all URLs
+        urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',txt)
+        if len(urls) >= 0:
+            print(urls)
+            session = Session()
+            for url in urls:
+
+                the_url = session.query(URL).filter(URL.text == url).first()
+
+                if the_url is not None:
+                    the_url.count += 1
+                else:
+                    if(timestamp):
+                        session.add(URL(text=url,timestamp=timestamp))
+                    else:
+                        session.add(URL(text=url))
+
+            session.commit()
 
         sentences = self.filter(txt)
         if len(sentences) == 0:

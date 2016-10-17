@@ -23,7 +23,7 @@ class WordRelation(Base):
     a = Column(Integer, ForeignKey('word.id'), nullable=False)
     b = Column(Integer, ForeignKey('word.id'), nullable=False)
     count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, default=7, nullable=False)
+    rating = Column(Integer, default=1, nullable=False)
 
 
 class Line(Base):
@@ -37,9 +37,17 @@ class Line(Base):
     text = Column(String, nullable=False)
 
 
+class URL(Base):
+    __tablename__ = "url"
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    text = Column(String, nullable=False, unique=True)
+    count = Column(Integer, nullable=False, default=1)
+
+
 engine = create_engine('sqlite:///markov.db')
 Base.metadata.create_all(engine)
 
 session_factory = sessionmaker(autoflush=False)
-session_factory.configure(bind=engine)
+session_factory.configure(bind=engine,expire_on_commit=False)
 Session = scoped_session(session_factory)
