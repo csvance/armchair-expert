@@ -91,7 +91,7 @@ def on_message(message):
                 mentioned = True
 
             # Treat mentioning another user as a single word
-            msg = re.sub(r'<@[0-9]+>', '#nick', msg)
+            msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
 
             ftbot.process_message(msg, args, mentioned=mentioned)
             if ftbot.reply is not None:
