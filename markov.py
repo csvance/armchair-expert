@@ -218,23 +218,17 @@ class MarkovAI(object):
 
             results = session.query(WordRelation.a, Word.text). \
                 join(Word, WordRelation.a == Word.id). \
-                filter(WordRelation.b == f_id).all()
+                order_by(WordRelation.rating). \
+                filter(and_(WordRelation.b == f_id,WordRelation.a != f_id)).all()
 
             if len(results) == 0:
                 break
 
-            chain_attempts = 0
-            while chain_attempts < CONFIG_MARKOV_CHAIN_ATTEMPTS:
-                # Pick a random result
-                r = results[random.randrange(0, len(results))]
+            # Pick a random result
+            r = results[random.randrange(0, len(results))]
 
-                if f_id == r.a:
-                    chain_attempts += 1
-                    continue
-
-                f_id = r.a
-                backwards_words.insert(0, r.text)
-                break
+            f_id = r.a
+            backwards_words.insert(0, r.text)
 
             count += 1
 
@@ -247,23 +241,17 @@ class MarkovAI(object):
 
             results = session.query(WordRelation.b, Word.text). \
                 join(Word, WordRelation.b == Word.id). \
-                filter(WordRelation.a == f_id).all()
+                order_by(WordRelation.rating). \
+                filter(and_(WordRelation.a == f_id,WordRelation.b != f_id)).all()
 
             if len(results) == 0:
                 break
 
-            chain_attempts = 0
-            while chain_attempts < CONFIG_MARKOV_CHAIN_ATTEMPTS:
-                # Pick a random result
-                r = results[random.randrange(0, len(results))]
+            # Pick a random result
+            r = results[random.randrange(0, len(results))]
 
-                if f_id == r.b:
-                    chain_attempts += 1
-                    continue
-
-                f_id = r.b
-                forward_words.append(r.text)
-                break
+            f_id = r.b
+            forward_words.append(r.text)
 
             count += 1
 
