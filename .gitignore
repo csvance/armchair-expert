@@ -93,3 +93,4 @@ ENV/
 .idea
 config.py
 *.bak
+*.db
