@@ -5,8 +5,9 @@
 - sqlalchemy
 - discord.py
 - googleapiclient
-- wand
+- wand (imagemagick)
 - schedule
+- numpy
 
 # Configuration
 
