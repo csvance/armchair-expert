@@ -8,6 +8,7 @@
 - wand (imagemagick)
 - schedule
 - numpy
+- spacy (Uses 'en' dataset by default, you will need to download this in addition to installing spacy: 'python -m spacy download en')
 
 # Configuration
 

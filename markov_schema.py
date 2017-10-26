@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy import create_engine
 import datetime
+import enum
 
 Base = declarative_base()
 
@@ -12,10 +13,24 @@ class Word(Base):
     id = Column(Integer, primary_key=True)
     text = Column(String, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
+    pos = Column(Integer, ForeignKey('pos.id'), nullable=False)
 
     def __repr__(self):
         return "id: %s text: %s" % (self.id, self.text)
 
+class Pos(Base):
+    __tablename__ = "pos"
+    id = Column(Integer, primary_key=True)
+    text = Column(String, nullable=False, unique=True)
+    count = Column(Integer, nullable=False, default=1)
+
+class PosRelation(Base):
+    __tablename__ = "posrelation"
+    id = Column(Integer, primary_key=True)
+    a = Column(Integer, ForeignKey('pos.id'),nullable=False)
+    b = Column(Integer, ForeignKey('pos.id'),nullable=False)
+    count = Column(Integer, nullable=False, default=1)
+    rating = Column(Integer, nullable=False, default=1)
 
 class WordRelation(Base):
     __tablename__ = "wordrelation"
@@ -23,7 +38,7 @@ class WordRelation(Base):
     a = Column(Integer, ForeignKey('word.id'), nullable=False)
     b = Column(Integer, ForeignKey('word.id'), nullable=False)
     count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, default=1, nullable=False)
+    rating = Column(Integer, nullable=False, default=1)
 
 
 class Line(Base):
