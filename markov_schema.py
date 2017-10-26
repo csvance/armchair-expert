@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy import create_engine
 import datetime
+import enum
 
 Base = declarative_base()
 
@@ -12,6 +13,7 @@ class Word(Base):
     id = Column(Integer, primary_key=True)
     text = Column(String, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
+    pos = Column(String, nullable=True, unique=False)
 
     def __repr__(self):
         return "id: %s text: %s" % (self.id, self.text)

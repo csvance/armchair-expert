@@ -6,6 +6,7 @@ import re
 import random
 import time
 import numpy as np
+import spacy
 
 
 class MarkovAI(object):
@@ -14,6 +15,7 @@ class MarkovAI(object):
     def __init__(self):
         self.rebuilding = False
         self.rebuilding_thread = None
+        self.nlp = spacy.load('en')
 
     def rebuild_db(self, ignore=[]):
 
@@ -119,15 +121,26 @@ class MarkovAI(object):
         last_b_added = None
 
         word_index = 0
+
+
+
         for word in words:
+
+
             # Add word if it doesn't exist
             word_a = session.query(Word).filter(Word.text == word).first()
             if word_a is None:
-                word_a = Word(text=word)
+
+                # Use NLP
+                doc = self.nlp(word)
+                word_pos = doc[0].pos_
+
+                word_a = Word(text=word, pos=word_pos)
                 session.add(word_a)
                 session.commit()
             elif last_b_added is None or word != last_b_added.text:
                 word_a.count += 1
+
 
             # Not last word? Lookup / add association
             if word_index != len(words) - 1:
@@ -135,7 +148,12 @@ class MarkovAI(object):
                 # Word B
                 word_b = session.query(Word).filter(Word.text == words[word_index + 1]).first()
                 if word_b is None:
-                    word_b = Word(text=words[word_index + 1])
+
+                    # Use NLP
+                    doc = self.nlp(words[word_index + 1])
+                    word_pos = doc[0].pos_
+
+                    word_b = Word(text=words[word_index + 1],pos=word_pos)
                     session.add(word_b)
                     session.commit()
                     last_b_added = word_b
@@ -168,6 +186,9 @@ class MarkovAI(object):
         if txt.startswith("!words"):
             result = self.cmd_stats()
 
+        if txt.startswith("!essay"):
+            result = self.essay(txt.split(" ")[1],args)
+
         if is_owner is False:
             return result
 
@@ -177,31 +198,58 @@ class MarkovAI(object):
 
         return result
 
-    def reply(self, words, args):
+    def essay(self, subject, args):
+
+        def random_punct():
+            return [".","!","?"][random.randrange(0,3)]
+
+        s = subject.lower()
+        txt = ""
+
+        for p in range(0,5):
+            txt += "\t" + self.reply([s], args, nourl=True) + random_punct()+ " "
+            txt += self.reply([s], args, nourl=True) + random_punct()+ " "
+            txt += self.reply([s], args, nourl=True) + random_punct()+ " "
+            txt += "\n"
+
+        return txt
+
+    def reply(self, words, args, nourl=False):
         session = Session()
+
+        # Attempt to find topic using NLP
+        words_string = ' '.join(words)
+        doc = self.nlp(words_string)
+        sentence = next(doc.sents)
 
         w = []
 
-        # Find a topic word to base the sentence on. Will be over 4 chars if we have two or more words.
-        if len(words) >= 3:
-            w = [word for word in words if len(word) >= CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH]
-            w = [word for word in w if word not in CONFIG_MARKOV_TOPIC_FILTER]
-        # Otherwise find the longest word that makes it through the filter
-        else:
-            longest_word = ''
+        for token in sentence:
+            if token.pos_ == 'NOUN':
+                w.append(token.orth_)
 
-            for word in words:
-                if word not in CONFIG_MARKOV_TOPIC_FILTER and len(word) > len(longest_word):
-                    longest_word = word
+        # NLP failed, so choose something else
+        if len(w) == 0:
+            # Find a topic word to base the sentence on. Will be over 4 chars if we have two or more words.
+            if len(words) >= 3:
+                w = [word for word in words if len(word) >= CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH]
+                w = [word for word in w if word not in CONFIG_MARKOV_TOPIC_FILTER]
+            # Otherwise find the longest word that makes it through the filter
+            else:
+                longest_word = ''
 
-            if longest_word != '':
-                w = [longest_word]
+                for word in words:
+                    if word not in CONFIG_MARKOV_TOPIC_FILTER and len(word) > len(longest_word):
+                        longest_word = word
 
-        # If we couldn't find any words, use 'nick' instead
+                if longest_word != '':
+                    w = [longest_word]
+
+        # If we couldn't find any words using NLP or other methods, use 'nick' instead
         if len(w) == 0:
             w = ['#nick']
 
-        the_word = session.query(Word.id, Word.text, func.count(WordRelation.id).label('relations')). \
+        the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
             join(WordRelation, WordRelation.a == Word.id). \
             filter(Word.text.in_(w)). \
             group_by(Word.id, Word.text). \
@@ -210,6 +258,8 @@ class MarkovAI(object):
         if the_word is None:
             return None
 
+        last_word = the_word
+
         # Generate Backwards
         backwards_words = []
         f_id = the_word.id
@@ -217,18 +267,43 @@ class MarkovAI(object):
         count = 0
         while count < back_count:
 
-            results = session.query(WordRelation.a, Word.text). \
-                join(Word, WordRelation.a == Word.id). \
-                order_by(WordRelation.rating). \
-                filter(and_(WordRelation.b == f_id,WordRelation.a != f_id)).all()
+            choices = ['NOUN','ADJ','VERB','ADV','RANDOM']
+            weights = []
+
+            if last_word.pos == 'ADJ':
+                weights = [0.0, 0.2, 0.2, 0.0, 0.6]
+            elif last_word.pos == 'ADV':
+                weights = [0.4, 0.0, 0.0, 0.2, 0.4]
+            elif last_word.pos == 'NOUN':
+                weights = [0.0, 0.4, 0.4, 0.0, 0.2]
+            elif last_word.pos == 'VERB':
+                weights = [0.4, 0.0, 0.0, 0.4, 0.2]
+            else:
+                weights = [0.0, 0.0, 0.0, 0.0, 1.0]
+
+            choice = np.random.choice(choices, 1, p=weights)
+
+            r_index = None
+
+            # Pick a random result
+            if choice == 'RANDOM':
+                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                    join(Word, WordRelation.b == Word.id). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+            else:
+                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                    join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
 
             if len(results) == 0:
                 break
 
-            #Pick a random result
             r_index = int(np.random.beta(0.5, 0.5) * len(results))
 
             r = results[r_index]
+            last_word = r
 
             f_id = r.a
             backwards_words.insert(0, r.text)
@@ -239,21 +314,43 @@ class MarkovAI(object):
         forward_words = []
         f_id = the_word.id
         forward_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
+
         count = 0
         while count < forward_count:
 
-            results = session.query(WordRelation.b, Word.text). \
-                join(Word, WordRelation.b == Word.id). \
-                order_by(WordRelation.rating). \
-                filter(and_(WordRelation.a == f_id,WordRelation.b != f_id)).all()
+            choices = ['NOUN','ADJ','VERB','ADV','RANDOM']
+            weights = []
+
+            if last_word.pos == 'ADJ':
+                weights = [0.6, 0.2, 0.0, 0.0, 0.2]
+            elif last_word.pos == 'ADV':
+                weights = [0.0, 0.0, 0.6, 0.2, 0.2]
+            elif last_word.pos == 'NOUN':
+                weights = [0.0, 0.2, 0.4, 0.2, 0.2]
+            else:
+                weights = [0.0, 0.0, 0.0, 0.0, 1.0]
+
+            choice = np.random.choice(choices, 1, p=weights)
+
+            # Pick a random result
+            if choice == 'RANDOM':
+                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                    join(Word, WordRelation.b == Word.id). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+            else:
+                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                    join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
 
             if len(results) == 0:
                 break
 
-            # Pick a random result
-            r_index = int(np.random.beta(0.5,0.5) * len(results))
+            r_index = int(np.random.beta(0.5, 0.5) * len(results))
 
             r = results[r_index]
+            last_word = r
 
             f_id = r.b
             forward_words.append(r.text)
@@ -269,11 +366,12 @@ class MarkovAI(object):
         # Replace any mention in response with a mention to the name of the message we are responding too
         reply = [word.replace('#nick', args['author_mention']) for word in reply]
 
-        # Add a random URL
-        if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
-            url = session.query(URL).order_by(func.random()).first()
-            if url is not None:
-                reply.append(url.text)
+        if not nourl:
+            # Add a random URL
+            if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
+                url = session.query(URL).order_by(func.random()).first()
+                if url is not None:
+                    reply.append(url.text)
 
         return " ".join(reply)
 

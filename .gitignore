@@ -94,5 +94,7 @@ ENV/
 config.py
 *.bak
 *.db
+serve/*
+learning/*
 
 markov.db-journal
