@@ -334,7 +334,7 @@ class MarkovAI(object):
             r_index = None
 
             results = session.query(WordRelation.a, Word.text, Word.pos). \
-                join(Word, WordRelation.b == Word.id). \
+                join(Word, WordRelation.a == Word.id). \
                 join(Pos, Pos.id == Word.pos).\
                 order_by(WordRelation.rating). \
                 filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
