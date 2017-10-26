@@ -238,8 +238,9 @@ class MarkovAI(object):
         words = session.query(Word.id).count()
         lines = session.query(Line.id).count()
         assoc = session.query(WordRelation).count()
-        return "I know %d words (%d contexts, %8.2f per word), %d lines." % (
-            words, assoc, float(assoc) / float(words), lines)
+        neigh = session.query(WordNeighbor).count()
+        return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
+            words, assoc, float(assoc) / float(words), lines, neigh, float(neigh)/float(words) )
 
     def command(self, txt, args=None, is_owner=False):
 
@@ -372,7 +373,7 @@ class MarkovAI(object):
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = session.query(word_a.id, WordRelation.a, word_a.text, word_a.pos,
+            results = session.query(word_a.id, word_a.text, word_a.pos,
                                     (coalesce(sum(WordNeighbor.rating),0)
                                      + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
                 join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
@@ -384,7 +385,7 @@ class MarkovAI(object):
                 order_by('rating').all()
 
             if len(results) == 0:
-                results = session.query(word_a.id, WordRelation.a, word_a.text, word_a.pos,
+                results = session.query(word_a.id, word_a.text, word_a.pos,
                                         (coalesce(sum(WordNeighbor.rating),0)
                                          + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
                     join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
@@ -409,7 +410,8 @@ class MarkovAI(object):
             r = results[r_index]
             last_word = r
 
-            f_id = r.a
+            f_id = r.id
+
             backwards_words.insert(0, r.text)
 
             count += 1
@@ -434,7 +436,7 @@ class MarkovAI(object):
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = session.query(word_b.id, WordRelation.b, word_b.text, word_b.pos,
+            results = session.query(word_b.id, word_b.text, word_b.pos,
                                     (coalesce(sum(WordNeighbor.rating),0)
                                      + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
                 join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
@@ -446,7 +448,7 @@ class MarkovAI(object):
                 order_by('rating').all()
 
             if len(results) == 0:
-                results = session.query(word_b.id, WordRelation.b, word_b.text, word_b.pos,
+                results = session.query(word_b.id, word_b.text, word_b.pos,
                                         (coalesce(sum(WordNeighbor.rating),0)
                                          + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
                     join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
@@ -473,7 +475,8 @@ class MarkovAI(object):
 
             last_word = r
 
-            f_id = r.b
+            f_id = r.id
+
             forward_words.append(r.text)
 
             count += 1
