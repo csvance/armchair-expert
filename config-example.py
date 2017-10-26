@@ -24,9 +24,10 @@ CONFIG_MARKOV_TOPIC_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'h
                               'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats',
                               'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
 CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH = 3
-CONFIG_MARKOV_CHAIN_ATTEMPTS = 10
 CONFIG_MARKOV_VECTOR_LENGTH = 7
 CONFIG_MARKOV_URL_CHANCE = 10
+CONFIG_MARKOV_WEIGHT_NEIGHBOR = 2
+CONFIG_MARKOV_WEIGHT_RELATION = 5
 
 CONFIG_MESSAGE_WAKEUP = "Yawn"
 CONFIG_MESSAGE_SHUTUP = "ZzZzZzZz"

@@ -368,8 +368,8 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_a.id, word_a.text, word_a.pos,
-                                    (coalesce(sum(WordNeighbor.rating), 0)
-                                     + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                                    (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                     + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
                 join(word_b, word_b.id == WordNeighbor.word). \
                 join(Pos, Pos.id == word_a.pos). \
@@ -380,8 +380,8 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = session.query(word_a.id, word_a.text, word_a.pos,
-                                        (coalesce(sum(WordNeighbor.rating), 0)
-                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                                        (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
                     join(word_b, word_b.id == WordNeighbor.word). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
@@ -431,8 +431,8 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_b.id, word_b.text, word_b.pos,
-                                    (coalesce(sum(WordNeighbor.rating), 0)
-                                     + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                                    (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                     + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
                 join(word_a, word_a.id == WordNeighbor.word). \
                 join(Pos, Pos.id == word_b.pos). \
@@ -443,8 +443,8 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = session.query(word_b.id, word_b.text, word_b.pos,
-                                        (coalesce(sum(WordNeighbor.rating), 0)
-                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                                        (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
                     join(word_a, word_a.id == WordNeighbor.word). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
