@@ -332,28 +332,28 @@ class MarkovAI(object):
             w = '#nick'
 
         # Attempt to do a general search for the word
-        the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
+        subject_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
             join(WordRelation, WordRelation.a == Word.id). \
             filter(Word.text.like('%' + w + '%')). \
             group_by(Word.id, Word.text). \
             order_by(func.count(WordRelation.id).desc()).first()
 
-        if the_word is None:
+        if subject_word is None:
             # One last random attempt...
             w = np.random.choice(words)
-            the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
+            subject_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
                 join(WordRelation, WordRelation.a == Word.id). \
                 filter(Word.text == (w)). \
                 group_by(Word.id, Word.text). \
                 order_by(func.count(WordRelation.id).desc()).first()
-            if the_word is None:
+            if subject_word is None:
                 return None
 
-        last_word = the_word
+        last_word = subject_word
 
         # Generate Backwards
         backwards_words = []
-        f_id = the_word.id
+        f_id = subject_word.id
         back_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
         count = 0
         while count < back_count:
@@ -371,9 +371,9 @@ class MarkovAI(object):
             results = session.query(WordRelation.a, Word.text, Word.pos). \
                 join(Word, WordRelation.a == Word.id). \
                 join(Pos, Pos.id == Word.pos). \
-                join(WordNeighbor, Word.id == WordNeighbor.word). \
+                join(WordNeighbor, and_(WordRelation.b == WordNeighbor.word,WordNeighbor.neighbor == Word.id)). \
                 order_by(WordRelation.rating,WordNeighbor.rating). \
-                filter(and_(and_(WordRelation.b == f_id, WordRelation.a != f_id),Pos.text == choice)).all()
+                filter(and_(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b),Pos.text == choice)).all()
 
             # Intelligent search without neighbor
             if len(results) == 0:
@@ -381,14 +381,14 @@ class MarkovAI(object):
                     join(Word, WordRelation.a == Word.id). \
                     join(Pos, Pos.id == Word.pos). \
                     order_by(WordRelation.rating). \
-                    filter(and_(and_(WordRelation.b == f_id, WordRelation.a != f_id), Pos.text == choice)).all()
+                    filter(and_(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b), Pos.text == choice)).all()
 
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.a, Word.text, Word.pos). \
                     join(Word, WordRelation.b == Word.id). \
                     order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
+                    filter(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b)).all()
 
             if len(results) == 0:
                 break
@@ -405,7 +405,7 @@ class MarkovAI(object):
 
         # Generate Forwards
         forward_words = []
-        f_id = the_word.id
+        f_id = subject_word.id
         forward_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
 
         count = 0
@@ -421,9 +421,9 @@ class MarkovAI(object):
             results = session.query(WordRelation.b, Word.text, Word.pos). \
                 join(Word, WordRelation.b == Word.id). \
                 join(Pos, Pos.id == Word.pos). \
-                join(WordNeighbor, Word.id == WordNeighbor.word).\
+                join(WordNeighbor, and_(WordRelation.a == WordNeighbor.word, WordNeighbor.neighbor == Word.id)). \
                 order_by(WordRelation.rating,WordNeighbor.rating). \
-                filter(and_(and_(WordRelation.a == f_id, WordRelation.b != f_id), Pos.text == choice)).all()
+                filter(and_(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a), Pos.text == choice)).all()
 
             # Intelligent search without neighbor
             if len(results) == 0:
@@ -431,14 +431,14 @@ class MarkovAI(object):
                     join(Word, WordRelation.b == Word.id). \
                     join(Pos, Pos.id == Word.pos). \
                     order_by(WordRelation.rating). \
-                    filter(and_(and_(WordRelation.a == f_id, WordRelation.b != f_id), Pos.text == choice)).all()
+                    filter(and_(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a), Pos.text == choice)).all()
 
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.b, Word.text, Word.pos). \
                     join(Word, WordRelation.b == Word.id). \
                     order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                    filter(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a)).all()
 
             if len(results) == 0:
                 break
@@ -456,7 +456,7 @@ class MarkovAI(object):
         reply = []
 
         reply += backwards_words
-        reply += [the_word.text]
+        reply += [subject_word.text]
         reply += forward_words
 
         # Replace any mention in response with a mention to the name of the message we are responding too
