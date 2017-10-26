@@ -209,21 +209,29 @@ class MarkovAI(object):
 
         session.commit()
 
-        for word in word_objs:
-            for potential_neighbor in word_objs:
-                if word.id != potential_neighbor.id:
+        def chunks(l, n):
+            """Yield successive n-sized chunks from l."""
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
 
-                    neighbor = session.query(WordNeighbor). \
-                        join(Word, WordNeighbor.neighbor == Word.id). \
-                        filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
+        chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_SENTENCE_SIZE_CHUNK)
 
-                    if neighbor is None:
-                        neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id)
-                        session.add(neighbor)
-                        session.commit()
-                    else:
-                        neighbor.count += 1
-                        neighbor.rating += 1
+        for chunk in chunk_word_objs:
+            for word in chunk:
+                for potential_neighbor in chunk:
+                    if word.id != potential_neighbor.id:
+
+                        neighbor = session.query(WordNeighbor). \
+                            join(Word, WordNeighbor.neighbor == Word.id). \
+                            filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
+
+                        if neighbor is None:
+                            neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id)
+                            session.add(neighbor)
+                            session.commit()
+                        else:
+                            neighbor.count += 1
+                            neighbor.rating += 1
 
         session.commit()
 
@@ -368,7 +376,8 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_a.id, word_a.text, word_a.pos,
-                                    (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                      + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
                 join(word_b, word_b.id == WordNeighbor.word). \
@@ -380,7 +389,8 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = session.query(word_a.id, word_a.text, word_a.pos,
-                                        (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                        (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
                     join(word_b, word_b.id == WordNeighbor.word). \
@@ -431,7 +441,8 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_b.id, word_b.text, word_b.pos,
-                                    (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                      + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
                 join(word_a, word_a.id == WordNeighbor.word). \
@@ -443,7 +454,8 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = session.query(word_b.id, word_b.text, word_b.pos,
-                                        (coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                        (coalesce(sum(word_b.count),0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
                     join(word_a, word_a.id == WordNeighbor.word). \
