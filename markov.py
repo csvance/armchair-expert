@@ -10,6 +10,7 @@ import numpy as np
 import spacy
 from sqlalchemy.orm import aliased
 
+
 class MarkovAI(object):
     ALPHANUMERIC = "abcdefghijklmnopqrstuvqxyz123456789"
 
@@ -143,7 +144,6 @@ class MarkovAI(object):
             else:
                 pos_a.count += 1
 
-
             # Add word if it doesn't exist
             word_a = session.query(Word).filter(Word.text == word).first()
             if word_a is None:
@@ -172,8 +172,6 @@ class MarkovAI(object):
                     session.commit()
                 else:
                     pos_b.count += 1
-
-
 
                 # Word B
                 word_b = session.query(Word).filter(Word.text == words[word_index + 1]).first()
@@ -215,23 +213,19 @@ class MarkovAI(object):
             for potential_neighbor in word_objs:
                 if word.id != potential_neighbor.id:
 
-                    neighbor = session.query(WordNeighbor).\
-                        join(Word,WordNeighbor.neighbor == Word.id).\
-                        filter(and_(WordNeighbor.word == word.id,Word.id == potential_neighbor.id)).first()
+                    neighbor = session.query(WordNeighbor). \
+                        join(Word, WordNeighbor.neighbor == Word.id). \
+                        filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
 
                     if neighbor is None:
-                        neighbor = WordNeighbor(word=word.id,neighbor=potential_neighbor.id)
+                        neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id)
                         session.add(neighbor)
                         session.commit()
                     else:
                         neighbor.count += 1
                         neighbor.rating += 1
 
-
-
-
         session.commit()
-
 
     def cmd_stats(self):
         session = Session()
@@ -240,7 +234,7 @@ class MarkovAI(object):
         assoc = session.query(WordRelation).count()
         neigh = session.query(WordNeighbor).count()
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
-            words, assoc, float(assoc) / float(words), lines, neigh, float(neigh)/float(words) )
+            words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
     def command(self, txt, args=None, is_owner=False):
 
@@ -374,25 +368,25 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_a.id, word_a.text, word_a.pos,
-                                    (coalesce(sum(WordNeighbor.rating),0)
-                                     + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
-                join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
-                join(word_b, word_b.id == WordNeighbor.word).\
-                join(Pos, Pos.id == word_a.pos).\
-                outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
-                filter(and_(word_b.id == f_id,Pos.text == choice)).\
-                group_by(word_a.id).\
+                                    (coalesce(sum(WordNeighbor.rating), 0)
+                                     + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
+                join(word_b, word_b.id == WordNeighbor.word). \
+                join(Pos, Pos.id == word_a.pos). \
+                outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                filter(and_(word_b.id == f_id, Pos.text == choice)). \
+                group_by(word_a.id). \
                 order_by('rating').all()
 
             if len(results) == 0:
                 results = session.query(word_a.id, word_a.text, word_a.pos,
-                                        (coalesce(sum(WordNeighbor.rating),0)
-                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
-                    join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
-                    join(word_b, word_b.id == WordNeighbor.word).\
-                    outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
-                    filter(word_b.id == f_id).\
-                    group_by(word_a.id).\
+                                        (coalesce(sum(WordNeighbor.rating), 0)
+                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                    join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
+                    join(word_b, word_b.id == WordNeighbor.word). \
+                    outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                    filter(word_b.id == f_id). \
+                    group_by(word_a.id). \
                     order_by('rating').all()
 
             # Fall back to random
@@ -437,27 +431,26 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_b.id, word_b.text, word_b.pos,
-                                    (coalesce(sum(WordNeighbor.rating),0)
-                                     + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
-                join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
-                join(word_a, word_a.id == WordNeighbor.word).\
-                join(Pos, Pos.id == word_b.pos).\
-                outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
-                filter(and_(word_a.id == f_id,Pos.text == choice)).\
-                group_by(word_b.id).\
+                                    (coalesce(sum(WordNeighbor.rating), 0)
+                                     + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
+                join(word_a, word_a.id == WordNeighbor.word). \
+                join(Pos, Pos.id == word_b.pos). \
+                outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                filter(and_(word_a.id == f_id, Pos.text == choice)). \
+                group_by(word_b.id). \
                 order_by('rating').all()
 
             if len(results) == 0:
                 results = session.query(word_b.id, word_b.text, word_b.pos,
-                                        (coalesce(sum(WordNeighbor.rating),0)
-                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
-                    join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
-                    join(word_a, word_a.id == WordNeighbor.word).\
-                    outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
-                    filter(word_a.id == f_id).\
-                    group_by(word_b.id).\
+                                        (coalesce(sum(WordNeighbor.rating), 0)
+                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')). \
+                    join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
+                    join(word_a, word_a.id == WordNeighbor.word). \
+                    outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                    filter(word_a.id == f_id). \
+                    group_by(word_b.id). \
                     order_by('rating').all()
-
 
             # Fall back to random
             if len(results) == 0:
