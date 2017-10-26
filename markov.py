@@ -35,7 +35,6 @@ class MarkovAI(object):
         lines = session.query(Line).order_by(Line.timestamp.asc()).all()
         for line in lines:
             if str(line.channel) in ignore:
-                print("!!!NSFW FILTER!!!")
                 continue
             elif line.server_id == 0:
                 continue
@@ -122,28 +121,45 @@ class MarkovAI(object):
 
         word_index = 0
 
-
-
         for word in words:
 
+            # Use NLP
+            doc = self.nlp(word)
+            word_pos_txt_a = doc[0].pos_
+
+            # Check if pos exists already
+            pos_a = session.query(Pos).filter(Pos.text == word_pos_txt_a).first()
+            if pos_a is None:
+                pos_a = Pos(text=word_pos_txt_a)
+                session.add(pos_a)
+            else:
+                pos_a.count += 1
 
             # Add word if it doesn't exist
             word_a = session.query(Word).filter(Word.text == word).first()
             if word_a is None:
+                word_a = Word(text=word, pos=pos_a.id)
 
-                # Use NLP
-                doc = self.nlp(word)
-                word_pos = doc[0].pos_
-
-                word_a = Word(text=word, pos=word_pos)
                 session.add(word_a)
                 session.commit()
+
             elif last_b_added is None or word != last_b_added.text:
                 word_a.count += 1
 
-
             # Not last word? Lookup / add association
             if word_index != len(words) - 1:
+
+                # Use NLP
+                doc = self.nlp(words[word_index + 1])
+                word_pos_txt_b = doc[0].pos_
+
+                # Check if pos exists already
+                pos_b = session.query(Pos).filter(Pos.text == word_pos_txt_b).first()
+                if pos_b is None:
+                    pos_b = Pos(text=word_pos_txt_b)
+                    session.add(pos_b)
+                else:
+                    pos_b.count += 1
 
                 # Word B
                 word_b = session.query(Word).filter(Word.text == words[word_index + 1]).first()
@@ -151,21 +167,32 @@ class MarkovAI(object):
 
                     # Use NLP
                     doc = self.nlp(words[word_index + 1])
-                    word_pos = doc[0].pos_
+                    word_pos_txt_b = doc[0].pos_
 
-                    word_b = Word(text=words[word_index + 1],pos=word_pos)
+                    word_b = Word(text=words[word_index + 1],pos=pos_b.id)
+
                     session.add(word_b)
                     session.commit()
+
                     last_b_added = word_b
 
-                # Add Association
-                relation = session.query(WordRelation).filter(
+                # Add NLP POS Association
+                pos_relation = session.query(PosRelation).filter(
+                    and_(PosRelation.a == pos_a.id, PosRelation.b == pos_b.id)).first()
+                if pos_relation is None:
+                    session.add(PosRelation(a=pos_a.id,b=pos_b.id))
+                else:
+                    pos_relation.count += 1
+                    pos_relation.rating += 1
+
+                # Add Word Association
+                word_relation = session.query(WordRelation).filter(
                     and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)).first()
-                if relation is None:
+                if word_relation is None:
                     session.add(WordRelation(a=word_a.id, b=word_b.id))
                 else:
-                    relation.count += 1
-                    relation.rating += 1
+                    word_relation.count += 1
+                    word_relation.rating += 1
 
             word_index += 1
 
@@ -235,7 +262,10 @@ class MarkovAI(object):
             pass
 
         if args['mentioned']:
-            nouns.remove('nick')
+            try:
+                nouns.remove('nick')
+            except(ValueError):
+                pass
 
         # NLP failed, so choose something else
         if len(nouns) == 0:
@@ -262,9 +292,10 @@ class MarkovAI(object):
         if w == None or w == "nick":
             w = '#nick'
 
+        # Attempt to do a general search for the word
         the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
             join(WordRelation, WordRelation.a == Word.id). \
-            filter(Word.text == (w)). \
+            filter(Word.text.like('%' + w + '%')). \
             group_by(Word.id, Word.text). \
             order_by(func.count(WordRelation.id).desc()).first()
 
@@ -288,41 +319,27 @@ class MarkovAI(object):
         count = 0
         while count < back_count:
 
-            choices = ['NOUN','ADJ','VERB','ADV','RANDOM']
-            weights = []
+            choices = session.query(PosRelation, Pos.text).\
+                join(Pos, PosRelation.a == Pos.id ).\
+                filter(PosRelation.b == last_word.pos).\
+                order_by(PosRelation.rating).all()
 
-            if last_word.pos == 'ADJ':
-                weights = [0.0, 0.2, 0.2, 0.0, 0.6]
-            elif last_word.pos == 'ADV':
-                weights = [0.4, 0.0, 0.0, 0.2, 0.4]
-            elif last_word.pos == 'NOUN':
-                weights = [0.0, 0.4, 0.4, 0.0, 0.2]
-            elif last_word.pos == 'VERB':
-                weights = [0.4, 0.0, 0.0, 0.4, 0.2]
-            else:
-                weights = [0.0, 0.0, 0.0, 0.0, 1.0]
+            choice = choices[int(np.random.triangular(0.0,1.0,1.0) * len(choices))].text
 
-            choice = np.random.choice(choices, p=weights)
 
             r_index = None
 
-            # Pick a random result
-            if choice == 'RANDOM':
+            results = session.query(WordRelation.a, Word.text, Word.pos). \
+                join(Word, WordRelation.b == Word.id). \
+                join(Pos, Pos.id == Word.pos).\
+                order_by(WordRelation.rating). \
+                filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
+            # Fall back to random
+            if len(results) == 0:
                 results = session.query(WordRelation.a, Word.text, Word.pos). \
-                    join(Word, WordRelation.a == Word.id). \
+                    join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
-            else:
-                results = session.query(WordRelation.a, Word.text, Word.pos). \
-                    join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
-                    order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
-                # Fall back to random
-                if len(results) == 0:
-                    results = session.query(WordRelation.a, Word.text, Word.pos). \
-                        join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
-                        order_by(WordRelation.rating). \
-                        filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
 
             if len(results) == 0:
                 break
@@ -344,38 +361,24 @@ class MarkovAI(object):
 
         count = 0
         while count < forward_count:
+            choices = session.query(PosRelation,Pos.text).\
+                join(Pos, PosRelation.b == Pos.id ).\
+                filter(PosRelation.a == last_word.pos).\
+                order_by(PosRelation.rating).all()
 
-            choices = ['NOUN','ADJ','VERB','ADV','RANDOM']
-            weights = []
+            choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
 
-            if last_word.pos == 'ADJ':
-                weights = [0.6, 0.2, 0.0, 0.0, 0.2]
-            elif last_word.pos == 'ADV':
-                weights = [0.0, 0.0, 0.6, 0.2, 0.2]
-            elif last_word.pos == 'NOUN':
-                weights = [0.0, 0.2, 0.4, 0.2, 0.2]
-            else:
-                weights = [0.0, 0.0, 0.0, 0.0, 1.0]
-
-            choice = np.random.choice(choices, p=weights)
-
-            # Pick a random result
-            if choice == 'RANDOM':
+            results = session.query(WordRelation.b, Word.text, Word.pos). \
+                join(Word, WordRelation.b == Word.id).\
+                join(Pos, Pos.id == Word.pos).\
+                order_by(WordRelation.rating). \
+                filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+            # Fall back to random
+            if len(results) == 0:
                 results = session.query(WordRelation.b, Word.text, Word.pos). \
                     join(Word, WordRelation.b == Word.id). \
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
-            else:
-                results = session.query(WordRelation.b, Word.text, Word.pos). \
-                    join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
-                    order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
-                # Fall back to random
-                if len(results) == 0:
-                    results = session.query(WordRelation.b, Word.text, Word.pos). \
-                        join(Word, WordRelation.b == Word.id). \
-                        order_by(WordRelation.rating). \
-                        filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
 
             if len(results) == 0:
                 break
