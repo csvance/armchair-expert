@@ -33,7 +33,8 @@ def on_message(message):
     args = {'channel': channel,
             'author': str(author),
             'author_mention': "<@%s>" % author.id,
-            'server': server}
+            'server': server,
+            'mentioned': False}
 
     # Handle Comands
     if message.content.startswith("!"):
@@ -87,18 +88,18 @@ def on_message(message):
     else:
         for msg in message.content.split("\n"):
 
-            mentioned = False
             if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
-                mentioned = True
+                args['mentioned'] = True
 
             # Treat mentioning another user as a single word
             msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
 
             # Don't learn from private messages
             if message.server is not None:
-                ftbot.process_message(msg, args, mentioned=mentioned, learning=True)
+                ftbot.process_message(msg, args, learning=True)
             else:
-                ftbot.process_message(msg, args, mentioned=True, learning=False)
+                args['mentioned'] = True
+                ftbot.process_message(msg, args, learning=False)
 
             if ftbot.reply is not None:
                 yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])

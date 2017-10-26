@@ -217,19 +217,28 @@ class MarkovAI(object):
     def reply(self, words, args, nourl=False):
         session = Session()
 
+        nouns = []
+
         # Attempt to find topic using NLP
         words_string = ' '.join(words)
         doc = self.nlp(words_string)
         sentence = next(doc.sents)
 
-        w = []
-
         for token in sentence:
             if token.pos_ == 'NOUN':
-                w.append(token.orth_)
+                nouns.append(token.orth_)
+
+        # TODO: Fix hack
+        try:
+            nouns.remove('#')
+        except(ValueError):
+            pass
+
+        if args['mentioned']:
+            nouns.remove('nick')
 
         # NLP failed, so choose something else
-        if len(w) == 0:
+        if len(nouns) == 0:
             # Find a topic word to base the sentence on. Will be over 4 chars if we have two or more words.
             if len(words) >= 3:
                 w = [word for word in words if len(word) >= CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH]
@@ -243,20 +252,32 @@ class MarkovAI(object):
                         longest_word = word
 
                 if longest_word != '':
-                    w = [longest_word]
+                    nouns.append(longest_word)
+
+        w = None
+        if len(nouns) != 0:
+            w = np.random.choice(nouns)
 
         # If we couldn't find any words using NLP or other methods, use 'nick' instead
-        if len(w) == 0:
-            w = ['#nick']
+        if w == None or w == "nick":
+            w = '#nick'
 
         the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
             join(WordRelation, WordRelation.a == Word.id). \
-            filter(Word.text.in_(w)). \
+            filter(Word.text == (w)). \
             group_by(Word.id, Word.text). \
             order_by(func.count(WordRelation.id).desc()).first()
 
         if the_word is None:
-            return None
+            # One last random attempt...
+            w = np.random.choice(words)
+            the_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
+                join(WordRelation, WordRelation.a == Word.id). \
+                filter(Word.text == (w)). \
+                group_by(Word.id, Word.text). \
+                order_by(func.count(WordRelation.id).desc()).first()
+            if the_word is None:
+                return None
 
         last_word = the_word
 
@@ -281,21 +302,28 @@ class MarkovAI(object):
             else:
                 weights = [0.0, 0.0, 0.0, 0.0, 1.0]
 
-            choice = np.random.choice(choices, 1, p=weights)
+            choice = np.random.choice(choices, p=weights)
 
             r_index = None
 
             # Pick a random result
             if choice == 'RANDOM':
-                results = session.query(WordRelation.b, Word.text, Word.pos). \
-                    join(Word, WordRelation.b == Word.id). \
+                results = session.query(WordRelation.a, Word.text, Word.pos). \
+                    join(Word, WordRelation.a == Word.id). \
                     order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                    filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
             else:
-                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                results = session.query(WordRelation.a, Word.text, Word.pos). \
                     join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
                     order_by(WordRelation.rating). \
-                    filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                    filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
+                # Fall back to random
+                #if len(results) == 0:
+                #    results = session.query(WordRelation.a, Word.text, Word.pos). \
+                #        join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
+                #        order_by(WordRelation.rating). \
+                #        filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
+                #    break
 
             if len(results) == 0:
                 break
@@ -330,7 +358,7 @@ class MarkovAI(object):
             else:
                 weights = [0.0, 0.0, 0.0, 0.0, 1.0]
 
-            choice = np.random.choice(choices, 1, p=weights)
+            choice = np.random.choice(choices, p=weights)
 
             # Pick a random result
             if choice == 'RANDOM':
@@ -343,6 +371,13 @@ class MarkovAI(object):
                     join(Word, and_(WordRelation.b == Word.id,Word.pos == choice)). \
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                # Fall back to random
+                #if len(results) == 0:
+                #    results = session.query(WordRelation.b, Word.text, Word.pos). \
+                #        join(Word, WordRelation.b == Word.id). \
+                #        order_by(WordRelation.rating). \
+                #        filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                #   break
 
             if len(results) == 0:
                 break
