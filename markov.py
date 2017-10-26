@@ -214,12 +214,20 @@ class MarkovAI(object):
             for i in range(0, len(l), n):
                 yield l[i:i + n]
 
-        chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_SENTENCE_SIZE_CHUNK)
+        chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
 
         for chunk in chunk_word_objs:
             for word in chunk:
+
+                # Filter things that are not relevant to the main information in a sentence
+                if self.nlp(word.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                    continue
+
                 for potential_neighbor in chunk:
                     if word.id != potential_neighbor.id:
+
+                        if self.nlp(potential_neighbor.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                            continue
 
                         neighbor = session.query(WordNeighbor). \
                             join(Word, WordNeighbor.neighbor == Word.id). \
