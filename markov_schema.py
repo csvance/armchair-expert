@@ -18,6 +18,14 @@ class Word(Base):
     def __repr__(self):
         return "id: %s text: %s" % (self.id, self.text)
 
+class WordNeighbor(Base):
+    __tablename__ = "wordneighbor"
+    id = Column(Integer, primary_key=True)
+    word = Column(Integer, ForeignKey('word.id'), nullable=False)
+    neighbor = Column(Integer, ForeignKey('word.id'), nullable=False)
+    count = Column(Integer, nullable=False, default=1)
+    rating = Column(Integer, nullable=False, default=1)
+
 class Pos(Base):
     __tablename__ = "pos"
     id = Column(Integer, primary_key=True)

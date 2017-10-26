@@ -29,7 +29,11 @@ class MarkovAI(object):
         session.execute("VACUUM")
         session.query(URL).delete()
         session.query(WordRelation).delete()
+        session.query(WordNeighbor).delete()
         session.query(Word).delete()
+        session.query(PosRelation).delete()
+        session.query(Pos).delete()
+
         session.commit()
 
         lines = session.query(Line).order_by(Line.timestamp.asc()).all()
@@ -115,6 +119,8 @@ class MarkovAI(object):
 
     def learn(self, words):
 
+        word_objs = []
+
         session = Session()
 
         last_b_added = None
@@ -132,8 +138,10 @@ class MarkovAI(object):
             if pos_a is None:
                 pos_a = Pos(text=word_pos_txt_a)
                 session.add(pos_a)
+                session.commit()
             else:
                 pos_a.count += 1
+
 
             # Add word if it doesn't exist
             word_a = session.query(Word).filter(Word.text == word).first()
@@ -145,6 +153,8 @@ class MarkovAI(object):
 
             elif last_b_added is None or word != last_b_added.text:
                 word_a.count += 1
+
+            word_objs.append(word_a)
 
             # Not last word? Lookup / add association
             if word_index != len(words) - 1:
@@ -158,18 +168,20 @@ class MarkovAI(object):
                 if pos_b is None:
                     pos_b = Pos(text=word_pos_txt_b)
                     session.add(pos_b)
+                    session.commit()
                 else:
                     pos_b.count += 1
+
+
 
                 # Word B
                 word_b = session.query(Word).filter(Word.text == words[word_index + 1]).first()
                 if word_b is None:
-
                     # Use NLP
                     doc = self.nlp(words[word_index + 1])
                     word_pos_txt_b = doc[0].pos_
 
-                    word_b = Word(text=words[word_index + 1],pos=pos_b.id)
+                    word_b = Word(text=words[word_index + 1], pos=pos_b.id)
 
                     session.add(word_b)
                     session.commit()
@@ -180,7 +192,7 @@ class MarkovAI(object):
                 pos_relation = session.query(PosRelation).filter(
                     and_(PosRelation.a == pos_a.id, PosRelation.b == pos_b.id)).first()
                 if pos_relation is None:
-                    session.add(PosRelation(a=pos_a.id,b=pos_b.id))
+                    session.add(PosRelation(a=pos_a.id, b=pos_b.id))
                 else:
                     pos_relation.count += 1
                     pos_relation.rating += 1
@@ -198,6 +210,28 @@ class MarkovAI(object):
 
         session.commit()
 
+        for word in word_objs:
+            for potential_neighbor in word_objs:
+                if word.id != potential_neighbor.id:
+
+                    neighbor = session.query(WordNeighbor).\
+                        join(Word,WordNeighbor.neighbor == Word.id).\
+                        filter(and_(WordNeighbor.word == word.id,Word.id == potential_neighbor.id)).first()
+
+                    if neighbor is None:
+                        neighbor = WordNeighbor(word=word.id,neighbor=potential_neighbor.id)
+                        session.add(neighbor)
+                        session.commit()
+                    else:
+                        neighbor.count += 1
+                        neighbor.rating += 1
+
+
+
+
+        session.commit()
+
+
     def cmd_stats(self):
         session = Session()
         words = session.query(Word.id).count()
@@ -214,7 +248,7 @@ class MarkovAI(object):
             result = self.cmd_stats()
 
         if txt.startswith("!essay"):
-            result = self.essay(txt.split(" ")[1],args)
+            result = self.essay(txt.split(" ")[1], args)
 
         if is_owner is False:
             return result
@@ -228,19 +262,19 @@ class MarkovAI(object):
     def essay(self, subject, args):
 
         def random_punct():
-            return [".","!","?"][random.randrange(0,3)]
+            return [".", "!", "?"][random.randrange(0, 3)]
 
         s = subject.lower()
         txt = ""
 
-        for p in range(0,5):
+        for p in range(0, 5):
             try:
-                txt += "\t" + self.reply([s], args, nourl=True) + random_punct()+ " "
+                txt += "\t" + self.reply([s], args, nourl=True) + random_punct() + " "
             except(TypeError):
                 txt = "I don't know that word well enough!"
                 break
-            txt += self.reply([s], args, nourl=True) + random_punct()+ " "
-            txt += self.reply([s], args, nourl=True) + random_punct()+ " "
+            txt += self.reply([s], args, nourl=True) + random_punct() + " "
+            txt += self.reply([s], args, nourl=True) + random_punct() + " "
             txt += "\n"
 
         return txt
@@ -265,6 +299,7 @@ class MarkovAI(object):
         except(ValueError):
             pass
 
+        # If we are mentioned, we don't want to use the mention as a subject
         if args['mentioned']:
             try:
                 nouns.remove('nick')
@@ -323,32 +358,42 @@ class MarkovAI(object):
         count = 0
         while count < back_count:
 
-            choices = session.query(PosRelation, Pos.text).\
-                join(Pos, PosRelation.a == Pos.id ).\
-                filter(PosRelation.b == last_word.pos).\
+            choices = session.query(PosRelation, Pos.text). \
+                join(Pos, PosRelation.a == Pos.id). \
+                filter(PosRelation.b == last_word.pos). \
                 order_by(PosRelation.rating).all()
 
-            choice = choices[int(np.random.triangular(0.0,1.0,1.0) * len(choices))].text
-
+            choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
 
             r_index = None
 
+            # Most Intelligent search for next word
             results = session.query(WordRelation.a, Word.text, Word.pos). \
                 join(Word, WordRelation.a == Word.id). \
-                join(Pos, Pos.id == Word.pos).\
-                order_by(WordRelation.rating). \
-                filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
+                join(Pos, Pos.id == Word.pos). \
+                join(WordNeighbor, Word.id == WordNeighbor.word). \
+                order_by(WordRelation.rating,WordNeighbor.rating). \
+                filter(and_(and_(WordRelation.b == f_id, WordRelation.a != f_id),Pos.text == choice)).all()
+
+            # Intelligent search without neighbor
+            if len(results) == 0:
+                results = session.query(WordRelation.a, Word.text, Word.pos). \
+                    join(Word, WordRelation.a == Word.id). \
+                    join(Pos, Pos.id == Word.pos). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(and_(WordRelation.b == f_id, WordRelation.a != f_id), Pos.text == choice)).all()
+
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.a, Word.text, Word.pos). \
-                    join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
+                    join(Word, WordRelation.b == Word.id). \
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
 
             if len(results) == 0:
                 break
 
-            r_index = int(np.random.beta(0.5, 0.5) * len(results))
+            r_index = int(np.random.triangular(0.0, 1.0, 1.0) * len(results))
 
             r = results[r_index]
             last_word = r
@@ -365,18 +410,29 @@ class MarkovAI(object):
 
         count = 0
         while count < forward_count:
-            choices = session.query(PosRelation,Pos.text).\
-                join(Pos, PosRelation.b == Pos.id ).\
-                filter(PosRelation.a == last_word.pos).\
+            choices = session.query(PosRelation, Pos.text). \
+                join(Pos, PosRelation.b == Pos.id). \
+                filter(PosRelation.a == last_word.pos). \
                 order_by(PosRelation.rating).all()
 
             choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
 
+            # Most Intelligent search for next word (neighbor and pos)
             results = session.query(WordRelation.b, Word.text, Word.pos). \
-                join(Word, WordRelation.b == Word.id).\
-                join(Pos, Pos.id == Word.pos).\
-                order_by(WordRelation.rating). \
-                filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
+                join(Word, WordRelation.b == Word.id). \
+                join(Pos, Pos.id == Word.pos). \
+                join(WordNeighbor, Word.id == WordNeighbor.word).\
+                order_by(WordRelation.rating,WordNeighbor.rating). \
+                filter(and_(and_(WordRelation.a == f_id, WordRelation.b != f_id), Pos.text == choice)).all()
+
+            # Intelligent search without neighbor
+            if len(results) == 0:
+                results = session.query(WordRelation.b, Word.text, Word.pos). \
+                    join(Word, WordRelation.b == Word.id). \
+                    join(Pos, Pos.id == Word.pos). \
+                    order_by(WordRelation.rating). \
+                    filter(and_(and_(WordRelation.a == f_id, WordRelation.b != f_id), Pos.text == choice)).all()
+
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.b, Word.text, Word.pos). \
@@ -387,7 +443,7 @@ class MarkovAI(object):
             if len(results) == 0:
                 break
 
-            r_index = int(np.random.beta(0.5, 0.5) * len(results))
+            r_index = int(np.random.triangular(0.0, 1.0, 1.0) * len(results))
 
             r = results[r_index]
             last_word = r
@@ -415,7 +471,8 @@ class MarkovAI(object):
 
         return " ".join(reply)
 
-    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None, learning=True):
+    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None,
+                    learning=True):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
