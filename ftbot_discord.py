@@ -109,4 +109,5 @@ def on_message(message):
 print("Starting FTBot")
 ftbot = FTBot()
 print("Running Discord")
+print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
 discord_client_run()
