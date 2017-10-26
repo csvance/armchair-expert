@@ -56,7 +56,7 @@ class MarkovAI(object):
         print("Rebuilding DB Complete!")
 
     @staticmethod
-    def clean_db():
+    def clean_db(): # TODO: Update this function to effect WordNeighborhood ratings
 
         print("Cleaning DB...")
         session = Session()
