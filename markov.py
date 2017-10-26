@@ -318,12 +318,11 @@ class MarkovAI(object):
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
                 # Fall back to random
-                #if len(results) == 0:
-                #    results = session.query(WordRelation.a, Word.text, Word.pos). \
-                #        join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
-                #        order_by(WordRelation.rating). \
-                #        filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
-                #    break
+                if len(results) == 0:
+                    results = session.query(WordRelation.a, Word.text, Word.pos). \
+                        join(Word, and_(WordRelation.b == Word.id, Word.pos == choice)). \
+                        order_by(WordRelation.rating). \
+                        filter(and_(WordRelation.b == f_id, WordRelation.a != f_id)).all()
 
             if len(results) == 0:
                 break
@@ -372,12 +371,11 @@ class MarkovAI(object):
                     order_by(WordRelation.rating). \
                     filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
                 # Fall back to random
-                #if len(results) == 0:
-                #    results = session.query(WordRelation.b, Word.text, Word.pos). \
-                #        join(Word, WordRelation.b == Word.id). \
-                #        order_by(WordRelation.rating). \
-                #        filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
-                #   break
+                if len(results) == 0:
+                    results = session.query(WordRelation.b, Word.text, Word.pos). \
+                        join(Word, WordRelation.b == Word.id). \
+                        order_by(WordRelation.rating). \
+                        filter(and_(WordRelation.a == f_id, WordRelation.b != f_id)).all()
 
             if len(results) == 0:
                 break
