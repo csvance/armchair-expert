@@ -2,12 +2,13 @@ from markov_schema import *
 from config import *
 from sqlalchemy import and_, or_
 from sqlalchemy import func, update, delete
+from sqlalchemy.sql.functions import coalesce, sum
 import re
 import random
 import time
 import numpy as np
 import spacy
-
+from sqlalchemy.orm import aliased
 
 class MarkovAI(object):
     ALPHANUMERIC = "abcdefghijklmnopqrstuvqxyz123456789"
@@ -367,21 +368,31 @@ class MarkovAI(object):
 
             r_index = None
 
-            # Most Intelligent search for next word
-            results = session.query(WordRelation.a, Word.text, Word.pos). \
-                join(Word, WordRelation.a == Word.id). \
-                join(Pos, Pos.id == Word.pos). \
-                join(WordNeighbor, and_(WordRelation.b == WordNeighbor.word,WordNeighbor.neighbor == Word.id)). \
-                order_by(WordRelation.rating,WordNeighbor.rating). \
-                filter(and_(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b),Pos.text == choice)).all()
+            # Most Intelligent search for next word (neighbor and pos)
+            word_a = aliased(Word)
+            word_b = aliased(Word)
 
-            # Intelligent search without neighbor
+            results = session.query(word_a.id, WordRelation.a, word_a.text, word_a.pos,
+                                    (coalesce(sum(WordNeighbor.rating),0)
+                                     + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
+                join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
+                join(word_b, word_b.id == WordNeighbor.word).\
+                join(Pos, Pos.id == word_a.pos).\
+                outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
+                filter(and_(word_b.id == f_id,Pos.text == choice)).\
+                group_by(word_a.id).\
+                order_by('rating').all()
+
             if len(results) == 0:
-                results = session.query(WordRelation.a, Word.text, Word.pos). \
-                    join(Word, WordRelation.a == Word.id). \
-                    join(Pos, Pos.id == Word.pos). \
-                    order_by(WordRelation.rating). \
-                    filter(and_(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b), Pos.text == choice)).all()
+                results = session.query(word_a.id, WordRelation.a, word_a.text, word_a.pos,
+                                        (coalesce(sum(WordNeighbor.rating),0)
+                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
+                    join(WordNeighbor,word_a.id == WordNeighbor.neighbor).\
+                    join(word_b, word_b.id == WordNeighbor.word).\
+                    outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
+                    filter(word_b.id == f_id).\
+                    group_by(word_a.id).\
+                    order_by('rating').all()
 
             # Fall back to random
             if len(results) == 0:
@@ -417,21 +428,34 @@ class MarkovAI(object):
 
             choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
 
-            # Most Intelligent search for next word (neighbor and pos)
-            results = session.query(WordRelation.b, Word.text, Word.pos). \
-                join(Word, WordRelation.b == Word.id). \
-                join(Pos, Pos.id == Word.pos). \
-                join(WordNeighbor, and_(WordRelation.a == WordNeighbor.word, WordNeighbor.neighbor == Word.id)). \
-                order_by(WordRelation.rating,WordNeighbor.rating). \
-                filter(and_(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a), Pos.text == choice)).all()
+            results = session.query()
 
-            # Intelligent search without neighbor
+            # Most Intelligent search for next word (neighbor and pos)
+            word_a = aliased(Word)
+            word_b = aliased(Word)
+
+            results = session.query(word_b.id, WordRelation.b, word_b.text, word_b.pos,
+                                    (coalesce(sum(WordNeighbor.rating),0)
+                                     + coalesce(sum(WordRelation.rating),0)*10).label('rating')).\
+                join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
+                join(word_a, word_a.id == WordNeighbor.word).\
+                join(Pos, Pos.id == word_b.pos).\
+                outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
+                filter(and_(word_a.id == f_id,Pos.text == choice)).\
+                group_by(word_b.id).\
+                order_by('rating').all()
+
             if len(results) == 0:
-                results = session.query(WordRelation.b, Word.text, Word.pos). \
-                    join(Word, WordRelation.b == Word.id). \
-                    join(Pos, Pos.id == Word.pos). \
-                    order_by(WordRelation.rating). \
-                    filter(and_(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a), Pos.text == choice)).all()
+                results = session.query(word_b.id, WordRelation.b, word_b.text, word_b.pos,
+                                        (coalesce(sum(WordNeighbor.rating),0)
+                                         + coalesce(sum(WordRelation.rating), 0) * 10).label('rating')).\
+                    join(WordNeighbor,word_b.id == WordNeighbor.neighbor).\
+                    join(word_a, word_a.id == WordNeighbor.word).\
+                    outerjoin(WordRelation,and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).\
+                    filter(word_a.id == f_id).\
+                    group_by(word_b.id).\
+                    order_by('rating').all()
+
 
             # Fall back to random
             if len(results) == 0:
@@ -446,6 +470,7 @@ class MarkovAI(object):
             r_index = int(np.random.triangular(0.0, 1.0, 1.0) * len(results))
 
             r = results[r_index]
+
             last_word = r
 
             f_id = r.b
