@@ -121,8 +121,6 @@ class MarkovAI(object):
 
     def learn(self, words):
 
-
-
         word_objs = []
 
         session = Session()
@@ -284,12 +282,12 @@ class MarkovAI(object):
         for p in range(0, 5):
             try:
                 txt += "\t" + self.reply([s], args, nourl=True) + random_punct() + " "
+                txt += self.reply([s], args, nourl=True) + random_punct() + " "
+                txt += self.reply([s], args, nourl=True) + random_punct() + " "
+                txt += "\n"
             except(TypeError):
                 txt = "I don't know that word well enough!"
                 break
-            txt += self.reply([s], args, nourl=True) + random_punct() + " "
-            txt += self.reply([s], args, nourl=True) + random_punct() + " "
-            txt += "\n"
 
         return txt
 
@@ -429,6 +427,8 @@ class MarkovAI(object):
             backwards_words.insert(0, r.text)
 
             count += 1
+
+
 
         # Generate Forwards
         forward_words = []

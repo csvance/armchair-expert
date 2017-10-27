@@ -4,6 +4,7 @@ import asyncio
 from config import *
 import extras
 import re
+from concurrent import futures
 
 client = discord.Client()
 
@@ -105,8 +106,9 @@ ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
 
-asyncio.ensure_future(ftbot.message_handler())
+pool = futures.ThreadPoolExecutor(4)
+
+loop.run_in_executor(pool,ftbot.message_handler)
 loop.create_task(reply_queue_handler())
 client.run(CONFIG_DISCORD_TOKEN)
-
 

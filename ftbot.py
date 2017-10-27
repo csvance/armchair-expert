@@ -2,8 +2,6 @@ from config import *
 from search import *
 from memegen import *
 import janus
-from concurrent import futures
-
 
 from markov import MarkovAI
 
@@ -44,10 +42,10 @@ class FTBot(object):
     def process_message(self, message, args):
         self.message_queue.sync_q.put({'message': message,'args': args})
 
-    async def message_handler(self):
+    def message_handler(self):
         while True:
 
-            task = await self.message_queue.async_q.get()
+            task = self.message_queue.sync_q.get()
 
             message = task['message']
             args = task['args']
