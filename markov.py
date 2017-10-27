@@ -296,7 +296,7 @@ class MarkovAI(object):
     def reply(self, words, args, nourl=False):
         session = Session()
 
-        nouns = []
+        potential_topics = []
 
         # Attempt to find topic using NLP
         words_string = ' '.join(words)
@@ -304,46 +304,29 @@ class MarkovAI(object):
         sentence = next(doc.sents)
 
         for token in sentence:
-            if token.pos_ == 'NOUN':
-                nouns.append(token.orth_)
+            if token.pos_ in CONFIG_MARKOV_TOPIC_SELECTION_FILTER:
+                potential_topics.append(token.orth_)
 
         # TODO: Fix hack
         try:
-            nouns.remove('#')
+            potential_topics.remove('#')
         except(ValueError):
             pass
 
         # If we are mentioned, we don't want to use the mention as a subject
         if args['mentioned']:
             try:
-                nouns.remove('nick')
+                potential_topics.remove('nick')
             except(ValueError):
                 pass
 
-        # NLP failed, so choose something else
-        if len(nouns) == 0:
-            # Find a topic word to base the sentence on. Will be over 4 chars if we have two or more words.
-            if len(words) >= 3:
-                w = [word for word in words if len(word) >= CONFIG_MARKOV_TOPIC_WORD_MIN_LENGTH]
-                w = [word for word in w if word not in CONFIG_MARKOV_TOPIC_FILTER]
-            # Otherwise find the longest word that makes it through the filter
-            else:
-                longest_word = ''
-
-                for word in words:
-                    if word not in CONFIG_MARKOV_TOPIC_FILTER and len(word) > len(longest_word):
-                        longest_word = word
-
-                if longest_word != '':
-                    nouns.append(longest_word)
-
-        w = None
-        if len(nouns) != 0:
-            w = np.random.choice(nouns)
+        potential_topic = None
+        if len(potential_topics) != 0:
+            potential_topic = np.random.choice(potential_topics)
 
         # If we couldn't find any words using NLP or other methods, use 'nick' instead
-        if w == None or w == "nick":
-            w = '#nick'
+        if potential_topic is None or potential_topic == "nick":
+            potential_topic = '#nick'
 
         word_a = aliased(Word)
         word_b = aliased(Word)
@@ -353,11 +336,11 @@ class MarkovAI(object):
                                  + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                  + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
                                     'rating')). \
-            join(word_a, word_a.text.like('%'+w+'%')). \
+            join(word_a, word_a.text.like('%'+potential_topic+'%')). \
             join(Pos, Pos.id == word_b.pos). \
             outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == word_a.id)). \
             outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-            filter(and_(Pos.text == 'NOUN', or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
+            filter(and_(Pos.text.in_(CONFIG_MARKOV_TOPIC_SELECTION_FILTER), or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
             group_by(word_b.id). \
             order_by(desc('rating')). \
             limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
