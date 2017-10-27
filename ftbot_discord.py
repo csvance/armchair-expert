@@ -99,6 +99,7 @@ def on_message(message):
                 args['learning'] = False
                 ftbot.process_message(msg, args)
 
+
 loop = asyncio.get_event_loop()
 
 print("Starting FTBot")
@@ -106,7 +107,7 @@ ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
 
-pool = futures.ThreadPoolExecutor(4)
+pool = futures.ThreadPoolExecutor(1)
 
 loop.run_in_executor(pool,ftbot.message_handler)
 loop.create_task(reply_queue_handler())
