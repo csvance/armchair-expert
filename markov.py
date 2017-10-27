@@ -1,6 +1,6 @@
 from markov_schema import *
 from config import *
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, desc
 from sqlalchemy import func, update, delete
 from sqlalchemy.sql.functions import coalesce, sum
 import re
@@ -384,40 +384,44 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = session.query(word_a.id, word_a.text, word_a.pos,
-                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                     + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
-                join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
-                join(word_b, subject_word.id == WordNeighbor.word). \
+                                            (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                             + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                             + coalesce(sum(WordRelation.rating),
+                                                        0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                                'rating')). \
+                join(word_b, word_b.id == f_id). \
                 join(Pos, Pos.id == word_a.pos). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-                filter(and_(word_b.id == f_id, Pos.text == choice)). \
+                outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
+                filter(Pos.text == choice). \
                 group_by(word_a.id). \
-                order_by('rating').all()
+                order_by(desc('rating')).\
+                limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             if len(results) == 0:
                 results = session.query(word_a.id, word_a.text, word_a.pos,
                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
-                    join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
-                    join(word_b, subject_word.id == WordNeighbor.word). \
+                    join(word_b, word_b.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-                    filter(word_b.id == f_id). \
+                    outerjoin(WordNeighbor,
+                              and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
                     group_by(word_a.id). \
-                    order_by('rating').all()
+                    order_by(desc('rating')). \
+                    limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.a, Word.text, Word.pos). \
                     join(Word, WordRelation.b == Word.id). \
-                    order_by(WordRelation.rating). \
+                    order_by(desc(WordRelation.rating)). \
                     filter(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b)).all()
 
             if len(results) == 0:
                 break
 
-            r_index = int(np.random.triangular(0.0, 1.0, 1.0) * len(results))
+            r_index = int(np.random.triangular(0.0, 0.0, 1.0) * len(results))
 
             r = results[r_index]
             last_word = r
@@ -452,37 +456,40 @@ class MarkovAI(object):
                                     (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                      + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                      + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
-                join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
-                join(word_a, subject_word.id == WordNeighbor.word). \
+                join(word_a, word_a.id == f_id). \
                 join(Pos, Pos.id == word_b.pos). \
+                outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-                filter(and_(word_a.id == f_id, Pos.text == choice)). \
+                filter(Pos.text == choice). \
                 group_by(word_b.id). \
-                order_by('rating').all()
+                order_by(desc('rating')). \
+                limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             if len(results) == 0:
                 results = session.query(word_b.id, word_b.text, word_b.pos,
                                         (coalesce(sum(word_b.count),0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
-                    join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
-                    join(word_a, subject_word.id == WordNeighbor.word). \
+                    join(word_a, word_a.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                    outerjoin(WordNeighbor,
+                              and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
                     filter(word_a.id == f_id). \
                     group_by(word_b.id). \
-                    order_by('rating').all()
+                    order_by(desc('rating')). \
+                    limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             # Fall back to random
             if len(results) == 0:
                 results = session.query(WordRelation.b, Word.text, Word.pos). \
                     join(Word, WordRelation.b == Word.id). \
-                    order_by(WordRelation.rating). \
+                    order_by(desc(WordRelation.rating)). \
                     filter(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a)).all()
 
             if len(results) == 0:
                 break
 
-            r_index = int(np.random.triangular(0.0, 1.0, 1.0) * len(results))
+            r_index = int(np.random.triangular(0.0, 0.0, 1.0) * len(results))
 
             r = results[r_index]
 
