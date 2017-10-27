@@ -388,7 +388,7 @@ class MarkovAI(object):
                                      + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                      + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
-                join(word_b, word_b.id == WordNeighbor.word). \
+                join(word_b, subject_word.id == WordNeighbor.word). \
                 join(Pos, Pos.id == word_a.pos). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                 filter(and_(word_b.id == f_id, Pos.text == choice)). \
@@ -401,7 +401,7 @@ class MarkovAI(object):
                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_a.id == WordNeighbor.neighbor). \
-                    join(word_b, word_b.id == WordNeighbor.word). \
+                    join(word_b, subject_word.id == WordNeighbor.word). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                     filter(word_b.id == f_id). \
                     group_by(word_a.id). \
@@ -453,7 +453,7 @@ class MarkovAI(object):
                                      + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                      + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                 join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
-                join(word_a, word_a.id == WordNeighbor.word). \
+                join(word_a, subject_word.id == WordNeighbor.word). \
                 join(Pos, Pos.id == word_b.pos). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                 filter(and_(word_a.id == f_id, Pos.text == choice)). \
@@ -466,7 +466,7 @@ class MarkovAI(object):
                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                          + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label('rating')). \
                     join(WordNeighbor, word_b.id == WordNeighbor.neighbor). \
-                    join(word_a, word_a.id == WordNeighbor.word). \
+                    join(word_a, subject_word.id == WordNeighbor.word). \
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                     filter(word_a.id == f_id). \
                     group_by(word_b.id). \
