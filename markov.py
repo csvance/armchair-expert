@@ -121,6 +121,8 @@ class MarkovAI(object):
 
     def learn(self, words):
 
+
+
         word_objs = []
 
         session = Session()
@@ -343,23 +345,24 @@ class MarkovAI(object):
         if w == None or w == "nick":
             w = '#nick'
 
-        # Attempt to do a general search for the word
-        subject_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
-            join(WordRelation, WordRelation.a == Word.id). \
-            filter(Word.text.like('%' + w + '%')). \
-            group_by(Word.id, Word.text). \
-            order_by(func.count(WordRelation.id).desc()).first()
+        word_a = aliased(Word)
+        word_b = aliased(Word)
 
-        if subject_word is None:
-            # One last random attempt...
-            w = np.random.choice(words)
-            subject_word = session.query(Word.id, Word.text, Word.pos, func.count(WordRelation.id).label('relations')). \
-                join(WordRelation, WordRelation.a == Word.id). \
-                filter(Word.text == (w)). \
-                group_by(Word.id, Word.text). \
-                order_by(func.count(WordRelation.id).desc()).first()
-            if subject_word is None:
-                return None
+        results = session.query(word_b.id, word_b.text, word_b.pos,
+                                (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                 + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                 + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                    'rating')). \
+            join(word_a, word_a.text.like('%'+w+'%')). \
+            join(Pos, Pos.id == word_b.pos). \
+            outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == word_a.id)). \
+            outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+            filter(and_(Pos.text == 'NOUN', or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
+            group_by(word_b.id). \
+            order_by(desc('rating')). \
+            limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
+
+        subject_word = results[int(np.random.triangular(0.0, 0.0, 1.0) * len(results))]
 
         last_word = subject_word
 
@@ -373,9 +376,9 @@ class MarkovAI(object):
             choices = session.query(PosRelation, Pos.text). \
                 join(Pos, PosRelation.a == Pos.id). \
                 filter(PosRelation.b == last_word.pos). \
-                order_by(PosRelation.rating).all()
+                order_by(desc(PosRelation.rating)).all()
 
-            choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
+            choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
 
             r_index = None
 
@@ -393,7 +396,7 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_a.pos). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
-                filter(Pos.text == choice). \
+                filter(and_(Pos.text == choice,or_(WordNeighbor.rating > 0,WordRelation.rating > 0))). \
                 group_by(word_a.id). \
                 order_by(desc('rating')).\
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -407,6 +410,7 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
+                    filter(or_(WordNeighbor.rating > 0,WordRelation.rating > 0)).\
                     group_by(word_a.id). \
                     order_by(desc('rating')). \
                     limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -442,9 +446,9 @@ class MarkovAI(object):
             choices = session.query(PosRelation, Pos.text). \
                 join(Pos, PosRelation.b == Pos.id). \
                 filter(PosRelation.a == last_word.pos). \
-                order_by(PosRelation.rating).all()
+                order_by(desc(PosRelation.rating)).all()
 
-            choice = choices[int(np.random.triangular(0.0, 1.0, 1.0) * len(choices))].text
+            choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
 
             results = session.query()
 
@@ -460,7 +464,7 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_b.pos). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-                filter(Pos.text == choice). \
+                filter(and_(Pos.text == choice,or_(WordNeighbor.rating > 0,WordRelation.rating > 0))). \
                 group_by(word_b.id). \
                 order_by(desc('rating')). \
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -474,7 +478,7 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
-                    filter(word_a.id == f_id). \
+                    filter(or_(WordNeighbor.rating > 0,WordRelation.rating > 0)). \
                     group_by(word_b.id). \
                     order_by(desc('rating')). \
                     limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -539,6 +543,7 @@ class MarkovAI(object):
                 result = self.command(txt, args, owner)
                 if result:
                     io_module.output(result, args)
+                # We don't want to learn from commands
                 return
 
         if learning:
