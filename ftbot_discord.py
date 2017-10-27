@@ -8,9 +8,11 @@ import re
 client = discord.Client()
 
 
-def discord_client_run():
-    client.run(CONFIG_DISCORD_TOKEN)
-
+async def reply_queue_handler():
+    await client.wait_until_ready()
+    while not client.is_closed:
+        reply = await ftbot.get_reply()
+        await client.send_message(reply['channel'], reply['message'])
 
 @client.event
 @asyncio.coroutine
@@ -43,13 +45,9 @@ def on_message(message):
 
         if message.content.startswith('!shutup'):
             ftbot.shutup()
-            yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-            ftbot.reply = None
             processed = True
         elif message.content.startswith('!wakeup'):
             ftbot.wakeup(args)
-            yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-            ftbot.reply = None
             processed = True
         elif message.content.startswith('!replyrate'):
             try:
@@ -63,9 +61,6 @@ def on_message(message):
                 meme = message.content.split("!meme")[1]
                 if len(meme) > 2:
                     ftbot.memegen(meme, {'channel': message.channel})
-                    if ftbot.reply is not None:
-                        yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-                        ftbot.reply = None
                 else:
                     yield from client.send_message(message.channel, 'Command Syntax error.')
             except KeyError:
@@ -79,35 +74,39 @@ def on_message(message):
 
         if not processed:
             if str(message.author) == CONFIG_DISCORD_OWNER:
-                ftbot.process_message(message.content, args, is_owner=True)
+                args['is_owner'] = True
+                ftbot.process_message(message.content, args)
             else:
-                ftbot.process_message(message.content, args, is_owner=False)
-            if ftbot.reply is not None:
-                yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-                ftbot.reply = None
+                args['is_owner'] = False
+                ftbot.process_message(message.content, args)
     else:
         for msg in message.content.split("\n"):
 
             if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
                 args['mentioned'] = True
+            else:
+                args['mentioned'] = False
 
             # Treat mentioning another user as a single word
             msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
 
             # Don't learn from private messages
             if message.server is not None:
-                ftbot.process_message(msg, args, learning=True)
+                args['learning'] = True
+                ftbot.process_message(msg, args)
             else:
-                args['mentioned'] = True
-                ftbot.process_message(msg, args, learning=False)
+                args['learning'] = False
+                ftbot.process_message(msg, args)
 
-            if ftbot.reply is not None:
-                yield from client.send_message(ftbot.reply['channel'], ftbot.reply['message'])
-                ftbot.reply = None
-
+loop = asyncio.get_event_loop()
 
 print("Starting FTBot")
-ftbot = FTBot()
+ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
-discord_client_run()
+
+asyncio.ensure_future(ftbot.message_handler())
+loop.create_task(reply_queue_handler())
+client.run(CONFIG_DISCORD_TOKEN)
+
+

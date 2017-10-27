@@ -254,7 +254,7 @@ class MarkovAI(object):
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
             words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
-    def command(self, txt, args=None, is_owner=False):
+    def command(self, txt, args=None):
 
         result = None
 
@@ -264,7 +264,7 @@ class MarkovAI(object):
         if txt.startswith("!essay"):
             result = self.essay(txt.split(" ")[1], args)
 
-        if is_owner is False:
+        if args['is_owner'] is False:
             return result
 
         # Admin Only Commands
@@ -506,8 +506,7 @@ class MarkovAI(object):
 
         return " ".join(reply)
 
-    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None,
-                    learning=True):
+    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
@@ -518,18 +517,18 @@ class MarkovAI(object):
 
         if not rebuild_db:
             session = Session()
-            session.add(Line(text=txt, author=args['author'], server_id=args['server'], channel=str(args['channel'])))
+            session.add(Line(text=txt, author=args['author'], server_id=int(args['server']), channel=str(args['channel'])))
             session.commit()
 
             # Check for command
             if txt.startswith("!"):
-                result = self.command(txt, args, owner)
+                result = self.command(txt, args)
                 if result:
                     io_module.output(result, args)
                 # We don't want to learn from commands
                 return
 
-        if learning:
+        if args['learning']:
             # Get all URLs
             urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
             if len(urls) >= 0:
@@ -556,7 +555,7 @@ class MarkovAI(object):
         reply_sentence = random.randrange(0, len(sentences))
 
         for sentence in sentences:
-            if learning:
+            if args['learning']:
                 self.learn(sentence)
 
             if not rebuild_db:
