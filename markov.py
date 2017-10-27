@@ -345,7 +345,18 @@ class MarkovAI(object):
             order_by(desc('rating')). \
             limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
-        subject_word = results[int(np.random.triangular(0.0, 0.0, 1.0) * len(results))]
+        subject_word = None
+        if len(results) != 0:
+            subject_word = results[int(np.random.triangular(0.0, 0.0, 1.0) * len(results))]
+        else:
+            fallback_subjects = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER_FALLBACK]
+            if len(fallback_subjects) == 0:
+                return None
+            fallback_word = fallback_subjects[np.random.randint(0,len(fallback_subjects))]
+            subject_word = session.query(Word.id,Word.text,Word.pos).filter(Word.text == fallback_word).first()
+
+        if subject_word is None:
+            return None
 
         last_word = subject_word
 
