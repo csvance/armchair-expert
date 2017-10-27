@@ -107,9 +107,10 @@ ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
 
-pool = futures.ThreadPoolExecutor(1)
+pool = futures.ThreadPoolExecutor(CONFIG_WORKER_THREADS)
+for i in range(0,CONFIG_WORKER_THREADS):
+    loop.run_in_executor(pool,ftbot.message_handler)
 
-loop.run_in_executor(pool,ftbot.message_handler)
 loop.create_task(reply_queue_handler())
 client.run(CONFIG_DISCORD_TOKEN)
 

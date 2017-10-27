@@ -28,7 +28,8 @@ class MarkovAI(object):
 
         self.rebuilding = True
         session = Session()
-        session.execute("VACUUM")
+        if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
+            session.execute("VACUUM")
         session.query(URL).delete()
         session.query(WordRelation).delete()
         session.query(WordNeighbor).delete()
@@ -48,11 +49,12 @@ class MarkovAI(object):
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
             print(text)
 
-            self.process_msg(None, text, rebuild_db=True, timestamp=line.timestamp)
+            self.process_msg(None, text, args={'learning': True}, rebuild_db=True, timestamp=line.timestamp)
 
         self.rebuilding = False
 
-        session.execute("VACUUM")
+        if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
+            session.execute("VACUUM")
         print("Rebuilding DB Complete!")
 
     @staticmethod
@@ -130,6 +132,10 @@ class MarkovAI(object):
         word_index = 0
 
         for word in words:
+
+            # TODO: Fix this hack
+            if len(word) > 64:
+                continue
 
             # Use NLP
             doc = self.nlp(word)

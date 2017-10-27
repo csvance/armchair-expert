@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from sqlalchemy import create_engine
@@ -11,7 +11,7 @@ Base = declarative_base()
 class Word(Base):
     __tablename__ = "word"
     id = Column(Integer, primary_key=True)
-    text = Column(String, nullable=False, unique=True)
+    text = Column(String(64), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
     pos = Column(Integer, ForeignKey('pos.id'), nullable=False)
 
@@ -29,7 +29,7 @@ class WordNeighbor(Base):
 class Pos(Base):
     __tablename__ = "pos"
     id = Column(Integer, primary_key=True)
-    text = Column(String, nullable=False, unique=True)
+    text = Column(String(16), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
 class PosRelation(Base):
@@ -54,21 +54,23 @@ class Line(Base):
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     source_id = Column(Integer, nullable=False, default=1)
-    server_id = Column(Integer, nullable=False)
-    channel = Column(String, nullable=False)
-    author = Column(String, nullable=False)
-    text = Column(String, nullable=False)
+    server_id = Column(BigInteger, nullable=False)
+    channel = Column(String(32), nullable=False)
+    author = Column(String(32), nullable=False)
+    text = Column(Text, nullable=False)
 
 
 class URL(Base):
     __tablename__ = "url"
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    text = Column(String, nullable=False, unique=True)
+    text = Column(String(256), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
 
-engine = create_engine('sqlite:///markov.db')
+#engine = create_engine('sqlite:///markov.db')
+engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4')
+
 Base.metadata.create_all(engine)
 
 session_factory = sessionmaker(autoflush=False)
