@@ -286,78 +286,87 @@ class MarkovAI(object):
         txt = ""
 
         for p in range(0, 5):
-            try:
-                txt += "\t" + self.reply([s], args, nourl=True) + random_punct() + " "
-                txt += self.reply([s], args, nourl=True) + random_punct() + " "
-                txt += self.reply([s], args, nourl=True) + random_punct() + " "
-                txt += "\n"
-            except(TypeError):
+
+            reply = self.reply([s], args, nourl=True)
+            if reply is None:
                 txt = "I don't know that word well enough!"
                 break
+            txt += "\t" + reply + random_punct() + " "
+            reply = self.reply([s], args, nourl=True)
+            if reply is None:
+                txt = "I don't know that word well enough!"
+                break
+            txt += reply + random_punct() + " "
+            reply = self.reply([s], args, nourl=True)
+            if reply is None:
+                txt = "I don't know that word well enough!"
+                break
+            txt += reply + random_punct() + " "
+            txt += "\n"
 
         return txt
 
     def reply(self, words, args, nourl=False):
+        print(words)
         session = Session()
 
-        potential_topics = []
+        potential_topics = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
 
         # Attempt to find topic using NLP
-        words_string = ' '.join(words)
+        words_string = ' '.join(potential_topics)
         doc = self.nlp(words_string)
         sentence = next(doc.sents)
 
         for token in sentence:
-            if token.pos_ in CONFIG_MARKOV_TOPIC_SELECTION_FILTER:
+            if token.pos_ in CONFIG_MARKOV_TOPIC_SELECTION_POS:
                 potential_topics.append(token.orth_)
 
         # TODO: Fix hack
         try:
             potential_topics.remove('#')
-        except(ValueError):
+        except ValueError:
             pass
 
-        # If we are mentioned, we don't want to use the mention as a subject
+        # If we are mentioned, we don't want to use the mention as a subject besides as a fallback
         if args['mentioned']:
             try:
                 potential_topics.remove('nick')
-            except(ValueError):
+            except ValueError:
                 pass
 
-        potential_topic = None
-        if len(potential_topics) != 0:
-            potential_topic = np.random.choice(potential_topics)
-
-        # If we couldn't find any words using NLP or other methods, use 'nick' instead
-        if potential_topic is None or potential_topic == "nick":
-            potential_topic = '#nick'
-
-        word_a = aliased(Word)
-        word_b = aliased(Word)
-
-        results = session.query(word_b.id, word_b.text, word_b.pos,
-                                (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                 + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                 + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                    'rating')). \
-            join(word_a, word_a.text.like('%'+potential_topic+'%')). \
-            join(Pos, Pos.id == word_b.pos). \
-            outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == word_a.id)). \
-            outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-            filter(and_(Pos.text.in_(CONFIG_MARKOV_TOPIC_SELECTION_FILTER), or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
-            group_by(word_b.id). \
-            order_by(desc('rating')). \
-            limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
-
+        potential_subject = None
         subject_word = None
-        if len(results) != 0:
-            subject_word = results[int(np.random.triangular(0.0, 0.0, 1.0) * len(results))]
+
+        # Find potential exact matches, weigh by occurance
+        subject_words = session.query(Word.id,Word.text,Word.pos,sum(Word.count).label('rating')).filter(Word.text.in_(potential_topics)).order_by(desc('rating')).all()
+
+        if len(subject_words) > 1:
+            # -Linear distribution to choose word
+            potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)].text
+        elif len(subject_words) == 1:
+            potential_subject = subject_words[0].text
         else:
-            fallback_subjects = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER_FALLBACK]
-            if len(fallback_subjects) == 0:
-                return None
-            fallback_word = fallback_subjects[np.random.randint(0,len(fallback_subjects))]
-            subject_word = session.query(Word.id,Word.text,Word.pos).filter(Word.text == fallback_word).first()
+            # Fallback!
+            potential_subject = '#nick'
+
+
+        # If the word is nick, the subject is person talking
+        if potential_subject == 'nick':
+            potential_subject = '#nick'
+            subject_word = session.query(Word.id,Word.text,Word.pos).filter(Word.text == potential_subject)
+
+        else:
+            # Find variations of chosen word, weigh by occurance
+            subject_words = session.query(Word.id,Word.text,Word.pos,sum(Word.count).label('rating')).\
+                filter(Word.text.like('%'+potential_subject+'%')).\
+                order_by(desc('rating')).all()
+
+            # -Linear distribution of variations of chosen word
+
+            if len(subject_words) > 1:
+                subject_word = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
+            elif len(subject_words) == 1:
+                subject_word = subject_words[0]
 
         if subject_word is None:
             return None
@@ -509,6 +518,7 @@ class MarkovAI(object):
 
         reply += backwards_words
         reply += [subject_word.text]
+        print("Reply-Subj: " + subject_word.text)
         reply += forward_words
 
         # Replace any mention in response with a mention to the name of the message we are responding too

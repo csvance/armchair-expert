@@ -34,10 +34,10 @@ CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK = 16
 CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT = ['NOUN','VERB','ADJ','ADV','X']
 
 # One of these
-CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['NOUN','VERB','X']
+CONFIG_MARKOV_TOPIC_SELECTION_POS = ['NOUN', 'VERB', 'X']
 
 # Not one of these
-CONFIG_MARKOV_TOPIC_SELECTION_FILTER_FALLBACK = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
+CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
                               'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats',
                               'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
 
