@@ -287,22 +287,23 @@ class MarkovAI(object):
 
         for p in range(0, 5):
 
+            # Lead In
             reply = self.reply([s], args, nourl=True)
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
             txt += "\t" + reply + random_punct() + " "
-            reply = self.reply(reply.split(" "), args, nourl=True)
-            if reply is None:
-                txt = "I don't know that word well enough!"
-                break
-            txt += reply + random_punct() + " "
-            reply = self.reply(reply.split(" "), args, nourl=True)
-            if reply is None:
-                txt = "I don't know that word well enough!"
-                break
-            txt += reply + random_punct() + " "
+
+            # Body sentences
+            for i in range(0,3):
+                reply = self.reply(reply.split(" "), args, nourl=True)
+                if reply is None:
+                    txt = "I don't know that word well enough!"
+                    break
+                txt += reply + random_punct() + " "
             reply = self.reply([s], args, nourl=True)
+
+            # Lead Out
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
