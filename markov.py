@@ -292,7 +292,12 @@ class MarkovAI(object):
                 txt = "I don't know that word well enough!"
                 break
             txt += "\t" + reply + random_punct() + " "
-            reply = self.reply([s], args, nourl=True)
+            reply = self.reply(reply.split(" "), args, nourl=True)
+            if reply is None:
+                txt = "I don't know that word well enough!"
+                break
+            txt += reply + random_punct() + " "
+            reply = self.reply(reply.split(" "), args, nourl=True)
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
@@ -307,7 +312,6 @@ class MarkovAI(object):
         return txt
 
     def reply(self, words, args, nourl=False):
-        print(words)
         session = Session()
 
         potential_topics = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
@@ -518,7 +522,6 @@ class MarkovAI(object):
 
         reply += backwards_words
         reply += [subject_word.text]
-        print("Reply-Subj: " + subject_word.text)
         reply += forward_words
 
         # Replace any mention in response with a mention to the name of the message we are responding too

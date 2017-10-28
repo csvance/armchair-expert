@@ -69,7 +69,7 @@ class URL(Base):
 
 
 #engine = create_engine('sqlite:///markov.db')
-engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4',echo='debug')
+engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4')
 
 Base.metadata.create_all(engine)
 
