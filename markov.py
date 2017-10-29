@@ -359,7 +359,8 @@ class MarkovAI(object):
         if potential_subject == 'nick':
             potential_subject = '#nick'
             subject_word = session.query(Word.id,Word.text,Word.pos).filter(Word.text == potential_subject)
-
+        elif potential_subject is None:
+            return None
         else:
             # Find variations of chosen word, weigh by occurance
             subject_words = session.query(Word.id,Word.text,Word.pos,sum(Word.count).label('rating')).\
