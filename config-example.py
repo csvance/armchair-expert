@@ -51,5 +51,3 @@ CONFIG_DATABASE = CONFIG_DATABASE_MYSQL
 
 CONFIG_DATABASE_CONNECT = 'sqlite:///markov.db'
 CONFIG_DATABASE_CONNECT = 'mysql+pymysql://root@localhost/markov?charset=utf8mb4'
-
-CONFIG_WORKER_THREADS = 4
