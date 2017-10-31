@@ -1,6 +1,5 @@
 from config import *
 from search import *
-from memegen import *
 import janus
 
 from markov import MarkovAI
@@ -22,14 +21,6 @@ class FTBot(object):
 
     async def get_reply(self):
         return await self.reply_queue.async_q.get()
-
-    def memegen(self, msg, args):
-        filename = "%s/meme_%s.jpg" % (CONFIG_SERVE_DIR, random.randint(0, 9999999))
-        resource = GoogleImages(msg, CONFIG_GOOGLE_KEY, CONFIG_GOOGLE_CX).execute(CONFIG_DOWNLOAD_DIR)
-        if resource is None:
-            self.output("Out of memes try again tommorow.", args)
-        ComputerMemeScene(resource=resource).generate(filename)
-        self.output("http://%s/%s" % (CONFIG_MY_IP, filename.split("/")[1]), args)
 
     def shutup(self, args):
         self.shutup = True

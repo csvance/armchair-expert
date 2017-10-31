@@ -2,7 +2,6 @@ from ftbot import *
 import discord
 import asyncio
 from config import *
-import extras
 import re
 from concurrent import futures
 
@@ -57,21 +56,6 @@ def on_message(message):
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
             processed = True
-        elif message.content.startswith("!meme"):
-            try:
-                meme = message.content.split("!meme")[1]
-                if len(meme) > 2:
-                    ftbot.memegen(meme, {'channel': message.channel})
-                else:
-                    yield from client.send_message(message.channel, 'Command Syntax error.')
-            except KeyError:
-                yield from client.send_message(message.channel, 'Command Syntax error.')
-            processed = True
-        elif message.content.startswith("!"):
-            ret_msg = extras.command_router(message.content)
-            if ret_msg != "No such command!":
-                processed = True
-                yield from client.send_message(message.channel, ret_msg)
 
         if not processed:
             if str(message.author) == CONFIG_DISCORD_OWNER:
