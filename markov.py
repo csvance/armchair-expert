@@ -347,12 +347,12 @@ class MarkovAI(object):
 
         if len(subject_words) > 1:
             # -Linear distribution to choose word
-            potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)].text
+            potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
         elif len(subject_words) == 1:
-            potential_subject = subject_words[0].text
+            potential_subject = subject_words[0]
         else:
             # Fallback!
-            potential_subject = '#nick'
+            potential_subject = session.query(Word).filter(Word.text == '#nick').first()
 
 
         # If the word is nick, the subject is person talking
