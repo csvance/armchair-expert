@@ -362,17 +362,7 @@ class MarkovAI(object):
         elif potential_subject is None:
             return None
         else:
-            # Find variations of chosen word, weigh by occurance
-            subject_words = session.query(Word.id,Word.text,Word.pos,sum(Word.count).label('rating')).\
-                filter(Word.text.like('%'+potential_subject+'%')).\
-                order_by(desc('rating')).all()
-
-            # -Linear distribution of variations of chosen word
-
-            if len(subject_words) > 1:
-                subject_word = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
-            elif len(subject_words) == 1:
-                subject_word = subject_words[0]
+            subject_word = potential_subject
 
         if subject_word is None:
             return None
