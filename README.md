@@ -1,5 +1,5 @@
 # About
-Inspired by old old IRC bots that created a markov chain from chat text, regurgitating it back in unintentionally hilarious ways.
+Inspired by old IRC bots that created a markov chain from chat text, regurgitating it back in unintentionally hilarious ways.
 
 # Features
 - Uses NLP to classify words, allowing for advanced topic selection
