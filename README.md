@@ -2,7 +2,7 @@
 Inspired by old IRC bots that created a markov chain from chat text, regurgitating it back in unintentionally hilarious ways.
 
 # Features
-- Uses NLP to classify words, allowing for advanced topic selection
+- Uses NLP to classify words, allowing for more accurate topic selection
 - Uses several factors to when learning to generate output, including markov A->B relationships and whether a word is used together with another in a sentence
 - Seperate markov chain for POS relationships
 - Uses scoring system with linear distribution when selecting choices
