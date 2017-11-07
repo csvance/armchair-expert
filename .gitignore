@@ -96,5 +96,6 @@ config.py
 *.db
 serve/*
 learning/*
+backup/*
 
 markov.db-journal

@@ -21,11 +21,11 @@ def on_message(message):
         return
 
     if str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
-        print("--NSFW FILTER--")
         return
 
     channel = message.channel
     author = message.author
+
     try:
         server = message.channel.server.id
     except AttributeError:
@@ -36,7 +36,9 @@ def on_message(message):
             'author': str(author),
             'author_mention': "<@%s>" % author.id,
             'server': server,
-            'mentioned': False}
+            'mentioned': False,
+            'always_reply': False,
+            'timestamp': message.timestamp}
 
     # Handle Comands
     if message.content.startswith("!"):
@@ -65,6 +67,10 @@ def on_message(message):
                 args['is_owner'] = False
                 ftbot.process_message(message.content, args)
     else:
+
+        if args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
+            args['always_reply'] = True
+
         for msg in message.content.split("\n"):
 
             if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
