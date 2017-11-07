@@ -135,13 +135,12 @@ class MarkovAI(object):
 
         # Return [line][word]
         lines = []
-        words = []
 
         for sentence in sentences:
+            words = []
             for word in sentence:
                 words.append(session.query(Word).filter(Word.text == word).first())
             lines.append(words)
-            words = []
 
         return lines
 
@@ -562,6 +561,11 @@ class MarkovAI(object):
 
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
+        # No information so we don't need to process
+        sentences = self.filter(txt)
+        if len(sentences) == 0:
+            return
+
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
             return
@@ -602,10 +606,6 @@ class MarkovAI(object):
                             session.add(URL(text=url))
 
                 session.commit()
-
-        sentences = self.filter(txt)
-        if len(sentences) == 0:
-            return
 
         sentence_index = 0
         reply_sentence = random.randrange(0, len(sentences))
