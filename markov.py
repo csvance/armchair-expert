@@ -12,8 +12,13 @@ import spacy
 from sqlalchemy.orm import aliased
 
 
-def format_input_line(txt):
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
+
+def format_input_line(txt):
     s = txt
 
     # Strip all URL
@@ -45,7 +50,6 @@ def format_input_line(txt):
 
 
 def wordify_sentences(sentences):
-
     session = Session()
 
     # Return [line][word]
@@ -245,11 +249,6 @@ class MarkovAI(object):
             word_index += 1
 
         session.commit()
-
-        def chunks(l, n):
-            """Yield successive n-sized chunks from l."""
-            for i in range(0, len(l), n):
-                yield l[i:i + n]
 
         chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
 
@@ -631,7 +630,8 @@ class MarkovAI(object):
                                 # Uprate rating
                                 a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
                             else:
-                                a_b_assoc = WordRelation(a=word_a.id, b=word_b.id, rating=1 + 5)
+                                a_b_assoc = WordRelation(a=word_a.id, b=word_b.id,
+                                                         rating=1 + CONFIG_MARKOV_REACTION_UPRATE_RELATION)
                                 session.add(a_b_assoc)
                                 session.commit()
 
@@ -639,6 +639,32 @@ class MarkovAI(object):
 
             word_index = 0
             sentence_index += 1
+
+        for sentence in self.last_reply['sentences']:
+            for word in sentence:
+                # Filter things that are not relevant to the main information in a sentence
+                if self.nlp(word.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                    continue
+
+                for potential_neighbor in sentence:
+                    if word.id != potential_neighbor.id:
+
+                        if self.nlp(potential_neighbor.text)[0].pos_ \
+                                not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                            continue
+
+                        neighbor = session.query(WordNeighbor). \
+                            join(Word, WordNeighbor.neighbor == Word.id). \
+                            filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
+
+                        if neighbor is None:
+                            neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id,
+                                                    rating=1 + CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR)
+                            session.add(neighbor)
+                            session.commit()
+                        else:
+                            neighbor.count += 1
+                            neighbor.rating += CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR
 
         session.commit()
 
