@@ -173,7 +173,7 @@ class MarkovAI(object):
 
             # Use NLP
             doc = self.nlp(word)
-            word_pos_txt_a = doc[0].pos_
+            word_pos_txt_a = doc[0].pos_ if word != '#nick' else 'NOUN'
 
             # Check if pos exists already
             pos_a = session.query(Pos).filter(Pos.text == word_pos_txt_a).first()
@@ -203,7 +203,7 @@ class MarkovAI(object):
 
                 # Use NLP
                 doc = self.nlp(words[word_index + 1])
-                word_pos_txt_b = doc[0].pos_
+                word_pos_txt_b = doc[0].pos_ if word != '#nick' else 'NOUN'
 
                 # Check if pos exists already
                 pos_b = session.query(Pos).filter(Pos.text == word_pos_txt_b).first()
@@ -219,7 +219,7 @@ class MarkovAI(object):
                 if word_b is None:
                     # Use NLP
                     doc = self.nlp(words[word_index + 1])
-                    word_pos_txt_b = doc[0].pos_
+                    word_pos_txt_b = doc[0].pos_ if word != '#nick' else 'NOUN'
 
                     word_b = Word(text=words[word_index + 1], pos=pos_b.id)
 
@@ -262,8 +262,8 @@ class MarkovAI(object):
                 for potential_neighbor in chunk:
                     if word.id != potential_neighbor.id:
 
-                        if self.nlp(potential_neighbor.text)[
-                            0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                        if self.nlp(potential_neighbor.text)[0].\
+                                pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                             continue
 
                         neighbor = session.query(WordNeighbor). \
@@ -346,36 +346,34 @@ class MarkovAI(object):
     def reply(self, words, args, nourl=False):
         session = Session()
 
+        selected_topics = []
         potential_topics = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
 
-        # Attempt to find topic using NLP
-        words_string = ' '.join(potential_topics)
-        doc = self.nlp(words_string)
-        sentence = next(doc.sents)
 
-        for token in sentence:
-            if token.pos_ in CONFIG_MARKOV_TOPIC_SELECTION_POS:
-                potential_topics.append(token.orth_)
+        for word in potential_topics:
+            # Use NLP to classify word
+            doc = self.nlp(word)
+            potential_subject_pos = doc[0].pos_ if word != "#nick" else "NOUN"
 
-        # TODO: Fix hack
-        try:
-            potential_topics.remove('#')
-        except ValueError:
-            pass
+            if potential_subject_pos in CONFIG_MARKOV_TOPIC_SELECTION_POS:
+                selected_topics.append(word)
 
         # If we are mentioned, we don't want to use the mention as a subject besides as a fallback
         if args['mentioned']:
             try:
-                potential_topics.remove('nick')
+                selected_topics.remove('#nick')
             except ValueError:
                 pass
+
+        if len(selected_topics) == 0:
+            selected_topics = words
 
         potential_subject = None
         subject_word = None
 
         # Find potential exact matches, weigh by occurance
         subject_words = session.query(Word.id, Word.text, Word.pos, sum(Word.count).label('rating')).filter(
-            Word.text.in_(potential_topics)).order_by(desc('rating')).all()
+            Word.text.in_(selected_topics)).order_by(desc('rating')).all()
 
         if len(subject_words) > 1:
             # -Linear distribution to choose word
