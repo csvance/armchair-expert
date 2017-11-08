@@ -12,6 +12,57 @@ import spacy
 from sqlalchemy.orm import aliased
 
 
+def format_input_line(txt):
+
+    s = txt
+
+    # Strip all URL
+    s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+               '', s, flags=re.MULTILINE)
+
+    # Convert everything to lowercase
+    s = txt.lower()
+
+    s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
+
+    sentences = []
+    # Split by lines
+    for line in s.split("\n"):
+        # Split by sentence
+        for sentence in re.split(r'\.|!|\?', line):
+            # Split by words
+            pre_words = sentence.split(" ")
+            post_words = []
+
+            for word in pre_words:
+                if word != '':
+                    post_words.append(word)
+
+            if len(post_words) >= 1:
+                sentences.append(post_words)
+
+    return sentences
+
+
+def wordify_sentences(sentences):
+
+    session = Session()
+
+    # Return [line][word]
+    lines = []
+
+    for sentence in sentences:
+        words = []
+        for word in sentence:
+            find_word = session.query(Word).filter(Word.text == word).first()
+            if find_word is None:
+                continue
+            words.append(find_word)
+        lines.append(words)
+
+    return lines
+
+
 class MarkovAI(object):
     ALPHANUMERIC = "abcdefghijklmnopqrstuvqxyz123456789"
 
@@ -50,7 +101,7 @@ class MarkovAI(object):
             elif line.server_id == 0:
                 continue
             elif line.author == CONFIG_DISCORD_ME:
-                self.last_reply = {'sentences': self.wordify_sentences(self.filter(line)), 'timestamp': line.timestamp}
+                self.last_reply = {'sentences': wordify_sentences(format_input_line(line)), 'timestamp': line.timestamp}
                 continue
 
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
@@ -65,8 +116,7 @@ class MarkovAI(object):
 
         print("Rebuilding DB Complete!")
 
-    @staticmethod
-    def clean_db():  # TODO: Update this function to effect WordNeighborhood ratings
+    def clean_db(self):  # TODO: Update this function to effect WordNeighborhood ratings
 
         print("Cleaning DB...")
         session = Session()
@@ -97,55 +147,6 @@ class MarkovAI(object):
         session.close()
 
         print("Cleaning DB Complete!")
-
-    def filter(self, txt):
-
-        s = txt
-
-        # Strip all URL
-        s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                   '', s, flags=re.MULTILINE)
-
-        # Convert everything to lowercase
-        s = txt.lower()
-
-        s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
-
-        sentences = []
-        # Split by lines
-        for line in s.split("\n"):
-            # Split by sentence
-            for sentence in re.split(r'\.|!|\?', line):
-                # Split by words
-                pre_words = sentence.split(" ")
-                post_words = []
-
-                for word in pre_words:
-                    if word != '':
-                        post_words.append(word)
-
-                if len(post_words) >= 1:
-                    sentences.append(post_words)
-
-        return sentences
-
-    def wordify_sentences(self, sentences):
-
-        session = Session()
-
-        # Return [line][word]
-        lines = []
-
-        for sentence in sentences:
-            words = []
-            for word in sentence:
-                find_word = session.query(Word).filter(Word.text == word).first()
-                if find_word is None:
-                    continue
-                words.append(find_word)
-            lines.append(words)
-
-        return lines
 
     def learn(self, words):
 
@@ -568,7 +569,7 @@ class MarkovAI(object):
         noise_sum = 0
 
         # Check if we have replied
-        if self.last_reply['timestamp'] == None:
+        if self.last_reply['timestamp'] is None:
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds
@@ -597,7 +598,6 @@ class MarkovAI(object):
         for sentence in self.last_reply['sentences']:
             for word_a in sentence:
 
-
                 # Use NLP to classify word
                 doc = self.nlp(word_a.text)
                 word_pos_txt_a = doc[0].pos_
@@ -618,12 +618,13 @@ class MarkovAI(object):
 
                             word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
 
-                            a_b_assoc = session.query(WordRelation).filter(and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).first()
+                            a_b_assoc = session.query(WordRelation).filter(
+                                and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)).first()
                             if a_b_assoc is not None:
                                 # Uprate rating
                                 a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
                             else:
-                                a_b_assoc = WordRelation(a = word_a.id, b = word_b.id, rating = 1+5)
+                                a_b_assoc = WordRelation(a=word_a.id, b=word_b.id, rating=1 + 5)
                                 session.add(a_b_assoc)
                                 session.commit()
 
@@ -637,7 +638,7 @@ class MarkovAI(object):
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
         # No information so we don't need to process
-        sentences = self.filter(txt)
+        sentences = format_input_line(txt)
         if len(sentences) == 0:
             return
 
@@ -690,7 +691,7 @@ class MarkovAI(object):
 
                 # Don't learn from ourself
                 if str(args['author']) != CONFIG_DISCORD_ME:
-                    self.check_reaction(" ".join(sentence),args)
+                    self.check_reaction(" ".join(sentence), args)
                     self.learn(sentence)
 
             if not rebuild_db:
@@ -699,17 +700,16 @@ class MarkovAI(object):
                     the_reply = self.reply(sentence, args)
 
                     if the_reply is not None:
-
                         # Offset timestamp by one second for database ordering
-                        reply_time = timestamp=args['timestamp'] + timedelta(seconds=1)
+                        reply_time = args['timestamp'] + timedelta(seconds=1)
 
-                        self.last_reply = {'sentences': self.wordify_sentences([the_reply.split(" ")]),
+                        self.last_reply = {'sentences': wordify_sentences([the_reply.split(" ")]),
                                            'timestamp': reply_time}
 
                         # Add response to lines
                         session = Session()
                         session.add(Line(text=the_reply, author=CONFIG_DISCORD_ME, server_id=int(args['server']),
-                                         channel=str(args['channel']),timestamp=reply_time))
+                                         channel=str(args['channel']), timestamp=reply_time))
                         session.commit()
 
                         io_module.output(the_reply, args)

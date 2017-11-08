@@ -1,9 +1,9 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker, scoped_session
-from sqlalchemy import create_engine
 import datetime
 
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 Base = declarative_base()
 
@@ -19,6 +19,7 @@ class Word(Base):
     def __repr__(self):
         return "id: %s text: %s" % (self.id, self.text)
 
+
 class WordNeighbor(Base):
     __tablename__ = "wordneighbor"
     id = Column(Integer, primary_key=True)
@@ -27,19 +28,22 @@ class WordNeighbor(Base):
     count = Column(Integer, nullable=False, default=1)
     rating = Column(Integer, nullable=False, default=1)
 
+
 class Pos(Base):
     __tablename__ = "pos"
     id = Column(Integer, primary_key=True)
     text = Column(String(16), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
+
 class PosRelation(Base):
     __tablename__ = "posrelation"
     id = Column(Integer, primary_key=True)
-    a = Column(Integer, ForeignKey('pos.id'),nullable=False)
-    b = Column(Integer, ForeignKey('pos.id'),nullable=False)
+    a = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    b = Column(Integer, ForeignKey('pos.id'), nullable=False)
     count = Column(Integer, nullable=False, default=1)
     rating = Column(Integer, nullable=False, default=1)
+
 
 class WordRelation(Base):
     __tablename__ = "wordrelation"
@@ -69,7 +73,7 @@ class URL(Base):
     count = Column(Integer, nullable=False, default=1)
 
 
-#engine = create_engine('sqlite:///markov.db')
+# engine = create_engine('sqlite:///markov.db')
 engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4')
 
 Base.metadata.create_all(engine)

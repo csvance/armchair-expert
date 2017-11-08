@@ -1,11 +1,11 @@
-from config import *
-from search import *
 import janus
 
+from config import *
 from markov import MarkovAI
 
+
 class FTBot(object):
-    def __init__(self,loop):
+    def __init__(self, loop):
         self.ai = MarkovAI()
         self.replyrate = CONFIG_DEFAULT_REPLYRATE
         self.reply = None
@@ -31,7 +31,7 @@ class FTBot(object):
         self.output(CONFIG_MESSAGE_WAKEUP, args)
 
     def process_message(self, message, args):
-        self.message_queue.sync_q.put({'message': message,'args': args})
+        self.message_queue.sync_q.put({'message': message, 'args': args})
 
     def message_handler(self):
         while True:
@@ -48,6 +48,3 @@ class FTBot(object):
                 self.ai.process_msg(self, message, self.replyrate, args)
             else:
                 self.ai.process_msg(self, message, 0, args)
-
-
-

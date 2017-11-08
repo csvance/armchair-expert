@@ -1,9 +1,11 @@
-from ftbot import *
-import discord
 import asyncio
-from config import *
 import re
 from concurrent import futures
+
+import discord
+
+from config import *
+from ftbot import *
 
 client = discord.Client()
 
@@ -13,6 +15,7 @@ async def reply_queue_handler():
     while not client.is_closed:
         reply = await ftbot.get_reply()
         await client.send_message(reply['channel'], reply['message'])
+
 
 @client.event
 @asyncio.coroutine
@@ -95,11 +98,11 @@ loop = asyncio.get_event_loop()
 print("Starting FTBot")
 ftbot = FTBot(loop=loop)
 print("Running Discord")
-print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (CONFIG_DISCORD_CLIENT_ID))
+print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
+CONFIG_DISCORD_CLIENT_ID))
 
 pool = futures.ThreadPoolExecutor(1)
-loop.run_in_executor(pool,ftbot.message_handler)
+loop.run_in_executor(pool, ftbot.message_handler)
 
 loop.create_task(reply_queue_handler())
 client.run(CONFIG_DISCORD_TOKEN)
-

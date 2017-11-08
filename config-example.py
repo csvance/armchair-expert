@@ -28,20 +28,22 @@ CONFIG_MARKOV_GENERATE_LIMIT = 20
 
 # Limits maximum complexity of neighborhood relations to n*n
 CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK = 16
-CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT = ['NOUN','VERB','ADJ','ADV','X']
+CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT = ['NOUN', 'VERB', 'ADJ', 'ADV', 'X']
 
 # One of these
 CONFIG_MARKOV_TOPIC_SELECTION_POS = ['NOUN', 'VERB', 'X']
 
 # Not one of these
-CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
-                              'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats',
-                              'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
+CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is',
+                                        'or',
+                                        'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s',
+                                        'whats',
+                                        'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
 
 # Used for one word reaction analysis, is the person responding to our message in a good way?
 CONFIG_MARKOV_REACTION_CHARS = ['lo', 'wtf', 'lmao', 'ha', 'rekt', 'rofl']
 CONFIG_MARKOV_REACTION_TIMEDELTA_S = 10
-CONFIG_MARKOV_REACTION_SCORE_POS = ['NOUN','VERB','ADJ','ADV','X']
+CONFIG_MARKOV_REACTION_SCORE_POS = ['NOUN', 'VERB', 'ADJ', 'ADV', 'X']
 CONFIG_MARKOV_REACTION_UPRATE_WORD = 1
 CONFIG_MARKOV_REACTION_UPRATE_RELATION = 5
 

@@ -1,6 +1,7 @@
-from ftbot import *
-from config import *
 import asyncio
+
+from config import *
+from ftbot import *
 
 print("Starting FTBot")
 ftbot = FTBot(loop=asyncio.get_event_loop())
