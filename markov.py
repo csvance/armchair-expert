@@ -70,7 +70,9 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
         self.nlp = spacy.load('en')
-        self.last_reply = {'sentences': [], 'timestamp': None}
+
+        # TODO: Make last_reply multi server friendly
+        self.last_reply = {'sentences': [], 'timestamp': None, 'channel': None}
 
     def rebuild_db(self, ignore=[]):
 
@@ -101,7 +103,8 @@ class MarkovAI(object):
             elif line.server_id == 0:
                 continue
             elif line.author == CONFIG_DISCORD_ME:
-                self.last_reply = {'sentences': wordify_sentences(format_input_line(line)), 'timestamp': line.timestamp}
+                self.last_reply = {'sentences': wordify_sentences(format_input_line(line)), 'timestamp': line.timestamp,
+                                   'channel': line.channel}
                 continue
 
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
@@ -573,7 +576,11 @@ class MarkovAI(object):
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds
-        if args['timestamp'] > self.last_reply['timestamp'] + timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
+        elif args['timestamp'] > self.last_reply['timestamp'] + timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
+            return
+
+        # Only handle reactions from the same channel we sent the message
+        elif str(args['channel']) != self.last_reply['channel']:
             return
 
         for one_word in CONFIG_MARKOV_REACTION_CHARS:
@@ -704,7 +711,7 @@ class MarkovAI(object):
                         reply_time = args['timestamp'] + timedelta(seconds=1)
 
                         self.last_reply = {'sentences': wordify_sentences([the_reply.split(" ")]),
-                                           'timestamp': reply_time}
+                                           'timestamp': reply_time, 'channel': str(args['channel'])}
 
                         # Add response to lines
                         session = Session()
