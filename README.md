@@ -4,6 +4,7 @@ Inspired by old IRC bots that created a markov chain from chat text, regurgitati
 # Features
 - Uses NLP to classify words, allowing for more accurate topic selection
 - Uses several factors to when learning to generate output, including markov A->B relationships and whether a word is used together with another in a sentence
+- Capable of determining when people react with extreme AOL speak, upranking words and A->B relationships that cause reactions
 - Seperate markov chain for POS relationships
 - Uses scoring system with linear distribution when selecting choices
 
