@@ -14,9 +14,7 @@ Inspired by old IRC bots that created a markov chain from chat text, regurgitati
 # Dependencies
 - sqlalchemy
 - discord.py
-- googleapiclient
-- wand (imagemagick)
-- schedule
+- janus
 - numpy
 - spacy (Uses 'en' dataset by default, you will need to download this in addition to installing spacy: 'python -m spacy download en')
 
