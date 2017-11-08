@@ -19,7 +19,7 @@ class MarkovAI(object):
         self.rebuilding = False
         self.rebuilding_thread = None
         self.nlp = spacy.load('en')
-        self.last_reply = {'words': [], 'timestamp': None}
+        self.last_reply = {'sentences': [], 'timestamp': None}
 
     def rebuild_db(self, ignore=[]):
 
@@ -50,7 +50,7 @@ class MarkovAI(object):
             elif line.server_id == 0:
                 continue
             elif line.author == CONFIG_DISCORD_ME:
-                self.last_reply = {'words': self.wordify_sentences(self.filter(line)), 'timestamp': line.timestamp}
+                self.last_reply = {'sentences': self.wordify_sentences(self.filter(line)), 'timestamp': line.timestamp}
                 continue
 
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
@@ -139,7 +139,10 @@ class MarkovAI(object):
         for sentence in sentences:
             words = []
             for word in sentence:
-                words.append(session.query(Word).filter(Word.text == word).first())
+                find_word = session.query(Word).filter(Word.text == word).first()
+                if find_word is None:
+                    continue
+                words.append(find_word)
             lines.append(words)
 
         return lines
@@ -183,6 +186,7 @@ class MarkovAI(object):
 
             elif last_b_added is None or word != last_b_added.text:
                 word_a.count += 1
+                word_a.rating += 1
 
             word_objs.append(word_a)
 
@@ -559,6 +563,77 @@ class MarkovAI(object):
 
         return " ".join(reply)
 
+    def check_reaction(self, txt, args):
+        signal_sum = 0
+        noise_sum = 0
+
+        # Check if we have replied
+        if self.last_reply['timestamp'] == None:
+            return
+
+        # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds
+        if args['timestamp'] > self.last_reply['timestamp'] + timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
+            return
+
+        for one_word in CONFIG_MARKOV_REACTION_CHARS:
+            for c in one_word:
+                signal_sum += txt.count(c)
+            noise_sum = len(txt) - signal_sum
+
+            if signal_sum > noise_sum:
+                self.handle_reaction()
+                return
+
+            signal_sum = 0
+            noise_sum = 0
+
+    def handle_reaction(self):
+
+        session = Session()
+
+        sentence_index = 0
+        word_index = 0
+
+        for sentence in self.last_reply['sentences']:
+            for word_a in sentence:
+
+
+                # Use NLP to classify word
+                doc = self.nlp(word_a.text)
+                word_pos_txt_a = doc[0].pos_
+
+                if word_pos_txt_a in CONFIG_MARKOV_REACTION_SCORE_POS:
+
+                    # Uprate word
+                    word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
+
+                    if word_index != len(sentence) - 1:
+                        word_b = sentence[word_index + 1]
+
+                        # Use NLP to classify word
+                        doc = self.nlp(word_b.text)
+                        word_pos_txt_b = doc[0].pos_
+
+                        if word_pos_txt_b in CONFIG_MARKOV_REACTION_SCORE_POS:
+
+                            word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
+
+                            a_b_assoc = session.query(WordRelation).filter(and_(WordRelation.a == word_a.id,WordRelation.b == word_b.id)).first()
+                            if a_b_assoc is not None:
+                                # Uprate rating
+                                a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
+                            else:
+                                a_b_assoc = WordRelation(a = word_a.id, b = word_b.id, rating = 1+5)
+                                session.add(a_b_assoc)
+                                session.commit()
+
+                word_index += 1
+
+            word_index = 0
+            sentence_index += 1
+
+        session.commit()
+
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
         # No information so we don't need to process
@@ -612,7 +687,11 @@ class MarkovAI(object):
 
         for sentence in sentences:
             if args['learning']:
-                self.learn(sentence)
+
+                # Don't learn from ourself
+                if str(args['author']) != CONFIG_DISCORD_ME:
+                    self.check_reaction(" ".join(sentence),args)
+                    self.learn(sentence)
 
             if not rebuild_db:
                 if reply_sentence == sentence_index and (replyrate > random.randrange(0, 100) or args['always_reply']):
@@ -624,7 +703,7 @@ class MarkovAI(object):
                         # Offset timestamp by one second for database ordering
                         reply_time = timestamp=args['timestamp'] + timedelta(seconds=1)
 
-                        self.last_reply = {'words': self.wordify_sentences([the_reply.split(" ")]),
+                        self.last_reply = {'sentences': self.wordify_sentences([the_reply.split(" ")]),
                                            'timestamp': reply_time}
 
                         # Add response to lines

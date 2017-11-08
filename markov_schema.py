@@ -14,6 +14,7 @@ class Word(Base):
     text = Column(String(64), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
     pos = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    rating = Column(Integer, nullable=False, default=1)
 
     def __repr__(self):
         return "id: %s text: %s" % (self.id, self.text)

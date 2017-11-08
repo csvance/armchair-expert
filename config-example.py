@@ -2,10 +2,6 @@ CONFIG_DOWNLOAD_DIR = "downloads"
 CONFIG_RES_DIR = "resources"
 CONFIG_SERVE_DIR = "serve"
 
-CONFIG_GOOGLE_CX = "40230423040234:324234234"
-CONFIG_GOOGLE_KEY = "sdfSFDSFfDSfsdf_ASdaSDsd"
-CONFIG_GOOGLE_SAFESEARCH = "medium"
-
 CONFIG_DISCORD_TOKEN = "asdASDASDasdaSDasd.aSDASDasD.ASDasdASdASD"
 CONFIG_DISCORD_OWNER = "BigBoss#8527"
 CONFIG_DISCORD_ME = "FTBot#3537"
@@ -41,6 +37,13 @@ CONFIG_MARKOV_TOPIC_SELECTION_POS = ['NOUN', 'VERB', 'X']
 CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['#nick', 'and', 'for', 'what', 'where', 'when', 'how', 'who', 'now', 'be', 'is', 'or',
                               'the', 'you', 'your', 'we', 'i', 'to', 'too', 'are', 'do', 'don\'t', 'what\'s', 'whats',
                               'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
+
+# Used for one word reaction analysis, is the person responding to our message in a good way?
+CONFIG_MARKOV_REACTION_CHARS = ['lo', 'wtf', 'lmao', 'ha', 'rekt', 'rofl']
+CONFIG_MARKOV_REACTION_TIMEDELTA_S = 10
+CONFIG_MARKOV_REACTION_SCORE_POS = ['NOUN','VERB','ADJ','ADV','X']
+CONFIG_MARKOV_REACTION_UPRATE_WORD = 1
+CONFIG_MARKOV_REACTION_UPRATE_RELATION = 5
 
 CONFIG_MESSAGE_WAKEUP = "Yawn"
 CONFIG_MESSAGE_SHUTUP = "ZzZzZzZz"
