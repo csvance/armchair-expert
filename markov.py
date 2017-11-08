@@ -568,6 +568,8 @@ class MarkovAI(object):
         signal_sum = 0
         noise_sum = 0
 
+        txt_lower = txt.lower()
+
         # Check if we have replied
         if self.last_reply['timestamp'] is None:
             return
@@ -582,8 +584,8 @@ class MarkovAI(object):
 
         for one_word in CONFIG_MARKOV_REACTION_CHARS:
             for c in one_word:
-                signal_sum += txt.count(c)
-            noise_sum = len(txt) - signal_sum
+                signal_sum += txt_lower.count(c)
+            noise_sum = len(txt_lower) - signal_sum
 
             if signal_sum > noise_sum:
                 self.handle_reaction()
