@@ -97,5 +97,7 @@ config.py
 serve/*
 learning/*
 backup/*
+models/eval/*
+models/events.out*
 
 markov.db-journal

@@ -14,6 +14,26 @@ def file_to_utf8(path):
     return str(utf8_data)
 
 
+def repeated_letter_ratio(line):
+
+    repeated_count = 0
+    not_repeated_count = 0
+
+    for idx,c in enumerate(line):
+        if idx != len(line)-1:
+            if c == line[idx+1]:
+                repeated_count += 1
+            else:
+                not_repeated_count += 1
+
+    total_count = repeated_count + not_repeated_count
+
+    if total_count != 0:
+        return repeated_count / float(total_count)
+    else:
+        return 0.0
+
+
 def aol_letter_ratio(line):
     txt_lower = line.lower()
 
@@ -22,11 +42,16 @@ def aol_letter_ratio(line):
     signal_sum = 0
     noise_sum = 0
 
-    for one_word in CONFIG_MARKOV_REACTION_CHARS:
-        for c in one_word:
+    for check_letters in CONFIG_MARKOV_REACTION_CHARS:
+        letters_found = {}
+        for c in check_letters:
+            if c in line:
+                letters_found[c] = True
             signal_sum += txt_lower.count(c)
 
-        current_ratio = signal_sum / len(txt_lower)
+        found_ratio = len(letters_found) / len(check_letters)
+
+        current_ratio = (found_ratio*signal_sum) / len(txt_lower)
 
         max_ratio = max_ratio if current_ratio < max_ratio else current_ratio
 
@@ -40,8 +65,8 @@ def upper_lower_ratio(line):
     upper_count = 0.0
     lower_count = 0.0
 
-    lower_count = len(re.findall("[a-z]", line))
-    upper_count = len(re.findall("[A-Z]", line))
+    lower_count = len(re.findall(r"[a-z]+", line))
+    upper_count = len(re.findall(r"[A-Z]+", line))
 
     letter_count = lower_count + upper_count
 
@@ -57,8 +82,8 @@ def letter_symbol_ratio(line):
     upper_count = 0.0
     lower_count = 0.0
 
-    lower_count = len(re.findall("[a-z]+", line))
-    upper_count = len(re.findall("[A-Z]+", line))
+    lower_count = len(re.findall(r"[a-z]+", line))
+    upper_count = len(re.findall(r"[A-Z]+", line))
 
     letter_count = lower_count + upper_count
 
@@ -78,11 +103,27 @@ def letter_diversity_ratio(line):
 
 
 class AOLReactionModel(object):
-    def __init__(self, classifier):
+    def __init__(self, model_dir="models/aol-reaction-model/"):
         self.data = []
         self.training_data = None
         self.y_label = None
-        self.classifier = classifier
+        self.model_dir = model_dir
+        self.classifier = self.create_tensor()
+
+    def create_tensor(self):
+        fc_length = tf.feature_column.numeric_column("length")
+        fc_whitespace = tf.feature_column.numeric_column("whitespace")
+        fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
+        fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
+        fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
+        fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
+        fc_repeated_letter_ratio = tf.feature_column.numeric_column("repeated_letter_ratio")
+
+        base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio,
+                        fc_letter_symbol_ratio,
+                        fc_aol_letter_ratio,fc_repeated_letter_ratio]
+
+        return tf.estimator.LinearClassifier(model_dir=self.model_dir, feature_columns=base_columns)
 
     def reset_training_data(self):
         self.training_data = None
@@ -130,13 +171,16 @@ class AOLReactionModel(object):
             shuffle=False)
 
     def classify_data(self, data):
+
+        classifications = []
+
         predict_input_fn = self.eval_data_input_fn(data)
         predictions = list(self.classifier.predict(input_fn=predict_input_fn))
 
-        for idx,row in enumerate(data):
-            text = row
-            c = predictions[idx]['classes'][0]
-            print("%s: %s" % (c, text))
+        for idx, row in enumerate(data):
+            classifications.append(bool(int(predictions[idx]['classes'][0])))
+
+        return classifications
 
     def print_evaluation(self, file_path):
         results = self.classifier.evaluate(
@@ -151,7 +195,6 @@ class AOLReactionModel(object):
                               steps=None)
 
     def compute_stats(self, data):
-
         for line in data:
             # Line Length
             line['length'] = len(line['text'])
@@ -163,33 +206,20 @@ class AOLReactionModel(object):
             line['upper_lower_ratio'] = upper_lower_ratio(line['text'])
             line['letter_symbol_ratio'] = letter_symbol_ratio(line['text'])
             line['aol_letter_ratio'] = aol_letter_ratio(line['text'])
+            line['repeated_letter_ratio'] = repeated_letter_ratio(line['text'])
 
         return data
 
 
-def create_reaction_model():
-    fc_length = tf.feature_column.numeric_column("length")
-    fc_whitespace = tf.feature_column.numeric_column("whitespace")
-    fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
-    fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
-    fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
-    fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
+if __name__ == '__main__':
+    reaction = AOLReactionModel()
 
-    base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio, fc_letter_symbol_ratio,
-                    fc_aol_letter_ratio]
+    if False:
+        data_path = 'learning/markov_line_utf8.csv'
+        reaction.train(data_path, epochs=100)
+        reaction.print_evaluation(data_path)
 
-    model_dir = tempfile.mkdtemp()
-
-    classifier = tf.estimator.LinearClassifier(model_dir=model_dir, feature_columns=base_columns)
-
-    r = AOLReactionModel(classifier)
-
-    return r
-
-
-data_path = 'learning/markov_line_utf8.csv'
-r = create_reaction_model()
-
-r.train(data_path, epochs=100)
-r.print_evaluation(data_path)
-r.classify_data(['lol', 'haha', 'wtf', 'llOloloLOlo', 'oh hi mark'])
+    if True:
+        classify = ['lol', 'haha', 'llooolololo', 'oh hi mark','llllll','oooooo','wwwwtttt']
+        for idx, is_aol_speak in enumerate(reaction.classify_data(classify)):
+            print("%s - %s" % (is_aol_speak, classify[idx]))

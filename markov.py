@@ -10,6 +10,7 @@ import time
 import numpy as np
 import spacy
 from sqlalchemy.orm import aliased
+from reaction_model import AOLReactionModel
 
 
 class BotReplyTracker(object):
@@ -52,6 +53,7 @@ class MarkovAI(object):
         self.rebuilding = False
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
+        self.reaction_model = AOLReactionModel()
 
     @staticmethod
     def format_input_line(txt):
@@ -597,7 +599,6 @@ class MarkovAI(object):
         noise_sum = 0
 
         txt_ = " ".join(txt)
-        txt_lower = txt_.lower()
 
         bot_reply = self.reply_tracker.get_reply(args)
 
@@ -606,21 +607,13 @@ class MarkovAI(object):
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds or if the message is fresh
-        elif bot_reply['fresh'] is not True and args['timestamp'] > bot_reply['timestamp'] + timedelta(
-                seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
+        elif bot_reply['fresh'] is not True and args['timestamp'] > bot_reply['timestamp'] + \
+                timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        for one_word in CONFIG_MARKOV_REACTION_CHARS:
-            for c in one_word:
-                signal_sum += txt_lower.count(c)
-            noise_sum = len(txt_lower) - signal_sum
-
-            if signal_sum > noise_sum:
-                self.handle_reaction(args)
-                return
-
-            signal_sum = 0
-            noise_sum = 0
+        if self.reaction_model.classify_data(txt)[0]:
+            self.handle_reaction(args)
+            return
 
         # If this wasn't a reaction, end the chain
         self.reply_tracker.human_reply(args)
