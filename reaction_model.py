@@ -9,8 +9,8 @@ import tempfile
 
 
 def file_to_utf8(path):
-    data = open(path,'rb').read()
-    utf8_data = data.decode('utf-8','ignore')
+    b_data = open(path, 'rb').read()
+    utf8_data = b_data.decode('utf-8', 'ignore')
     return str(utf8_data)
 
 
@@ -33,6 +33,7 @@ def aol_letter_ratio(line):
         signal_sum = 0
 
     return max_ratio
+
 
 def upper_lower_ratio(line):
     letter_count = 0.0
@@ -75,104 +76,120 @@ def letter_diversity_ratio(line):
 
     return len(chars) / len(line)
 
-class Reaction(object):
-    def __init__(self):
-        self.stats = {}
+
+class AOLReactionModel(object):
+    def __init__(self, classifier):
         self.data = []
-        self.pd_data = None
+        self.training_data = None
+        self.y_label = None
+        self.classifier = classifier
 
-    def input_fn(self,data_file, num_epochs, shuffle):
-        with open(data_file, newline='', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if row[0] != '':
-                    self.data.append({'reaction': int(row[0]),'text': row[1]})
+    def reset_training_data(self):
+        self.training_data = None
 
-        self.compute_stats()
+    def training_file_input_fn(self, data_file, num_epochs, shuffle):
 
-        df_data = pd.DataFrame.from_dict(self.data)
-        df_data = df_data.dropna(how="any", axis=0)
+        input_data = []
+        if self.training_data is None:
+            with open(data_file, newline='', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if row[0] != '':
+                        input_data.append({'reaction': int(row[0]), 'text': row[1]})
 
-        self.pd_data = df_data
+            self.compute_stats(input_data)
 
-        labels = df_data['reaction'].astype(int)
+            pd_eval_data = pd.DataFrame.from_dict(input_data)
+            pd_eval_data = pd_eval_data.dropna(how="any", axis=0)
 
-        return  tf.estimator.inputs.pandas_input_fn(
-            x=df_data,
-            y=labels,
+            self.training_data = pd_eval_data
+            self.y_label = pd_eval_data['reaction'].astype(int)
+
+        return tf.estimator.inputs.pandas_input_fn(
+            x=self.training_data,
+            y=self.y_label,
             batch_size=100,
             num_epochs=num_epochs,
             shuffle=shuffle,
             num_threads=4)
 
+    def eval_data_input_fn(self, data):
 
-    def compute_stats(self):
+        data_rows = []
 
-        self.stats['length'] = 0
-        self.stats['whitespace'] = 0
-        self.stats['lines'] = 0
+        for row in data:
+            data_rows.append({'text': row})
 
-        for line in self.data:
+        data_rows = self.compute_stats(data_rows)
 
+        pd_eval_data = pd.DataFrame.from_dict(data_rows)
+
+        return tf.estimator.inputs.pandas_input_fn(
+            x=pd_eval_data,
+            num_epochs=1,
+            shuffle=False)
+
+    def classify_data(self, data):
+        predict_input_fn = self.eval_data_input_fn(data)
+        predictions = list(self.classifier.predict(input_fn=predict_input_fn))
+
+        for idx,row in enumerate(data):
+            text = row
+            c = predictions[idx]['classes'][0]
+            print("%s: %s" % (c, text))
+
+    def print_evaluation(self, file_path):
+        results = self.classifier.evaluate(
+            input_fn=self.training_file_input_fn(file_path, num_epochs=1, shuffle=False),
+            steps=None)
+
+        for key in sorted(results):
+            print("%s: %s" % (key, results[key]))
+
+    def train(self, file_path, epochs=1):
+        self.classifier.train(input_fn=self.training_file_input_fn(file_path, num_epochs=epochs, shuffle=True),
+                              steps=None)
+
+    def compute_stats(self, data):
+
+        for line in data:
             # Line Length
             line['length'] = len(line['text'])
-            self.stats['length'] += line['length']
 
             # Whitespace
             line['whitespace'] = line['text'].count(" ")
-            self.stats['length'] += line['whitespace']
 
             line['letter_diversity_ratio'] = letter_diversity_ratio(line['text'])
             line['upper_lower_ratio'] = upper_lower_ratio(line['text'])
             line['letter_symbol_ratio'] = letter_symbol_ratio(line['text'])
             line['aol_letter_ratio'] = aol_letter_ratio(line['text'])
 
-            self.stats['lines'] += 1
+        return data
 
 
-def print_classifications(classifier, data):
-    predict_input_fn = tf.estimator.inputs.pandas_input_fn(x=data, num_epochs=1, shuffle=False)
+def create_reaction_model():
+    fc_length = tf.feature_column.numeric_column("length")
+    fc_whitespace = tf.feature_column.numeric_column("whitespace")
+    fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
+    fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
+    fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
+    fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
 
-    predictions = list(classifier.predict(input_fn=predict_input_fn))
+    base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio, fc_letter_symbol_ratio,
+                    fc_aol_letter_ratio]
 
-    for index, row in data.iterrows():
-        text = row['text']
-        c = predictions[index]['classes'][0]
-        if int(c) == 1:
-            print("%s: %s" % (c, text))
+    model_dir = tempfile.mkdtemp()
 
+    classifier = tf.estimator.LinearClassifier(model_dir=model_dir, feature_columns=base_columns)
 
-def print_evaluation(model):
-    results = model.evaluate(
-        input_fn=r.input_fn(data_file_path, num_epochs=1, shuffle=False),
-        steps=None)
+    r = AOLReactionModel(classifier)
 
-    for key in sorted(results):
-        print("%s: %s" % (key, results[key]))
-
-# Make sure the file is UTF-8
-data_file_path = 'learning/markov_line_utf8.csv'
-data = file_to_utf8(data_file_path)
-open(data_file_path,'w').write(data)
-
-r = Reaction()
-
-fc_length = tf.feature_column.numeric_column("length")
-fc_whitespace = tf.feature_column.numeric_column("whitespace")
-fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
-fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
-fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
-fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
-
-base_columns = [fc_length,fc_whitespace,fc_letter_diversity_ratio,fc_upper_lower_ratio,fc_letter_symbol_ratio,fc_aol_letter_ratio]
-
-model_dir = tempfile.mkdtemp()
-
-m = tf.estimator.LinearClassifier(model_dir=model_dir, feature_columns=base_columns)
-m.train(input_fn=r.input_fn(data_file_path, num_epochs=1, shuffle=True), steps=None)
+    return r
 
 
-print_evaluation(m)
-#print_classifications(m,r.pd_data)
+data_path = 'learning/markov_line_utf8.csv'
+r = create_reaction_model()
 
-
+r.train(data_path, epochs=100)
+r.print_evaluation(data_path)
+r.classify_data(['lol', 'haha', 'wtf', 'llOloloLOlo', 'oh hi mark'])
