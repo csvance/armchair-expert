@@ -5,7 +5,7 @@ Inspired by old IRC bots that created a markov chain from chat text, regurgitati
 - Uses NLP to detect words' POS, allowing for more accurate topic selection
 - Uses several factors to generate output, including markov A->B relationships and whether a word is used together with another in a sentence
 - Uses scoring system with linear distribution when selecting choices
-- Capable of determining when people react with extreme AOL speak, upranking words and A->B relationships that cause reactions
+- Capable of determining when people react with extreme AOL speak using machine learning, upranking words and A->B relationships that cause reactions
 - Seperate markov chain for POS relationships
 
 # Requirements
