@@ -12,71 +12,95 @@ import spacy
 from sqlalchemy.orm import aliased
 
 
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
+class BotReplyTracker(object):
+    def __init__(self):
+        self.replies = {}
 
+    # Creates relevant nodes in reply tracker for server and channel
+    def branch_(self, args):
+        try:
+            server = self.replies[int(args['server'])]
+        except KeyError:
+            self.replies[int(args['server'])] = {}
 
-def format_input_line(txt):
-    s = txt
+        try:
+            channel = self.replies[int(args['server'])][str(args['channel'])]
+        except KeyError:
+            self.replies[int(args['server'])][str(args['channel'])] = {'timestamp': None, 'sentences': [],
+                                                                       'fresh': False}
 
-    # Strip all URL
-    s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-               '', s, flags=re.MULTILINE)
+    # Called whenever the bot sends a message in a channel
+    def bot_reply(self, sentences, args):
+        self.branch_(args)
+        self.replies[int(args['server'])][str(args['channel'])] = {'sentences': sentences,
+                                                                   'timestamp': args['timestamp'], 'fresh': True}
 
-    # Convert everything to lowercase
-    s = txt.lower()
+    # Called whenever a human sends a message to a channel
+    def human_reply(self, args):
+        self.branch_(args)
+        self.get_reply(args)['fresh'] = False
 
-    s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
-
-    sentences = []
-    # Split by lines
-    for line in s.split("\n"):
-        # Split by sentence
-        for sentence in re.split(r'\.|!|\?', line):
-            # Split by words
-            pre_words = sentence.split(" ")
-            post_words = []
-
-            for word in pre_words:
-                if word != '':
-                    post_words.append(word)
-
-            if len(post_words) >= 1:
-                sentences.append(post_words)
-
-    return sentences
-
-
-def wordify_sentences(sentences):
-    session = Session()
-
-    # Return [line][word]
-    lines = []
-
-    for sentence in sentences:
-        words = []
-        for word in sentence:
-            find_word = session.query(Word).filter(Word.text == word).first()
-            if find_word is None:
-                continue
-            words.append(find_word)
-        lines.append(words)
-
-    return lines
+    # Gets the last bot reply in a channel
+    def get_reply(self, args):
+        self.branch_(args)
+        return self.replies[int(args['server'])][str(args['channel'])]
 
 
 class MarkovAI(object):
-    ALPHANUMERIC = "abcdefghijklmnopqrstuvqxyz123456789"
 
     def __init__(self):
         self.rebuilding = False
-        self.rebuilding_thread = None
         self.nlp = spacy.load('en')
+        self.reply_tracker = BotReplyTracker()
 
-        # TODO: Make last_reply multi server friendly
-        self.last_reply = {'sentences': [], 'timestamp': None, 'channel': None}
+    @staticmethod
+    def format_input_line(txt):
+        s = txt
+
+        # Strip all URL
+        s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                   '', s, flags=re.MULTILINE)
+
+        # Convert everything to lowercase
+        s = txt.lower()
+
+        s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
+
+        sentences = []
+        # Split by lines
+        for line in s.split("\n"):
+            # Split by sentence
+            for sentence in re.split(r'\.|!|\?', line):
+                # Split by words
+                pre_words = sentence.split(" ")
+                post_words = []
+
+                for word in pre_words:
+                    if word != '':
+                        post_words.append(word)
+
+                if len(post_words) >= 1:
+                    sentences.append(post_words)
+
+        return sentences
+
+    @staticmethod
+    def db_wordify_sentences(sentences):
+        session = Session()
+
+        # Return [line][word]
+        lines = []
+
+        for sentence in sentences:
+            words = []
+            for word in sentence:
+                find_word = session.query(Word).filter(Word.text == word).first()
+                if find_word is None:
+                    continue
+                words.append(find_word)
+            lines.append(words)
+
+        return lines
 
     def rebuild_db(self, ignore=[]):
 
@@ -107,8 +131,8 @@ class MarkovAI(object):
             elif line.server_id == 0:
                 continue
             elif line.author == CONFIG_DISCORD_ME:
-                self.last_reply = {'sentences': wordify_sentences(format_input_line(line)), 'timestamp': line.timestamp,
-                                   'channel': line.channel}
+                self.reply_tracker.bot_reply(MarkovAI.db_wordify_sentences(MarkovAI.format_input_line(line)),
+                                             {'timestamp': line.timestamp, 'channel': line.channel})
                 continue
 
             text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
@@ -250,6 +274,11 @@ class MarkovAI(object):
 
         session.commit()
 
+        def chunks(l, n):
+            """Yield successive n-sized chunks from l."""
+            for i in range(0, len(l), n):
+                yield l[i:i + n]
+
         chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
 
         for chunk in chunk_word_objs:
@@ -262,7 +291,7 @@ class MarkovAI(object):
                 for potential_neighbor in chunk:
                     if word.id != potential_neighbor.id:
 
-                        if self.nlp(potential_neighbor.text)[0].\
+                        if self.nlp(potential_neighbor.text)[0]. \
                                 pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                             continue
 
@@ -348,7 +377,6 @@ class MarkovAI(object):
 
         selected_topics = []
         potential_topics = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
-
 
         for word in potential_topics:
             # Use NLP to classify word
@@ -568,18 +596,18 @@ class MarkovAI(object):
         signal_sum = 0
         noise_sum = 0
 
-        txt_lower = txt.lower()
+        txt_ = " ".join(txt)
+        txt_lower = txt_.lower()
 
-        # Check if we have replied
-        if self.last_reply['timestamp'] is None:
+        bot_reply = self.reply_tracker.get_reply(args)
+
+        # Check if reply exists
+        if bot_reply['timestamp'] is None:
             return
 
-        # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds
-        elif args['timestamp'] > self.last_reply['timestamp'] + timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
-            return
-
-        # Only handle reactions from the same channel we sent the message
-        elif str(args['channel']) != self.last_reply['channel']:
+        # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds or if the message is fresh
+        elif bot_reply['fresh'] is not True and args['timestamp'] > bot_reply['timestamp'] + timedelta(
+                seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
         for one_word in CONFIG_MARKOV_REACTION_CHARS:
@@ -588,20 +616,26 @@ class MarkovAI(object):
             noise_sum = len(txt_lower) - signal_sum
 
             if signal_sum > noise_sum:
-                self.handle_reaction()
+                self.handle_reaction(args)
                 return
 
             signal_sum = 0
             noise_sum = 0
 
-    def handle_reaction(self):
+        # If this wasn't a reaction, end the chain
+        self.reply_tracker.human_reply(args)
+
+    def handle_reaction(self, args):
 
         session = Session()
 
         sentence_index = 0
         word_index = 0
 
-        for sentence in self.last_reply['sentences']:
+        server_last_replies = self.reply_tracker.get_reply(args)
+
+        # Uprate words and relations
+        for sentence in server_last_replies['sentences']:
             for word_a in sentence:
 
                 # Use NLP to classify word
@@ -640,7 +674,8 @@ class MarkovAI(object):
             word_index = 0
             sentence_index += 1
 
-        for sentence in self.last_reply['sentences']:
+        # Uprate neighborhood
+        for sentence in server_last_replies['sentences']:
             for word in sentence:
                 # Filter things that are not relevant to the main information in a sentence
                 if self.nlp(word.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
@@ -671,7 +706,7 @@ class MarkovAI(object):
     def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
 
         # No information so we don't need to process
-        sentences = format_input_line(txt)
+        sentences = MarkovAI.format_input_line(txt)
         if len(sentences) == 0:
             return
 
@@ -724,7 +759,7 @@ class MarkovAI(object):
 
                 # Don't learn from ourself
                 if str(args['author']) != CONFIG_DISCORD_ME:
-                    self.check_reaction(" ".join(sentence), args)
+                    self.check_reaction(sentence, args)
                     self.learn(sentence)
 
             if not rebuild_db:
@@ -736,8 +771,7 @@ class MarkovAI(object):
                         # Offset timestamp by one second for database ordering
                         reply_time = args['timestamp'] + timedelta(seconds=1)
 
-                        self.last_reply = {'sentences': wordify_sentences([the_reply.split(" ")]),
-                                           'timestamp': reply_time, 'channel': str(args['channel'])}
+                        self.reply_tracker.bot_reply(MarkovAI.db_wordify_sentences([the_reply.split(" ")]), args)
 
                         # Add response to lines
                         session = Session()
