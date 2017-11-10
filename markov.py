@@ -427,7 +427,7 @@ class MarkovAI(object):
 
             # Fall back to random
             if len(results) == 0:
-                results = self.session.query(WordRelation.b_id, Word.text, Word.pos_id). \
+                results = self.session.query(WordRelation.b_id.label('id'), Word.text, Word.pos_id). \
                     join(Word, WordRelation.b_id == Word.id). \
                     order_by(desc(WordRelation.rating)). \
                     filter(and_(WordRelation.a_id == f_id, WordRelation.b_id != WordRelation.a_id)).all()
