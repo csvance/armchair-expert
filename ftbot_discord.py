@@ -3,9 +3,10 @@ import re
 from concurrent import futures
 
 import discord
-
+import spacy
 from config import *
 from ftbot import *
+from messages import *
 
 client = discord.Client()
 
@@ -13,35 +14,23 @@ client = discord.Client()
 async def reply_queue_handler():
     await client.wait_until_ready()
     while not client.is_closed:
-        reply = await ftbot.get_reply()
-        await client.send_message(reply['channel'], reply['message'])
+        output_message = await ftbot.get_reply()
+        await client.send_message(output_message.args['channel'], output_message.message_filtered)
 
 
 @client.event
 @asyncio.coroutine
 def on_message(message):
+
+    # Prevent feedback loop / learning from ourself
     if str(message.author) == CONFIG_DISCORD_ME:
         return
 
-    if str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
+    # Ignore messages in NSFW channels
+    elif str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
         return
 
-    channel = message.channel
-    author = message.author
-
-    try:
-        server = message.channel.server.id
-    except AttributeError:
-        # Private Message
-        server = 0
-
-    args = {'channel': channel,
-            'author': str(author),
-            'author_mention': "<@%s>" % author.id,
-            'server': server,
-            'mentioned': False,
-            'always_reply': False,
-            'timestamp': message.timestamp}
+    input_message = MessageInput(message=message)
 
     # Handle Comands
     if message.content.startswith("!"):
@@ -49,10 +38,10 @@ def on_message(message):
         processed = False
 
         if message.content.startswith('!shutup'):
-            ftbot.shutup()
+            ftbot.shutup(input_message.args)
             processed = True
         elif message.content.startswith('!wakeup'):
-            ftbot.wakeup(args)
+            ftbot.wakeup(input_message.args)
             processed = True
         elif message.content.startswith('!replyrate'):
             try:
@@ -62,40 +51,19 @@ def on_message(message):
                 yield from client.send_message(message.channel, 'Command Syntax error.')
             processed = True
 
+        # If the command was not handled
         if not processed:
-            if str(message.author) == CONFIG_DISCORD_OWNER:
-                args['is_owner'] = True
-                ftbot.process_message(message.content, args)
-            else:
-                args['is_owner'] = False
-                ftbot.process_message(message.content, args)
+            yield from client.send_message(message.channel, "Unknown Command: %s" % message.content)
+            return
+
+    # Hand the message off to the markov layer
     else:
-
-        if args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
-            args['always_reply'] = True
-
-        for msg in message.content.split("\n"):
-
-            if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
-                args['mentioned'] = True
-            else:
-                args['mentioned'] = False
-
-            # Treat mentioning another user as a single word
-            msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
-
-            # Don't learn from private messages
-            if message.server is not None:
-                args['learning'] = True
-                ftbot.process_message(msg, args)
-            else:
-                args['learning'] = False
-                ftbot.process_message(msg, args)
+        ftbot.process_message(input_message)
 
 
-loop = asyncio.get_event_loop()
 
 print("Starting FTBot")
+loop = asyncio.get_event_loop()
 ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (

@@ -1,11 +1,8 @@
 from config import *
-import pandas as pd
 import csv
-import string
 import re
 import pandas as pd
 import tensorflow as tf
-import tempfile
 
 
 def file_to_utf8(path):
@@ -82,10 +79,7 @@ def letter_symbol_ratio(line):
     upper_count = 0.0
     lower_count = 0.0
 
-    lower_count = len(re.findall(r"[a-z]+", line))
-    upper_count = len(re.findall(r"[A-Z]+", line))
-
-    letter_count = lower_count + upper_count
+    letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
 
     return letter_count / char_count
 
@@ -220,6 +214,6 @@ if __name__ == '__main__':
         reaction.print_evaluation(data_path)
 
     if True:
-        classify = ['lol', 'haha', 'llooolololo', 'oh hi mark','llllll','oooooo','wwwwtttt']
+        classify = ['roflcopter','wat','lol', 'haha', 'llooolololo', 'oh hi mark','llllll','oooooo','wwwwtttt']
         for idx, is_aol_speak in enumerate(reaction.classify_data(classify)):
             print("%s - %s" % (is_aol_speak, classify[idx]))

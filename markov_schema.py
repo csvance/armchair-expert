@@ -4,6 +4,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigI
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
@@ -11,9 +12,10 @@ Base = declarative_base()
 class Word(Base):
     __tablename__ = "word"
     id = Column(Integer, primary_key=True)
-    text = Column(String(64), nullable=False, unique=True)
+    text = Column(String(256), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
-    pos = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    pos_id = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    pos = relationship("Pos")
     rating = Column(Integer, nullable=False, default=1)
 
     def __repr__(self):
@@ -23,35 +25,41 @@ class Word(Base):
 class WordNeighbor(Base):
     __tablename__ = "wordneighbor"
     id = Column(Integer, primary_key=True)
-    word = Column(Integer, ForeignKey('word.id'), nullable=False)
-    neighbor = Column(Integer, ForeignKey('word.id'), nullable=False)
-    count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, nullable=False, default=1)
+    a_id = Column(Integer, ForeignKey('word.id'), nullable=False)
+    b_id = Column(Integer, ForeignKey('word.id'), nullable=False)
+    a = relationship("Word",foreign_keys=[a_id])
+    b = relationship("Word",foreign_keys=[b_id])
+    count = Column(Integer, nullable=False, default=0)
+    rating = Column(Integer, nullable=False, default=0)
 
 
 class Pos(Base):
     __tablename__ = "pos"
     id = Column(Integer, primary_key=True)
     text = Column(String(16), nullable=False, unique=True)
-    count = Column(Integer, nullable=False, default=1)
+    count = Column(Integer, nullable=False, default=0)
 
 
 class PosRelation(Base):
     __tablename__ = "posrelation"
     id = Column(Integer, primary_key=True)
-    a = Column(Integer, ForeignKey('pos.id'), nullable=False)
-    b = Column(Integer, ForeignKey('pos.id'), nullable=False)
-    count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, nullable=False, default=1)
+    a_id = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    b_id = Column(Integer, ForeignKey('pos.id'), nullable=False)
+    a = relationship("Pos",foreign_keys=[a_id])
+    b = relationship("Pos",foreign_keys=[b_id])
+    count = Column(Integer, nullable=False, default=0)
+    rating = Column(Integer, nullable=False, default=0)
 
 
 class WordRelation(Base):
     __tablename__ = "wordrelation"
     id = Column(Integer, primary_key=True)
-    a = Column(Integer, ForeignKey('word.id'), nullable=False)
-    b = Column(Integer, ForeignKey('word.id'), nullable=False)
-    count = Column(Integer, nullable=False, default=1)
-    rating = Column(Integer, nullable=False, default=1)
+    a_id = Column(Integer, ForeignKey('word.id'), nullable=False)
+    b_id = Column(Integer, ForeignKey('word.id'), nullable=False)
+    a = relationship("Word",foreign_keys=[a_id])
+    b = relationship("Word",foreign_keys=[a_id])
+    count = Column(Integer, nullable=False, default=0)
+    rating = Column(Integer, nullable=False, default=0)
 
 
 class Line(Base):
@@ -69,7 +77,7 @@ class URL(Base):
     __tablename__ = "url"
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    text = Column(String(256), nullable=False, unique=True)
+    text = Column(String(512), nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
 
