@@ -85,16 +85,24 @@ class MessageBase(object):
     def load_pos(self, session, nlp):
         for sentence in self.sentences:
             # First, load POS
+
+            pos_a = None
+            pos_b = None
+
             for word_index, word in enumerate(sentence):
 
                 word['pos_text'] = self.nlp_pos_query(nlp, word['word_text'])
 
                 # Check if pos exists already
-                pos_a = session.query(Pos).filter(Pos.text == word['pos_text']).first()
-                if pos_a is None:
-                    pos_a = Pos(text=word['pos_text'])
-                    session.add(pos_a)
-                    session.commit()
+                if not pos_b:
+                    pos_a = session.query(Pos).filter(Pos.text == word['pos_text']).first()
+                    if pos_a is None:
+                        pos_a = Pos(text=word['pos_text'])
+                        session.add(pos_a)
+                        session.commit()
+                else:
+                    pos_a = pos_b
+
                 word['pos'] = pos_a
 
                 if word_index >= len(sentence) - 1:
@@ -121,14 +129,20 @@ class MessageBase(object):
     def load_words(self, session, nlp):
         for sentence in self.sentences:
 
+            word_a = None
+            word_b = None
+
             # Load words and relationships
             for word_index, word in enumerate(sentence):
 
-                word_a = session.query(Word).filter(Word.text == word['word_text']).first()
-                if word_a is None:
-                    word_a = Word(text=word['word_text'], pos_id=word['pos'].id)
-                    session.add(word_a)
-                    session.commit()
+                if not word_b:
+                    word_a = session.query(Word).filter(Word.text == word['word_text']).first()
+                    if word_a is None:
+                        word_a = Word(text=word['word_text'], pos_id=word['pos'].id)
+                        session.add(word_a)
+                        session.commit()
+                else:
+                    word_a = word_b
                 word['word'] = word_a
 
                 # If we are on the last word, there is no word b or a->b relationship

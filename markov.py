@@ -558,7 +558,6 @@ class MarkovAI(object):
                 # Offset timestamp by one second for database ordering
                 reply_time_db = input_msg.args['timestamp'] + timedelta(seconds=1)
 
-
                 line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_msg.args['server']),
                                  channel=str(input_msg.args['channel']), timestamp=reply_time_db)
                 self.session.add(line)
