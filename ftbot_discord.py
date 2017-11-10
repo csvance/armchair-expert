@@ -37,11 +37,11 @@ def on_message(message):
 
         command_message = MessageInputCommand(message=message)
 
-        if message.content.startswith('!shutup'):
+        if message.content.startswith(CONFIG_COMMAND_TOKEN + 'shutup'):
             ftbot.shutup(command_message.args)
-        elif message.content.startswith('!wakeup'):
+        elif message.content.startswith(CONFIG_COMMAND_TOKEN + 'wakeup'):
             ftbot.wakeup(command_message.args)
-        elif message.content.startswith('!replyrate'):
+        elif message.content.startswith(CONFIG_COMMAND_TOKEN + 'replyrate'):
             try:
                 ftbot.replyrate = int(message.content.split(" ")[1])
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)

@@ -170,17 +170,17 @@ class MarkovAI(object):
 
         result = None
 
-        if command_message.message_raw.startswith("!words"):
+        if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "stats"):
             result = self.cmd_stats()
 
-        if command_message.message_raw.startswith("!essay"):
+        if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "essay"):
             result = self.essay(command_message)
 
         if command_message.args['is_owner'] is False:
             return result
 
         # Admin Only Commands
-        if command_message.message_raw.startswith("!clean"):
+        if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "clean"):
             self.clean_db()
 
         return result
