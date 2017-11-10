@@ -475,15 +475,20 @@ class MarkovAI(object):
         # Uprate words and relations
         for sentence_index, sentence in enumerate(server_last_replies['sentences']):
             for word_index, word in enumerate(sentence):
+
                 word_a = word['word']
+
                 if word_a.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                     word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
-                    if word_index <= len(sentence) - 1:
-                        word_b = word['word_a->b'].b
-                        if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
-                            word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
-                            a_b_assoc = word['word_a->b']
-                            a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
+
+                    if word_index >= len(sentence) - 1:
+                        continue
+
+                    word_b = word['word_a->b'].b
+                    if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
+                        word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
+                        a_b_assoc = word['word_a->b']
+                        a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
 
         # Uprate neighborhood
         for sentence in server_last_replies['sentences']:
@@ -516,73 +521,73 @@ class MarkovAI(object):
 
             self.session.commit()
 
-    def process_msg(self, io_module, input_msg, replyrate=0, owner=False, rebuild_db=False):
+    def process_msg(self, io_module, input_message, replyrate=0, owner=False, rebuild_db=False):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
             return
 
         # Learn URLs
-        self.learn_url(input_msg)
+        self.learn_url(input_message)
 
         # Log this line only if we are not rebuilding the database
         if not rebuild_db:
 
             # Sometimes server_id and channel can be none
             server_id = None
-            if input_msg.args['server'] is not None:
-                server_id = server_id = int(input_msg.args['server'])
+            if input_message.args['server'] is not None:
+                server_id = server_id = int(input_message.args['server'])
 
             channel = None
-            if input_msg.args['channel'] is not None:
-                channel = str(input_msg.args['channel'])
+            if input_message.args['channel'] is not None:
+                channel = str(input_message.args['channel'])
 
             self.session.add(
-                Line(text=input_msg.message_raw, author=input_msg.args['author'],
+                Line(text=input_message.message_raw, author=input_message.args['author'],
                      server_id=server_id, channel=channel,
-                     timestamp=input_msg.args['timestamp']))
+                     timestamp=input_message.args['timestamp']))
             self.session.commit()
 
         # Populate ORM and NLP POS data
-        input_msg.load(self.session, self.nlp)
+        input_message.load(self.session, self.nlp)
 
         # Decide on a sentence in which to potentially reply
-        reply_sentence = random.randrange(0, len(input_msg.sentences))
+        reply_sentence = random.randrange(0, len(input_message.sentences))
 
-        for sentence_index, sentence in enumerate(input_msg.sentences):
+        for sentence_index, sentence in enumerate(input_message.sentences):
 
             # Don't learn from ourself
-            if input_msg.args['learning'] and not input_msg.args['author'] == CONFIG_DISCORD_ME:
+            if input_message.args['learning'] and not input_message.args['author'] == CONFIG_DISCORD_ME:
 
                 # Only want to check reaction when message on a server
-                if input_msg.args['server'] is not None:
-                    self.check_reaction(input_msg)
+                if input_message.args['server'] is not None:
+                    self.check_reaction(input_message)
 
-                self.learn(input_msg)
+                self.learn(input_message)
 
             # Don't reply when rebuilding the database
             if not rebuild_db and reply_sentence == sentence_index and (
-                            replyrate > random.randrange(0, 100) or input_msg.args['always_reply']):
+                            replyrate > random.randrange(0, 100) or input_message.args['always_reply']):
 
-                reply = self.reply(input_msg, sentence_index)
+                reply = self.reply(input_message, sentence_index)
 
                 if reply is None:
                     continue
 
                 # Add response to lines
                 # Offset timestamp by one second for database ordering
-                reply_time_db = input_msg.args['timestamp'] + timedelta(seconds=1)
+                reply_time_db = input_message.args['timestamp'] + timedelta(seconds=1)
 
-                line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_msg.args['server']),
-                            channel=str(input_msg.args['channel']), timestamp=reply_time_db)
+                line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_message.args['server']),
+                            channel=str(input_message.args['channel']), timestamp=reply_time_db)
                 self.session.add(line)
                 self.session.commit()
 
                 output_message = MessageOutput(line=line)
 
                 # We want the discord channel object to respond to and the original timestamp
-                output_message.args['channel'] = input_msg.args['channel']
-                output_message.args['timestamp'] = input_msg.args['timestamp']
+                output_message.args['channel'] = input_message.args['channel']
+                output_message.args['timestamp'] = input_message.args['timestamp']
 
                 # Load the reply database objects for reaction tracking
                 output_message.load(self.session, self.nlp)
@@ -592,5 +597,5 @@ class MarkovAI(object):
                 io_module.output(output_message)
 
             # If the author is us while we are rebuilding the DB, update the reply tracker
-            elif rebuild_db and input_msg.args['author'] == CONFIG_DISCORD_ME:
-                self.reply_tracker.bot_reply(output_message)
+            elif rebuild_db and input_message.args['author'] == CONFIG_DISCORD_ME:
+                self.reply_tracker.bot_reply(input_message)
