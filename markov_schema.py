@@ -31,7 +31,7 @@ class WordNeighbor(Base):
     b = relationship("Word",foreign_keys=[b_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    Index('idx_wordneighbor_a_b','a_id','b_id',unique=True)
+    idx_wordneighbor_a_b = Index('idx_wordneighbor_a_b','a_id','b_id',unique=True)
 
 
 class Pos(Base):
@@ -50,7 +50,7 @@ class PosRelation(Base):
     b = relationship("Pos",foreign_keys=[b_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    Index('idx_posrelation_a_b','a_id','b_id',unique=True)
+    idx_posrelation_a_b = Index('idx_posrelation_a_b','a_id','b_id',unique=True)
 
 
 class WordRelation(Base):
@@ -62,7 +62,7 @@ class WordRelation(Base):
     b = relationship("Word",foreign_keys=[a_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    Index('idx_wordrelation_a_b','a_id','b_id',unique=True)
+    idx_wordrelation_a_b = Index('idx_wordrelation_a_b','a_id','b_id',unique=True)
 
 
 
@@ -71,9 +71,8 @@ class Line(Base):
     __tablename__ = "line"
     id = Column(Integer, index=True, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    source_id = Column(Integer, nullable=False, default=1)
-    server_id = Column(BigInteger, nullable=False)
-    channel = Column(String(32), nullable=False)
+    server_id = Column(BigInteger, nullable=True)
+    channel = Column(String(32), nullable=True)
     author = Column(String(32), nullable=False)
     text = Column(Text, nullable=False)
 

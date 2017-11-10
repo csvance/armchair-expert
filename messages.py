@@ -7,10 +7,11 @@ import emoji
 import re
 from markov_schema import *
 import numpy as np
+import datetime
 
 
 class MessageBase(object):
-    def __init__(self, message=None, line=None):
+    def __init__(self, message=None, line=None, text=None):
         # Class Data
         self.message = message
         self.line = line
@@ -23,11 +24,69 @@ class MessageBase(object):
         self.re_emoji_emojify = re.compile(r":[a-z]+:")
         self.re_emoji_custom = re.compile(r"<:[a-z]+:[0-9]+>")
 
+        args_processed = False
+
+        # Create args based on the type of message
+        if text:
+            self.message_raw = text
+            self.args_from_text(text)
+        elif line:
+            self.message_raw = line.text
+            self.args_from_line(line)
+        elif message:
+            self.message_raw = message.content
+            self.args_from_message(message)
+        else:
+            raise ValueError('text, line, and message cannot be None')
+
+        self.process(self.message_raw)
+
+    def args_from_text(self, text):
+        self.args = {'learning': True, 'mentioned': False, 'channel': None, 'server': None, 'author': 'text_loader',
+                     'always_reply': False, 'author_mention': None, 'timestamp': datetime.datetime.now()}
+
     # From line db table. Only called when rebuilding the database
     def args_from_line(self, line):
         self.args = {'timestamp': line.timestamp, 'channel': line.channel,
                      'server': line.server_id, 'author': line.author, 'always_reply': False,
                      'mentioned': False, 'author_mention': None, 'learning': True}
+
+    # From discord client
+    def args_from_message(self, message):
+
+        # Check for Private Message
+        server = None
+        try:
+            server = message.channel.server.id
+        except AttributeError:
+            server = 0
+
+        self.args = {'channel': message.channel,
+                     'author': str(message.author),
+                     'author_mention': "<@%s>" % message.author.id,
+                     'server': server,
+                     'always_reply': False,
+                     'timestamp': message.timestamp}
+
+        # Fill in the rest of the flags based on the raw content
+        if message.content.find(CONFIG_DISCORD_MENTION_ME) != -1:
+            self.args['mentioned'] = True
+        else:
+            self.args['mentioned'] = False
+
+        if str(message.author) == CONFIG_DISCORD_OWNER:
+            self.args['is_owner'] = True
+        else:
+            self.args['is_owner'] = False
+
+        if self.args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
+            self.args['always_reply'] = True
+
+        # Don't learn from private messages or ourself
+        if message.server is not None and str(self.args['author']) != CONFIG_DISCORD_ME:
+            self.args['learning'] = True
+        else:
+            self.args['learning'] = False
 
     def filter_line(self, raw_message):
         pass
@@ -219,19 +278,8 @@ class MessageBase(object):
 # A message from the bot
 class MessageOutput(MessageBase):
     # message is just a string, not a discord message object
-    def __init__(self, line=None, text=None, channel=None):
-        MessageBase.__init__(self, line=line)
-
-        if text is None and line is None:
-            raise ValueError('text and line cannot both be None!')
-        elif text is not None:
-            self.args['channel'] = channel
-            self.message_raw = text
-        elif line is not None:
-            self.message_raw = line.text
-            self.args_from_line(line)
-
-        self.process(self.message_raw)
+    def __init__(self, line=None, text=None):
+        MessageBase.__init__(self, line=line, text=Text)
 
     def filter_line(self, raw_message):
         return emoji.emojize(raw_message)
@@ -241,60 +289,10 @@ class MessageOutput(MessageBase):
 class MessageInput(MessageBase):
     # message is a discord message object
     # line is a orm object for the line table
-    def __init__(self, message=None, line=None):
-
-        MessageBase.__init__(self, message, line)
-
-        if message is None and line is None:
-            raise ValueError('message and line cannot both be None!')
-        elif message is not None:
-            self.message_raw = message.content
-            self.args_from_message(message)
-        elif line is not None:
-            self.message_raw = line.text
-            self.args_from_line(line)
-
-        self.process(self.message_raw)
-
-    # From discord client
-    def args_from_message(self, message):
-
-        # Check for Private Message
-        server = None
-        try:
-            server = message.channel.server.id
-        except AttributeError:
-            server = 0
-
-        self.args = {'channel': message.channel,
-                     'author': str(message.author),
-                     'author_mention': "<@%s>" % message.author.id,
-                     'server': server,
-                     'always_reply': False,
-                     'timestamp': message.timestamp}
-
-        # Fill in the rest of the flags based on the raw content
-        if message.content.find(CONFIG_DISCORD_MENTION_ME) != -1:
-            self.args['mentioned'] = True
-        else:
-            self.args['mentioned'] = False
-
-        if str(message.author) == CONFIG_DISCORD_OWNER:
-            self.args['is_owner'] = True
-        else:
-            self.args['is_owner'] = False
-
-        if self.args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
-            self.args['always_reply'] = True
-
-        # Don't learn from private messages or ourself
-        if message.server is not None and str(self.args['author']) != CONFIG_DISCORD_ME:
-            self.args['learning'] = True
-        else:
-            self.args['learning'] = False
+    def __init__(self, message=None, line=None, text=None):
+        MessageBase.__init__(self, message=message, line=line, text=text)
 
     def filter_line(self, raw_message):
-
         message = raw_message
 
         # Replace mention with nick
