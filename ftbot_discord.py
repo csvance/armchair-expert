@@ -70,7 +70,8 @@ print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=
 CONFIG_DISCORD_CLIENT_ID))
 
 pool = futures.ThreadPoolExecutor(1)
-loop.run_in_executor(pool, ftbot.message_handler)
+loop.run_in_executor(pool, client.run, CONFIG_DISCORD_TOKEN)
 
 loop.create_task(reply_queue_handler())
-client.run(CONFIG_DISCORD_TOKEN)
+
+ftbot.message_handler()
