@@ -5,100 +5,137 @@ import pandas as pd
 import tensorflow as tf
 
 
-def funny_emoji_ratio(line):
+class MLFeatureAnalyzer(object):
+    def __init__(self, data):
+        self.data = data
 
-    emoji_len = 0.
+    def analyze(self):
 
-    for emoji in CONFIG_MARKOV_REACTION_EMOJIS:
-        emoji_len += line.count(emoji) * len(emoji)
+        results = []
+        for row in self.data:
+            results.append(self.analyze_row(row))
 
-    return emoji_len / len(line)
+        return results
 
-
-def repeated_letter_ratio(line):
-
-    repeated_count = 0
-    not_repeated_count = 0
-
-    for idx,c in enumerate(line):
-        if idx != len(line)-1:
-            if c == line[idx+1]:
-                repeated_count += 1
-            else:
-                not_repeated_count += 1
-
-    total_count = repeated_count + not_repeated_count
-
-    if total_count != 0:
-        return repeated_count / float(total_count)
-    else:
-        return 0.0
+    def analyze_row(self,row):
+        pass
 
 
-def aol_letter_ratio(line):
-    txt_lower = line.lower()
+class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
+    def __init__(self,data):
+        MLFeatureAnalyzer.__init__(self,data)
 
-    max_ratio = 0.0
+    def analyze_row(self,line):
 
-    signal_sum = 0
-    noise_sum = 0
+        # Line Length
+        line['length'] = len(line['text'])
 
-    for check_letters in CONFIG_MARKOV_REACTION_CHARS:
-        letters_found = {}
-        for c in check_letters:
-            if c in line:
-                letters_found[c] = True
-            signal_sum += txt_lower.count(c)
+        # Whitespace
+        line['whitespace'] = line['text'].count(" ")
 
-        found_ratio = len(letters_found) / len(check_letters)
+        line['letter_diversity_ratio'] = AOLReactionFeatureAnalyzer.letter_diversity_ratio(line['text'])
+        line['upper_lower_ratio'] = AOLReactionFeatureAnalyzer.upper_lower_ratio(line['text'])
+        line['letter_symbol_ratio'] = AOLReactionFeatureAnalyzer.letter_symbol_ratio(line['text'])
+        line['aol_letter_ratio'] = AOLReactionFeatureAnalyzer.aol_letter_ratio(line['text'])
+        line['repeated_letter_ratio'] = AOLReactionFeatureAnalyzer.repeated_letter_ratio(line['text'])
+        line['funny_emoji_ratio'] = AOLReactionFeatureAnalyzer.funny_emoji_ratio(line['text'])
 
-        current_ratio = (found_ratio*signal_sum) / len(txt_lower)
+        return line
 
-        max_ratio = max_ratio if current_ratio < max_ratio else current_ratio
+    @staticmethod
+    def funny_emoji_ratio(line):
+
+        emoji_len = 0.
+
+        for emoji in CONFIG_MARKOV_REACTION_EMOJIS:
+            emoji_len += line.count(emoji) * len(emoji)
+
+        return emoji_len / len(line)
+
+    @staticmethod
+    def repeated_letter_ratio(line):
+
+        repeated_count = 0
+        not_repeated_count = 0
+
+        for idx, c in enumerate(line):
+            if idx != len(line) - 1:
+                if c == line[idx + 1]:
+                    repeated_count += 1
+                else:
+                    not_repeated_count += 1
+
+        total_count = repeated_count + not_repeated_count
+
+        if total_count != 0:
+            return repeated_count / float(total_count)
+        else:
+            return 0.0
+
+    @staticmethod
+    def aol_letter_ratio(line):
+        txt_lower = line.lower()
+
+        max_ratio = 0.0
 
         signal_sum = 0
+        noise_sum = 0
 
-    return max_ratio
+        for check_letters in CONFIG_MARKOV_REACTION_CHARS:
+            letters_found = {}
+            for c in check_letters:
+                if c in line:
+                    letters_found[c] = True
+                signal_sum += txt_lower.count(c)
 
+            found_ratio = len(letters_found) / len(check_letters)
 
-def upper_lower_ratio(line):
-    letter_count = 0.0
-    upper_count = 0.0
-    lower_count = 0.0
+            current_ratio = (found_ratio * signal_sum) / len(txt_lower)
 
-    lower_count = len(re.findall(r"[a-z]+", line))
-    upper_count = len(re.findall(r"[A-Z]+", line))
+            max_ratio = max_ratio if current_ratio < max_ratio else current_ratio
 
-    letter_count = lower_count + upper_count
+            signal_sum = 0
 
-    if letter_count > 0:
-        return upper_count / letter_count
-    else:
-        return 0.0
+        return max_ratio
 
+    @staticmethod
+    def upper_lower_ratio(line):
+        letter_count = 0.0
+        upper_count = 0.0
+        lower_count = 0.0
 
-def letter_symbol_ratio(line):
-    char_count = len(line)
-    letter_count = 0.0
-    upper_count = 0.0
-    lower_count = 0.0
+        lower_count = len(re.findall(r"[a-z]+", line))
+        upper_count = len(re.findall(r"[A-Z]+", line))
 
-    letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
+        letter_count = lower_count + upper_count
 
-    return letter_count / char_count
+        if letter_count > 0:
+            return upper_count / letter_count
+        else:
+            return 0.0
 
+    @staticmethod
+    def letter_symbol_ratio(line):
+        char_count = len(line)
+        letter_count = 0.0
+        upper_count = 0.0
+        lower_count = 0.0
 
-def letter_diversity_ratio(line):
-    chars = {}
+        letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
 
-    for c in line:
-        try:
-            chars[c] += 1
-        except KeyError:
-            chars[c] = 1
+        return letter_count / char_count
 
-    return len(chars) / len(line)
+    @staticmethod
+    def letter_diversity_ratio(line):
+        chars = {}
 
+        for c in line:
+            try:
+                chars[c] += 1
+            except KeyError:
+                chars[c] = 1
+
+        return len(chars) / len(line)
 
 class AOLReactionModel(object):
     def __init__(self, model_dir="models/aol-reaction-model/"):
@@ -136,7 +173,8 @@ class AOLReactionModel(object):
                     if row[0] != '':
                         input_data.append({'reaction': int(row[0]), 'text': row[1]})
 
-            self.compute_stats(input_data)
+            analyzer = AOLReactionFeatureAnalyzer(input_data)
+            input_data = analyzer.analyze()
 
             pd_eval_data = pd.DataFrame.from_dict(input_data)
             pd_eval_data = pd_eval_data.dropna(how="any", axis=0)
@@ -159,7 +197,8 @@ class AOLReactionModel(object):
         for row in data:
             data_rows.append({'text': row})
 
-        data_rows = self.compute_stats(data_rows)
+        analyzer = AOLReactionFeatureAnalyzer(data_rows)
+        data_rows = analyzer.analyze()
 
         pd_eval_data = pd.DataFrame.from_dict(data_rows)
 
@@ -191,20 +230,3 @@ class AOLReactionModel(object):
     def train(self, file_path, epochs=1):
         self.classifier.train(input_fn=self.training_file_input_fn(file_path, num_epochs=epochs, shuffle=True),
                               steps=None)
-
-    def compute_stats(self, data):
-        for line in data:
-            # Line Length
-            line['length'] = len(line['text'])
-
-            # Whitespace
-            line['whitespace'] = line['text'].count(" ")
-
-            line['letter_diversity_ratio'] = letter_diversity_ratio(line['text'])
-            line['upper_lower_ratio'] = upper_lower_ratio(line['text'])
-            line['letter_symbol_ratio'] = letter_symbol_ratio(line['text'])
-            line['aol_letter_ratio'] = aol_letter_ratio(line['text'])
-            line['repeated_letter_ratio'] = repeated_letter_ratio(line['text'])
-            line['funny_emoji_ratio'] = funny_emoji_ratio(line['text'])
-
-        return data
