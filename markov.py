@@ -33,7 +33,7 @@ class BotReplyTracker(object):
     def bot_reply(self, output_message):
         self.branch_(output_message.args)
         self.replies[int(output_message.args['server'])][str(output_message.args['channel'])] = {
-            'sentences': [output_message.sentences],
+            'sentences': output_message.sentences,
             'timestamp': output_message.args['timestamp'], 'fresh': True}
 
     # Called whenever a human sends a message to a channel
@@ -477,7 +477,7 @@ class MarkovAI(object):
                 word_a = word['word']
                 if word_a.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                     word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
-                    if word_index != len(sentence) - 1:
+                    if word_index <= len(sentence) - 1:
                         word_b = word['word_a->b'].b
                         if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                             word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
@@ -569,6 +569,9 @@ class MarkovAI(object):
                 # We want the discord channel object to respond to and the original timestamp
                 output_message.args['channel'] = input_msg.args['channel']
                 output_message.args['timestamp'] = input_msg.args['timestamp']
+
+                # Load the reply database objects for reaction tracking
+                output_message.load(self.session,self.nlp)
 
                 self.reply_tracker.bot_reply(output_message)
 
