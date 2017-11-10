@@ -12,12 +12,14 @@ Inspired by old IRC bots that created a markov chain from chat text, regurgitati
 - python 3.6
 
 # Dependencies
-- sqlalchemy
-- discord.py
-- janus
-- numpy
 - spacy (Uses 'en' dataset by default, you will need to download this in addition to installing spacy: 'python -m spacy download en')
 - tensorflow
+- sqlalchemy
+- discord.py
+- numpy
+- pandas
+- janus
+- emoji
 
 # Database
 Currently supports both MySQL and SQLite as DB backends. I recommend using MySQL as the performance is orders of magnitude better.
