@@ -95,7 +95,7 @@ config.py
 *.bak
 *.db
 serve/*
-learning/*
+training/*
 backup/*
 models/eval/*
 models/events.out*
