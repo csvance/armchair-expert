@@ -460,7 +460,7 @@ class MarkovAI(object):
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.classify_data(input_msg.message_filtered)[0]:
+        if self.reaction_model.classify_data([input_msg.message_filtered])[0]:
             self.handle_reaction(input_msg)
             return
 
