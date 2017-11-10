@@ -8,8 +8,9 @@ import re
 from markov_schema import *
 import numpy as np
 
+
 class MessageBase(object):
-    def __init__(self,message=None,line=None):
+    def __init__(self, message=None, line=None):
         # Class Data
         self.message = message
         self.line = line
@@ -28,7 +29,7 @@ class MessageBase(object):
                      'server': line.server_id, 'author': line.author, 'always_reply': False,
                      'mentioned': False, 'author_mention': None, 'learning': True}
 
-    def filter_line(self,raw_message):
+    def filter_line(self, raw_message):
         pass
 
     def process_word(self, word):
@@ -81,8 +82,7 @@ class MessageBase(object):
 
         return pos
 
-
-    def load_pos(self,session, nlp):
+    def load_pos(self, session, nlp):
         for sentence in self.sentences:
             # First, load POS
             for word_index, word in enumerate(sentence):
@@ -118,7 +118,7 @@ class MessageBase(object):
                     session.commit()
                 word['pos_a->b'] = pos_a_b
 
-    def load_words(self,session,nlp):
+    def load_words(self, session, nlp):
         for sentence in self.sentences:
 
             # Load words and relationships
@@ -126,7 +126,7 @@ class MessageBase(object):
 
                 word_a = session.query(Word).filter(Word.text == word['word_text']).first()
                 if word_a is None:
-                    word_a = Word(text=word['word_text'], pos_id = word['pos'].id)
+                    word_a = Word(text=word['word_text'], pos_id=word['pos'].id)
                     session.add(word_a)
                     session.commit()
                 word['word'] = word_a
@@ -139,7 +139,7 @@ class MessageBase(object):
                 word_b = session.query(Word).filter(
                     Word.text == sentence[word_index + 1]['word_text']).first()
                 if word_b is None:
-                    word_b = Word(text=sentence[word_index + 1]['word_text'], pos_id = sentence[word_index + 1]['pos'].id)
+                    word_b = Word(text=sentence[word_index + 1]['word_text'], pos_id=sentence[word_index + 1]['pos'].id)
                     session.add(word_b)
                     session.commit()
                 sentence[word_index + 1]['word'] = word_b
@@ -152,11 +152,17 @@ class MessageBase(object):
                     session.commit()
                 word['word_a->b'] = word_a_b
 
-    def load_neighbors(self,session,nlp):
+    def load_neighbors(self, session, nlp):
 
         for sentence in self.sentences:
 
-            chunks = np.array_split(sentence,len(sentence) / float(CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK))
+            num_chunks = None
+            if len(sentence) <= CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK:
+                num_chunks = 1
+            else:
+                num_chunks = len(sentence) / float(CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
+
+            chunks = np.array_split(sentence, num_chunks)
 
             for chunk in chunks:
 
@@ -168,8 +174,7 @@ class MessageBase(object):
                     if word['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                         continue
 
-
-                    for neighbor_index,potential_neighbor in enumerate(chunk):
+                    for neighbor_index, potential_neighbor in enumerate(chunk):
 
                         if word['word'].id != potential_neighbor['word'].id:
 
@@ -191,15 +196,14 @@ class MessageBase(object):
 
     # Called when ORM objects are needed
     def load(self, session, nlp):
-            self.load_pos(session,nlp)
-            self.load_words(session,nlp)
-            self.load_neighbors(session,nlp)
-            session.commit()
+        self.load_pos(session, nlp)
+        self.load_words(session, nlp)
+        self.load_neighbors(session, nlp)
+        session.commit()
 
 
 # A message from the bot
 class MessageOutput(MessageBase):
-
     # message is just a string, not a discord message object
     def __init__(self, line=None, text=None, channel=None):
         MessageBase.__init__(self, line=line)
@@ -215,14 +219,12 @@ class MessageOutput(MessageBase):
 
         self.process(self.message_raw)
 
-    def filter_line(self,raw_message):
+    def filter_line(self, raw_message):
         return emoji.emojize(raw_message)
-
 
 
 # A message received from discord or loaded from the database line table
 class MessageInput(MessageBase):
-
     # message is a discord message object
     # line is a orm object for the line table
     def __init__(self, message=None, line=None):
@@ -286,7 +288,7 @@ class MessageInput(MessageBase):
 
         # Extract URLs
         self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                              message)
+                                      message)
 
         # Remove URLs
         message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
@@ -302,4 +304,3 @@ class MessageInput(MessageBase):
         message = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
 
         return message
-
