@@ -9,7 +9,6 @@ from markov_schema import *
 import numpy as np
 import datetime
 
-
 class MessageBase(object):
     def __init__(self, message=None, line=None, text=None):
         # Class Data
@@ -23,8 +22,6 @@ class MessageBase(object):
         # Helpers
         self.re_emoji_emojify = re.compile(r":[a-z]+:")
         self.re_emoji_custom = re.compile(r"<:[a-z]+:[0-9]+>")
-
-        args_processed = False
 
         # Create args based on the type of message
         if text:
@@ -315,3 +312,10 @@ class MessageInput(MessageBase):
         message = emoji.demojize(message)
 
         return message
+
+
+class MessageInputCommand(MessageInput):
+    def __init__(self, message=None, line=None, text=None):
+        MessageInput.__init__(self, message=message, line=line, text=text)
+
+

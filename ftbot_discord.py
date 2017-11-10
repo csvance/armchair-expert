@@ -30,35 +30,30 @@ def on_message(message):
     elif str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
         return
 
-    input_message = MessageInput(message=message)
+
 
     # Handle Comands
     if message.content.startswith("!"):
 
-        processed = False
+        command_message = MessageInputCommand(message=message)
 
         if message.content.startswith('!shutup'):
-            ftbot.shutup(input_message.args)
-            processed = True
+            ftbot.shutup(command_message.args)
         elif message.content.startswith('!wakeup'):
-            ftbot.wakeup(input_message.args)
-            processed = True
+            ftbot.wakeup(command_message.args)
         elif message.content.startswith('!replyrate'):
             try:
                 ftbot.replyrate = int(message.content.split(" ")[1])
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
-            processed = True
 
-        # If the command was not handled
-        if not processed:
-            yield from client.send_message(message.channel, "Unknown Command: %s" % message.content)
-            return
+        else:
+            ftbot.process_message(command_message)
 
     # Hand the message off to the markov layer
     else:
-        ftbot.process_message(input_message)
+        ftbot.process_message(MessageInput(message=message))
 
 
 

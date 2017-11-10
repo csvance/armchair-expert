@@ -166,26 +166,30 @@ class MarkovAI(object):
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
             words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
-    def command(self, txt, args=None):
+    def command(self, command_message):
 
         result = None
 
-        if txt.startswith("!words"):
+        if command_message.message_raw.startswith("!words"):
             result = self.cmd_stats()
 
-        if txt.startswith("!essay"):
-            result = self.essay(txt.split(" ")[1], args)
+        if command_message.message_raw.startswith("!essay"):
+            result = self.essay(command_message)
 
-        if args['is_owner'] is False:
+        if command_message.args['is_owner'] is False:
             return result
 
         # Admin Only Commands
-        if txt.startswith("!clean"):
+        if command_message.message_raw.startswith("!clean"):
             self.clean_db()
 
         return result
 
-    def essay(self, subject, args):
+    def essay(self, command_message):
+
+        command_message.load(self.session, self.nlp)
+
+        subject = command_message.message_raw.split(" ")[1]
 
         def random_punct():
             return [".", "!", "?"][random.randrange(0, 3)]
@@ -196,7 +200,7 @@ class MarkovAI(object):
         for p in range(0, 5):
 
             # Lead In
-            reply = self.reply([s], args, nourl=True)
+            reply = self.reply(command_message, 0, no_url=True)
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
@@ -204,12 +208,19 @@ class MarkovAI(object):
 
             # Body sentences
             for i in range(0, 3):
-                reply = self.reply(reply.split(" "), args, nourl=True)
+
+                feedback_reply_output = MessageOutput(text=reply)
+                feedback_reply_output.args['author_mention'] = command_message.args['author_mention']
+
+                feedback_reply_output.load(self.session,self.nlp)
+
+                reply = self.reply(feedback_reply_output, 0, no_url=True)
                 if reply is None:
                     txt = "I don't know that word well enough!"
                     break
                 txt += reply + random_punct() + " "
-            reply = self.reply([s], args, nourl=True)
+
+            reply = self.reply(command_message, 0, no_url=True)
 
             # Lead Out
             if reply is None:
@@ -220,11 +231,16 @@ class MarkovAI(object):
 
         return txt
 
-    def reply(self, input_message, sentence_index):
+    def reply(self, input_message, sentence_index, no_url=False):
 
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
                             x['word_text'] not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+
+        # TODO: Fix hack
+        if type(input_message) == MessageInputCommand:
+            potential_topics = [x for x in input_message.sentences[sentence_index] if
+                                "essay" not in x['word_text']]
 
         for word in potential_topics:
 
@@ -441,7 +457,7 @@ class MarkovAI(object):
         reply = [word.replace('#nick', input_message.args['author_mention']) for word in reply]
 
         # Add a random URL
-        if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
+        if not no_url and random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
             url = self.session.query(URL).order_by(func.random()).first()
             if url is not None:
                 reply.append(url.text)
@@ -525,6 +541,17 @@ class MarkovAI(object):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
+            return
+
+        # Command message?
+        if type(input_message) == MessageInputCommand:
+            reply = self.command(input_message)
+            if reply:
+                output_message = MessageOutput(text=reply)
+                output_message.args['channel'] = input_message.args['channel']
+                output_message.args['timestamp'] = input_message.args['timestamp']
+
+                io_module.output(output_message)
             return
 
         # Learn URLs
