@@ -39,7 +39,7 @@ class MessageBase(object):
         else:
             raise ValueError('text, line, and message cannot be None')
 
-        self.process(self.message_raw)
+        self.process()
 
     def args_from_text(self, text):
         self.args = {'learning': True, 'mentioned': False, 'channel': None, 'server': None, 'author': 'text_loader',
@@ -113,10 +113,10 @@ class MessageBase(object):
         else:
             return None
 
-    def process(self, raw_message):
+    def process(self):
 
         # Filter at line level
-        self.message_filtered = self.filter_line(raw_message)
+        self.message_filtered = self.filter_line(self.message_raw)
 
         # Split by lines
         for line in self.message_filtered.split("\n"):
@@ -143,7 +143,6 @@ class MessageBase(object):
 
     def load_pos(self, session, nlp):
         for sentence in self.sentences:
-            # First, load POS
 
             pos_a = None
             pos_b = None
@@ -279,13 +278,13 @@ class MessageBase(object):
 class MessageOutput(MessageBase):
     # message is just a string, not a discord message object
     def __init__(self, line=None, text=None):
-        MessageBase.__init__(self, line=line, text=Text)
+        MessageBase.__init__(self, line=line, text=text)
 
     def filter_line(self, raw_message):
         return emoji.emojize(raw_message)
 
 
-# A message received from discord or loaded from the database line table
+# A message received from discord, loaded from the database line table, or from raw text
 class MessageInput(MessageBase):
     # message is a discord message object
     # line is a orm object for the line table
