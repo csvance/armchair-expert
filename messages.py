@@ -154,18 +154,13 @@ class MessageBase(object):
 
     def load_neighbors(self,session,nlp):
 
-        permutations = 0
-
         for sentence in self.sentences:
 
             chunks = np.array_split(sentence,len(sentence) / float(CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK))
 
             for chunk in chunks:
 
-                print("Chunk: %s" % len(chunk))
-
                 for word in chunk:
-                    print(word['word'].text)
 
                     word['word_neighbors'] = []
 
@@ -193,10 +188,6 @@ class MessageBase(object):
                                 session.commit()
 
                             word['word_neighbors'].append(neighbor)
-
-                        permutations += 1
-
-        print(permutations)
 
     # Called when ORM objects are needed
     def load(self, session, nlp):
