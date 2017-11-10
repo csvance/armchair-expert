@@ -104,7 +104,6 @@ class MarkovAI(object):
 
         print("Cleaning DB...")
 
-
         # Subtract Rating by 1
         self.session.execute(update(WordRelation, values={
             WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE}))
@@ -128,7 +127,6 @@ class MarkovAI(object):
             self.session.query(Word).filter(Word.id == result.id).delete()
 
         self.session.commit()
-
 
         print("Cleaning DB Complete!")
 
@@ -306,11 +304,11 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
-                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                     + coalesce(sum(WordRelation.rating),
-                                                0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                        'rating')). \
+                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                          + coalesce(sum(WordRelation.rating),
+                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                             'rating')). \
                 join(word_b, word_b.id == f_id). \
                 join(Pos, Pos.id == word_a.pos_id). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
@@ -322,10 +320,11 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
-                                        (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                            'rating')). \
+                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                              + coalesce(sum(WordRelation.rating),
+                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                                 'rating')). \
                     join(word_b, word_b.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
@@ -380,10 +379,11 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
-                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                     + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                        'rating')). \
+                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                          + coalesce(sum(WordRelation.rating),
+                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                             'rating')). \
                 join(word_a, word_a.id == f_id). \
                 join(Pos, Pos.id == word_b.pos_id). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
@@ -395,10 +395,11 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
-                                        (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                            'rating')). \
+                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                              + coalesce(sum(WordRelation.rating),
+                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                                 'rating')). \
                     join(word_a, word_a.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
@@ -472,8 +473,8 @@ class MarkovAI(object):
         server_last_replies = self.reply_tracker.get_reply(input_msg)
 
         # Uprate words and relations
-        for sentence_index,sentence in enumerate(server_last_replies['sentences']):
-            for word_index,word in enumerate(sentence):
+        for sentence_index, sentence in enumerate(server_last_replies['sentences']):
+            for word_index, word in enumerate(sentence):
                 word_a = word['word']
                 if word_a.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                     word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
@@ -526,9 +527,19 @@ class MarkovAI(object):
 
         # Log this line only if we are not rebuilding the database
         if not rebuild_db:
+
+            # Sometimes server_id and channel can be none
+            server_id = None
+            if input_msg.args['server'] is not None:
+                server_id = server_id = int(input_msg.args['server'])
+
+            channel = None
+            if input_msg.args['channel'] is not None:
+                channel = str(input_msg.args['channel'])
+
             self.session.add(
                 Line(text=input_msg.message_raw, author=input_msg.args['author'],
-                     server_id=int(input_msg.args['server']), channel=str(input_msg.args['channel']),
+                     server_id=server_id, channel=channel,
                      timestamp=input_msg.args['timestamp']))
             self.session.commit()
 
@@ -542,7 +553,11 @@ class MarkovAI(object):
 
             # Don't learn from ourself
             if input_msg.args['learning'] and not input_msg.args['author'] == CONFIG_DISCORD_ME:
-                self.check_reaction(input_msg)
+
+                # Only want to check reaction when message on a server
+                if input_msg.args['server'] is not None:
+                    self.check_reaction(input_msg)
+
                 self.learn(input_msg)
 
             # Don't reply when rebuilding the database
@@ -559,7 +574,7 @@ class MarkovAI(object):
                 reply_time_db = input_msg.args['timestamp'] + timedelta(seconds=1)
 
                 line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_msg.args['server']),
-                                 channel=str(input_msg.args['channel']), timestamp=reply_time_db)
+                            channel=str(input_msg.args['channel']), timestamp=reply_time_db)
                 self.session.add(line)
                 self.session.commit()
 
@@ -570,7 +585,7 @@ class MarkovAI(object):
                 output_message.args['timestamp'] = input_msg.args['timestamp']
 
                 # Load the reply database objects for reaction tracking
-                output_message.load(self.session,self.nlp)
+                output_message.load(self.session, self.nlp)
 
                 self.reply_tracker.bot_reply(output_message)
 
