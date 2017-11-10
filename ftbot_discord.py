@@ -3,9 +3,10 @@ import re
 from concurrent import futures
 
 import discord
-
+import spacy
 from config import *
 from ftbot import *
+from messages import *
 
 client = discord.Client()
 
@@ -13,96 +14,59 @@ client = discord.Client()
 async def reply_queue_handler():
     await client.wait_until_ready()
     while not client.is_closed:
-        reply = await ftbot.get_reply()
-        await client.send_message(reply['channel'], reply['message'])
+        output_message = await ftbot.get_reply()
+        await client.send_message(output_message.args['channel'], output_message.message_filtered)
 
 
 @client.event
 @asyncio.coroutine
 def on_message(message):
+
+    # Prevent feedback loop / learning from ourself
     if str(message.author) == CONFIG_DISCORD_ME:
         return
 
-    if str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
+    # Ignore messages in NSFW channels
+    elif str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
         return
 
-    channel = message.channel
-    author = message.author
 
-    try:
-        server = message.channel.server.id
-    except AttributeError:
-        # Private Message
-        server = 0
-
-    args = {'channel': channel,
-            'author': str(author),
-            'author_mention': "<@%s>" % author.id,
-            'server': server,
-            'mentioned': False,
-            'always_reply': False,
-            'timestamp': message.timestamp}
 
     # Handle Comands
     if message.content.startswith("!"):
 
-        processed = False
+        command_message = MessageInputCommand(message=message)
 
         if message.content.startswith('!shutup'):
-            ftbot.shutup()
-            processed = True
+            ftbot.shutup(command_message.args)
         elif message.content.startswith('!wakeup'):
-            ftbot.wakeup(args)
-            processed = True
+            ftbot.wakeup(command_message.args)
         elif message.content.startswith('!replyrate'):
             try:
                 ftbot.replyrate = int(message.content.split(" ")[1])
                 yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
-            processed = True
 
-        if not processed:
-            if str(message.author) == CONFIG_DISCORD_OWNER:
-                args['is_owner'] = True
-                ftbot.process_message(message.content, args)
-            else:
-                args['is_owner'] = False
-                ftbot.process_message(message.content, args)
+        else:
+            ftbot.process_message(command_message)
+
+    # Hand the message off to the markov layer
     else:
-
-        if args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
-            args['always_reply'] = True
-
-        for msg in message.content.split("\n"):
-
-            if msg.find(CONFIG_DISCORD_MENTION_ME) != -1:
-                args['mentioned'] = True
-            else:
-                args['mentioned'] = False
-
-            # Treat mentioning another user as a single word
-            msg = re.sub(r'<@[!]?[0-9]+>', '#nick', msg)
-
-            # Don't learn from private messages
-            if message.server is not None:
-                args['learning'] = True
-                ftbot.process_message(msg, args)
-            else:
-                args['learning'] = False
-                ftbot.process_message(msg, args)
+        ftbot.process_message(MessageInput(message=message))
 
 
-loop = asyncio.get_event_loop()
 
 print("Starting FTBot")
+loop = asyncio.get_event_loop()
 ftbot = FTBot(loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
 CONFIG_DISCORD_CLIENT_ID))
 
 pool = futures.ThreadPoolExecutor(1)
-loop.run_in_executor(pool, ftbot.message_handler)
+loop.run_in_executor(pool, client.run, CONFIG_DISCORD_TOKEN)
 
 loop.create_task(reply_queue_handler())
-client.run(CONFIG_DISCORD_TOKEN)
+
+ftbot.message_handler()

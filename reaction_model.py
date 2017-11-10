@@ -1,18 +1,8 @@
 from config import *
-import pandas as pd
 import csv
-import string
 import re
 import pandas as pd
 import tensorflow as tf
-import tempfile
-
-
-def file_to_utf8(path):
-    b_data = open(path, 'rb').read()
-    utf8_data = b_data.decode('utf-8', 'ignore')
-    return str(utf8_data)
-
 
 def repeated_letter_ratio(line):
 
@@ -82,10 +72,7 @@ def letter_symbol_ratio(line):
     upper_count = 0.0
     lower_count = 0.0
 
-    lower_count = len(re.findall(r"[a-z]+", line))
-    upper_count = len(re.findall(r"[A-Z]+", line))
-
-    letter_count = lower_count + upper_count
+    letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
 
     return letter_count / char_count
 
@@ -209,17 +196,3 @@ class AOLReactionModel(object):
             line['repeated_letter_ratio'] = repeated_letter_ratio(line['text'])
 
         return data
-
-
-if __name__ == '__main__':
-    reaction = AOLReactionModel()
-
-    if False:
-        data_path = 'learning/markov_line_utf8.csv'
-        reaction.train(data_path, epochs=100)
-        reaction.print_evaluation(data_path)
-
-    if True:
-        classify = ['lol', 'haha', 'llooolololo', 'oh hi mark','llllll','oooooo','wwwwtttt']
-        for idx, is_aol_speak in enumerate(reaction.classify_data(classify)):
-            print("%s - %s" % (is_aol_speak, classify[idx]))

@@ -2,15 +2,14 @@ from markov_schema import *
 from config import *
 from sqlalchemy import and_, or_, desc
 from sqlalchemy import func, update, delete
-from datetime import timedelta
 from sqlalchemy.sql.functions import coalesce, sum
-import re
-import random
-import time
-import numpy as np
-import spacy
 from sqlalchemy.orm import aliased
+from datetime import timedelta
+import random
+import numpy as np
 from reaction_model import AOLReactionModel
+from messages import *
+import spacy
 
 
 class BotReplyTracker(object):
@@ -31,78 +30,33 @@ class BotReplyTracker(object):
                                                                        'fresh': False}
 
     # Called whenever the bot sends a message in a channel
-    def bot_reply(self, sentences, args):
-        self.branch_(args)
-        self.replies[int(args['server'])][str(args['channel'])] = {'sentences': sentences,
-                                                                   'timestamp': args['timestamp'], 'fresh': True}
+    def bot_reply(self, output_message):
+        self.branch_(output_message.args)
+        self.replies[int(output_message.args['server'])][str(output_message.args['channel'])] = {
+            'sentences': output_message.sentences,
+            'timestamp': output_message.args['timestamp'], 'fresh': True}
 
     # Called whenever a human sends a message to a channel
-    def human_reply(self, args):
-        self.branch_(args)
-        self.get_reply(args)['fresh'] = False
+    def human_reply(self, input_msg):
+        self.branch_(input_msg.args)
+        self.get_reply(input_msg)['fresh'] = False
 
     # Gets the last bot reply in a channel
-    def get_reply(self, args):
-        self.branch_(args)
-        return self.replies[int(args['server'])][str(args['channel'])]
+    def get_reply(self, input_msg):
+        self.branch_(input_msg.args)
+        return self.replies[int(input_msg.args['server'])][str(input_msg.args['channel'])]
 
 
 class MarkovAI(object):
-
     def __init__(self):
         self.rebuilding = False
+        print("Loading NLP DB...")
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
+        print("Loading ML model...")
         self.reaction_model = AOLReactionModel()
 
-    @staticmethod
-    def format_input_line(txt):
-        s = txt
-
-        # Strip all URL
-        s = re.sub('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                   '', s, flags=re.MULTILINE)
-
-        # Convert everything to lowercase
-        s = txt.lower()
-
-        s = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", s)
-
-        sentences = []
-        # Split by lines
-        for line in s.split("\n"):
-            # Split by sentence
-            for sentence in re.split(r'\.|!|\?', line):
-                # Split by words
-                pre_words = sentence.split(" ")
-                post_words = []
-
-                for word in pre_words:
-                    if word != '':
-                        post_words.append(word)
-
-                if len(post_words) >= 1:
-                    sentences.append(post_words)
-
-        return sentences
-
-    @staticmethod
-    def db_wordify_sentences(sentences):
-        session = Session()
-
-        # Return [line][word]
-        lines = []
-
-        for sentence in sentences:
-            words = []
-            for word in sentence:
-                find_word = session.query(Word).filter(Word.text == word).first()
-                if find_word is None:
-                    continue
-                words.append(find_word)
-            lines.append(words)
-
-        return lines
+        self.session = Session()
 
     def rebuild_db(self, ignore=[]):
 
@@ -112,59 +66,55 @@ class MarkovAI(object):
         print("Rebuilding DB...")
 
         self.rebuilding = True
-        session = Session()
 
         if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
-            session.execute("VACUUM")
+            self.session.execute("VACUUM")
 
-        session.query(URL).delete()
-        session.query(WordRelation).delete()
-        session.query(WordNeighbor).delete()
-        session.query(Word).delete()
-        session.query(PosRelation).delete()
-        session.query(Pos).delete()
+        self.session.query(URL).delete()
+        self.session.query(WordRelation).delete()
+        self.session.query(WordNeighbor).delete()
+        self.session.query(Word).delete()
+        self.session.query(PosRelation).delete()
+        self.session.query(Pos).delete()
 
-        session.commit()
+        self.session.commit()
 
-        lines = session.query(Line).order_by(Line.timestamp.asc()).all()
+        lines = self.session.query(Line).order_by(Line.timestamp.asc()).all()
         for line in lines:
+
+            input_message = MessageInput(line=line)
+
+            print(input_message.message_filtered)
+
             if str(line.channel) in ignore:
                 continue
             elif line.server_id == 0:
                 continue
-            elif line.author == CONFIG_DISCORD_ME:
-                self.reply_tracker.bot_reply(MarkovAI.db_wordify_sentences(MarkovAI.format_input_line(line)),
-                                             {'timestamp': line.timestamp, 'channel': line.channel})
-                continue
 
-            text = re.sub(r'<@[!]?[0-9]+>', '#nick', line.text)
-            print(text)
-
-            self.process_msg(None, text, args={'learning': True}, rebuild_db=True, timestamp=line.timestamp)
+            self.process_msg(None, input_message, rebuild_db=True)
 
         self.rebuilding = False
 
         if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
-            session.execute("VACUUM")
+            self.session.execute("VACUUM")
 
         print("Rebuilding DB Complete!")
 
     def clean_db(self):  # TODO: Update this function to effect WordNeighborhood ratings
 
         print("Cleaning DB...")
-        session = Session()
 
         # Subtract Rating by 1
-        session.execute(update(WordRelation, values={
+        self.session.execute(update(WordRelation, values={
             WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE}))
-        session.commit()
+        self.session.commit()
 
         # Remove all forwards associations with no score
-        session.query(WordRelation).filter(WordRelation.rating <= 0).delete()
-        session.commit()
+        self.session.query(WordRelation).filter(WordRelation.rating <= 0).delete()
+        self.session.commit()
 
         # Check if we have any forward associations left
-        results = session.query(Word.id). \
+        results = self.session.query(Word.id). \
             outerjoin(WordRelation, WordRelation.a == Word.id). \
             group_by(Word.id). \
             having(func.count(WordRelation.id) == 0).all()
@@ -172,174 +122,74 @@ class MarkovAI(object):
         # Go through each word with no forward associations left
         for result in results:
             # First delete all associations backwards from this word to other words
-            session.query(WordRelation).filter(WordRelation.b == result.id).delete()
+            self.session.query(WordRelation).filter(WordRelation.b == result.id).delete()
             # Next delete the word
-            session.query(Word).filter(Word.id == result.id).delete()
+            self.session.query(Word).filter(Word.id == result.id).delete()
 
-        session.commit()
-        session.close()
+        self.session.commit()
 
         print("Cleaning DB Complete!")
 
-    def learn(self, words):
+    def learn(self, input_message):
 
-        word_objs = []
+        for sentence in input_message.sentences:
+            for word_index, word in enumerate(sentence):
 
-        session = Session()
+                # Uprate Words
+                word['word'].count += 1
 
-        last_b_added = None
+                # Uprate Word Relations
+                if word_index < len(sentence) - 1:
+                    word['word_a->b'].count += 1
+                    word['word_a->b'].rating += 1
 
-        word_index = 0
+                # Uprate POS
+                word['pos'].count += 1
 
-        for word in words:
+                # Uprate POS Relations
+                if word_index < len(sentence) - 1:
+                    word['pos_a->b'].count += 1
+                    word['pos_a->b'].rating += 1
 
-            # TODO: Fix this hack
-            if len(word) > 64:
-                continue
+                # Uprate Word Neighbors
+                for neighbor in word['word_neighbors']:
+                    neighbor.count += 1
+                    neighbor.rating += 1
 
-            # Use NLP
-            doc = self.nlp(word)
-            word_pos_txt_a = doc[0].pos_ if word != '#nick' else 'NOUN'
-
-            # Check if pos exists already
-            pos_a = session.query(Pos).filter(Pos.text == word_pos_txt_a).first()
-            if pos_a is None:
-                pos_a = Pos(text=word_pos_txt_a)
-                session.add(pos_a)
-                session.commit()
-            else:
-                pos_a.count += 1
-
-            # Add word if it doesn't exist
-            word_a = session.query(Word).filter(Word.text == word).first()
-            if word_a is None:
-                word_a = Word(text=word, pos=pos_a.id)
-
-                session.add(word_a)
-                session.commit()
-
-            elif last_b_added is None or word != last_b_added.text:
-                word_a.count += 1
-                word_a.rating += 1
-
-            word_objs.append(word_a)
-
-            # Not last word? Lookup / add association
-            if word_index != len(words) - 1:
-
-                # Use NLP
-                doc = self.nlp(words[word_index + 1])
-                word_pos_txt_b = doc[0].pos_ if word != '#nick' else 'NOUN'
-
-                # Check if pos exists already
-                pos_b = session.query(Pos).filter(Pos.text == word_pos_txt_b).first()
-                if pos_b is None:
-                    pos_b = Pos(text=word_pos_txt_b)
-                    session.add(pos_b)
-                    session.commit()
-                else:
-                    pos_b.count += 1
-
-                # Word B
-                word_b = session.query(Word).filter(Word.text == words[word_index + 1]).first()
-                if word_b is None:
-                    # Use NLP
-                    doc = self.nlp(words[word_index + 1])
-                    word_pos_txt_b = doc[0].pos_ if word != '#nick' else 'NOUN'
-
-                    word_b = Word(text=words[word_index + 1], pos=pos_b.id)
-
-                    session.add(word_b)
-                    session.commit()
-
-                    last_b_added = word_b
-
-                # Add NLP POS Association
-                pos_relation = session.query(PosRelation).filter(
-                    and_(PosRelation.a == pos_a.id, PosRelation.b == pos_b.id)).first()
-                if pos_relation is None:
-                    session.add(PosRelation(a=pos_a.id, b=pos_b.id))
-                else:
-                    pos_relation.count += 1
-                    pos_relation.rating += 1
-
-                # Add Word Association
-                word_relation = session.query(WordRelation).filter(
-                    and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)).first()
-                if word_relation is None:
-                    session.add(WordRelation(a=word_a.id, b=word_b.id))
-                else:
-                    word_relation.count += 1
-                    word_relation.rating += 1
-
-            word_index += 1
-
-        session.commit()
-
-        def chunks(l, n):
-            """Yield successive n-sized chunks from l."""
-            for i in range(0, len(l), n):
-                yield l[i:i + n]
-
-        chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
-
-        for chunk in chunk_word_objs:
-            for word in chunk:
-
-                # Filter things that are not relevant to the main information in a sentence
-                if self.nlp(word.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
-                    continue
-
-                for potential_neighbor in chunk:
-                    if word.id != potential_neighbor.id:
-
-                        if self.nlp(potential_neighbor.text)[0]. \
-                                pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
-                            continue
-
-                        neighbor = session.query(WordNeighbor). \
-                            join(Word, WordNeighbor.neighbor == Word.id). \
-                            filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
-
-                        if neighbor is None:
-                            neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id)
-                            session.add(neighbor)
-                            session.commit()
-                        else:
-                            neighbor.count += 1
-                            neighbor.rating += 1
-
-        session.commit()
+        self.session.commit()
 
     def cmd_stats(self):
-        session = Session()
-        words = session.query(Word.id).count()
-        lines = session.query(Line.id).filter(Line.author != CONFIG_DISCORD_ME).count()
-        assoc = session.query(WordRelation).count()
-        neigh = session.query(WordNeighbor).count()
+        words = self.session.query(Word.id).count()
+        lines = self.session.query(Line.id).filter(Line.author != CONFIG_DISCORD_ME).count()
+        assoc = self.session.query(WordRelation).count()
+        neigh = self.session.query(WordNeighbor).count()
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
             words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
-    def command(self, txt, args=None):
+    def command(self, command_message):
 
         result = None
 
-        if txt.startswith("!words"):
+        if command_message.message_raw.startswith("!words"):
             result = self.cmd_stats()
 
-        if txt.startswith("!essay"):
-            result = self.essay(txt.split(" ")[1], args)
+        if command_message.message_raw.startswith("!essay"):
+            result = self.essay(command_message)
 
-        if args['is_owner'] is False:
+        if command_message.args['is_owner'] is False:
             return result
 
         # Admin Only Commands
-        if txt.startswith("!clean"):
+        if command_message.message_raw.startswith("!clean"):
             self.clean_db()
 
         return result
 
-    def essay(self, subject, args):
+    def essay(self, command_message):
+
+        command_message.load(self.session, self.nlp)
+
+        subject = command_message.message_raw.split(" ")[1]
 
         def random_punct():
             return [".", "!", "?"][random.randrange(0, 3)]
@@ -350,7 +200,7 @@ class MarkovAI(object):
         for p in range(0, 5):
 
             # Lead In
-            reply = self.reply([s], args, nourl=True)
+            reply = self.reply(command_message, 0, no_url=True)
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
@@ -358,12 +208,19 @@ class MarkovAI(object):
 
             # Body sentences
             for i in range(0, 3):
-                reply = self.reply(reply.split(" "), args, nourl=True)
+
+                feedback_reply_output = MessageOutput(text=reply)
+                feedback_reply_output.args['author_mention'] = command_message.args['author_mention']
+
+                feedback_reply_output.load(self.session,self.nlp)
+
+                reply = self.reply(feedback_reply_output, 0, no_url=True)
                 if reply is None:
                     txt = "I don't know that word well enough!"
                     break
                 txt += reply + random_punct() + " "
-            reply = self.reply([s], args, nourl=True)
+
+            reply = self.reply(command_message, 0, no_url=True)
 
             # Lead Out
             if reply is None:
@@ -374,55 +231,65 @@ class MarkovAI(object):
 
         return txt
 
-    def reply(self, words, args, nourl=False):
-        session = Session()
+    def reply(self, input_message, sentence_index, no_url=False):
 
         selected_topics = []
-        potential_topics = [x for x in words if x not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+        potential_topics = [x for x in input_message.sentences[sentence_index] if
+                            x['word_text'] not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+
+        # TODO: Fix hack
+        if type(input_message) == MessageInputCommand:
+            potential_topics = [x for x in input_message.sentences[sentence_index] if
+                                "essay" not in x['word_text']]
 
         for word in potential_topics:
-            # Use NLP to classify word
-            doc = self.nlp(word)
-            potential_subject_pos = doc[0].pos_ if word != "#nick" else "NOUN"
+
+            potential_subject_pos = word['pos_text']
 
             if potential_subject_pos in CONFIG_MARKOV_TOPIC_SELECTION_POS:
                 selected_topics.append(word)
 
         # If we are mentioned, we don't want to use the mention as a subject besides as a fallback
-        if args['mentioned']:
-            try:
-                selected_topics.remove('#nick')
-            except ValueError:
-                pass
+        if input_message.args['mentioned']:
+            for word in selected_topics:
+                if word['word_text'] == '#nick':
+                    try:
+                        selected_topics.remove(word)
+                    except ValueError:
+                        pass
 
         if len(selected_topics) == 0:
-            selected_topics = words
+            selected_topics = input_message.sentences[sentence_index]
+
+        selected_topic_id = []
+        selected_topic_text = []
+
+        for topic in selected_topics:
+            selected_topic_id.append(topic['word'].id)
+            selected_topic_text.append(topic['word_text'])
 
         potential_subject = None
         subject_word = None
 
         # Find potential exact matches, weigh by occurance
-        subject_words = session.query(Word.id, Word.text, Word.pos, sum(Word.count).label('rating')).filter(
-            Word.text.in_(selected_topics)).order_by(desc('rating')).all()
+        subject_words = self.session.query(Word.id, Word.text, Word.pos_id, sum(Word.count).label('rating')).filter(
+            Word.id.in_(selected_topic_id)).order_by(desc('rating')).all()
 
         if len(subject_words) > 1:
-            # -Linear distribution to choose word
+            # Linear distribution to choose word
             potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
         elif len(subject_words) == 1:
             potential_subject = subject_words[0]
         else:
-            # Fallback!
-            potential_subject = session.query(Word).filter(Word.text == '#nick').first()
+            # Fallback to #nick
+            potential_subject = self.session.query(Word.id, Word.text, Word.pos.id).filter(Word.text == '#nick')
 
-        # If the word is nick, the subject is person talking
-        if potential_subject == 'nick':
-            potential_subject = '#nick'
-            subject_word = session.query(Word.id, Word.text, Word.pos).filter(Word.text == potential_subject)
-        elif potential_subject is None:
+        if potential_subject is None:
             return None
         else:
             subject_word = potential_subject
 
+        # TODO: Figure out why this is needed
         if subject_word is None:
             return None
 
@@ -431,13 +298,14 @@ class MarkovAI(object):
         # Generate Backwards
         backwards_words = []
         f_id = subject_word.id
+
         back_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
         count = 0
         while count < back_count:
 
-            choices = session.query(PosRelation, Pos.text). \
-                join(Pos, PosRelation.a == Pos.id). \
-                filter(PosRelation.b == last_word.pos). \
+            choices = self.session.query(PosRelation, Pos.text). \
+                join(Pos, PosRelation.a_id == Pos.id). \
+                filter(PosRelation.b_id == last_word.pos_id). \
                 order_by(desc(PosRelation.rating)).all()
 
             if len(choices) == 0:
@@ -451,31 +319,32 @@ class MarkovAI(object):
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = session.query(word_a.id, word_a.text, word_a.pos,
-                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                     + coalesce(sum(WordRelation.rating),
-                                                0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                        'rating')). \
+            results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
+                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                          + coalesce(sum(WordRelation.rating),
+                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                             'rating')). \
                 join(word_b, word_b.id == f_id). \
-                join(Pos, Pos.id == word_a.pos). \
-                outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
-                outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
+                join(Pos, Pos.id == word_a.pos_id). \
+                outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
+                outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 filter(and_(Pos.text == choice, or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
                 group_by(word_a.id). \
                 order_by(desc('rating')). \
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             if len(results) == 0:
-                results = session.query(word_a.id, word_a.text, word_a.pos,
-                                        (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                            'rating')). \
+                results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
+                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                              + coalesce(sum(WordRelation.rating),
+                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                                 'rating')). \
                     join(word_b, word_b.id == f_id). \
-                    outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                    outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
-                              and_(word_a.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
+                              and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(or_(WordNeighbor.rating > 0, WordRelation.rating > 0)). \
                     group_by(word_a.id). \
                     order_by(desc('rating')). \
@@ -483,10 +352,10 @@ class MarkovAI(object):
 
             # Fall back to random
             if len(results) == 0:
-                results = session.query(WordRelation.a, Word.text, Word.pos). \
-                    join(Word, WordRelation.b == Word.id). \
+                results = self.session.query(WordRelation.a_id, Word.text, Word.pos_id). \
+                    join(Word, WordRelation.b_id == Word.id). \
                     order_by(desc(WordRelation.rating)). \
-                    filter(and_(WordRelation.b == f_id, WordRelation.a != WordRelation.b)).all()
+                    filter(and_(WordRelation.b_id == f_id, WordRelation.a_id != WordRelation.b_id)).all()
 
             if len(results) == 0:
                 break
@@ -509,9 +378,9 @@ class MarkovAI(object):
 
         count = 0
         while count < forward_count:
-            choices = session.query(PosRelation, Pos.text). \
-                join(Pos, PosRelation.b == Pos.id). \
-                filter(PosRelation.a == last_word.pos). \
+            choices = self.session.query(PosRelation, Pos.text). \
+                join(Pos, PosRelation.b_id == Pos.id). \
+                filter(PosRelation.a_id == last_word.pos_id). \
                 order_by(desc(PosRelation.rating)).all()
 
             if len(choices) == 0:
@@ -519,36 +388,38 @@ class MarkovAI(object):
 
             choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
 
-            results = session.query()
+            results = self.session.query()
 
             # Most Intelligent search for next word (neighbor and pos)
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = session.query(word_b.id, word_b.text, word_b.pos,
-                                    (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                     + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                     + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                        'rating')). \
+            results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
+                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                          + coalesce(sum(WordRelation.rating),
+                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                             'rating')). \
                 join(word_a, word_a.id == f_id). \
-                join(Pos, Pos.id == word_b.pos). \
-                outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
-                outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                join(Pos, Pos.id == word_b.pos_id). \
+                outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
+                outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 filter(and_(Pos.text == choice, or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
                 group_by(word_b.id). \
                 order_by(desc('rating')). \
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
 
             if len(results) == 0:
-                results = session.query(word_b.id, word_b.text, word_b.pos,
-                                        (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                         + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                         + coalesce(sum(WordRelation.rating), 0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                            'rating')). \
+                results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
+                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                              + coalesce(sum(WordRelation.rating),
+                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                                 'rating')). \
                     join(word_a, word_a.id == f_id). \
-                    outerjoin(WordRelation, and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)). \
+                    outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
-                              and_(word_b.id == WordNeighbor.neighbor, WordNeighbor.word == subject_word.id)). \
+                              and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(or_(WordNeighbor.rating > 0, WordRelation.rating > 0)). \
                     group_by(word_b.id). \
                     order_by(desc('rating')). \
@@ -556,10 +427,10 @@ class MarkovAI(object):
 
             # Fall back to random
             if len(results) == 0:
-                results = session.query(WordRelation.b, Word.text, Word.pos). \
-                    join(Word, WordRelation.b == Word.id). \
+                results = self.session.query(WordRelation.b_id, Word.text, Word.pos_id). \
+                    join(Word, WordRelation.b_id == Word.id). \
                     order_by(desc(WordRelation.rating)). \
-                    filter(and_(WordRelation.a == f_id, WordRelation.b != WordRelation.a)).all()
+                    filter(and_(WordRelation.a_id == f_id, WordRelation.b_id != WordRelation.a_id)).all()
 
             if len(results) == 0:
                 break
@@ -583,195 +454,175 @@ class MarkovAI(object):
         reply += forward_words
 
         # Replace any mention in response with a mention to the name of the message we are responding too
-        reply = [word.replace('#nick', args['author_mention']) for word in reply]
+        reply = [word.replace('#nick', input_message.args['author_mention']) for word in reply]
 
-        if not nourl:
-            # Add a random URL
-            if random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
-                url = session.query(URL).order_by(func.random()).first()
-                if url is not None:
-                    reply.append(url.text)
+        # Add a random URL
+        if not no_url and random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
+            url = self.session.query(URL).order_by(func.random()).first()
+            if url is not None:
+                reply.append(url.text)
 
         return " ".join(reply)
 
-    def check_reaction(self, txt, args):
-        signal_sum = 0
-        noise_sum = 0
+    def check_reaction(self, input_msg):
 
-        txt_ = " ".join(txt)
-
-        bot_reply = self.reply_tracker.get_reply(args)
+        bot_reply = self.reply_tracker.get_reply(input_msg)
 
         # Check if reply exists
         if bot_reply['timestamp'] is None:
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds or if the message is fresh
-        elif bot_reply['fresh'] is not True and args['timestamp'] > bot_reply['timestamp'] + \
+        elif bot_reply['fresh'] is not True and input_msg.args['timestamp'] > bot_reply['timestamp'] + \
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.classify_data(txt)[0]:
-            self.handle_reaction(args)
+        if self.reaction_model.classify_data([input_msg.message_filtered])[0]:
+            self.handle_reaction(input_msg)
             return
 
         # If this wasn't a reaction, end the chain
-        self.reply_tracker.human_reply(args)
+        self.reply_tracker.human_reply(input_msg)
 
-    def handle_reaction(self, args):
+    def handle_reaction(self, input_msg):
 
-        session = Session()
-
-        sentence_index = 0
-        word_index = 0
-
-        server_last_replies = self.reply_tracker.get_reply(args)
+        server_last_replies = self.reply_tracker.get_reply(input_msg)
 
         # Uprate words and relations
-        for sentence in server_last_replies['sentences']:
-            for word_a in sentence:
+        for sentence_index, sentence in enumerate(server_last_replies['sentences']):
+            for word_index, word in enumerate(sentence):
 
-                # Use NLP to classify word
-                doc = self.nlp(word_a.text)
-                word_pos_txt_a = doc[0].pos_
+                word_a = word['word']
 
-                if word_pos_txt_a in CONFIG_MARKOV_REACTION_SCORE_POS:
-
-                    # Uprate word
+                if word_a.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                     word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
 
-                    if word_index != len(sentence) - 1:
-                        word_b = sentence[word_index + 1]
+                    if word_index >= len(sentence) - 1:
+                        continue
 
-                        # Use NLP to classify word
-                        doc = self.nlp(word_b.text)
-                        word_pos_txt_b = doc[0].pos_
-
-                        if word_pos_txt_b in CONFIG_MARKOV_REACTION_SCORE_POS:
-
-                            word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
-
-                            a_b_assoc = session.query(WordRelation).filter(
-                                and_(WordRelation.a == word_a.id, WordRelation.b == word_b.id)).first()
-                            if a_b_assoc is not None:
-                                # Uprate rating
-                                a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
-                            else:
-                                a_b_assoc = WordRelation(a=word_a.id, b=word_b.id,
-                                                         rating=1 + CONFIG_MARKOV_REACTION_UPRATE_RELATION)
-                                session.add(a_b_assoc)
-                                session.commit()
-
-                word_index += 1
-
-            word_index = 0
-            sentence_index += 1
+                    word_b = word['word_a->b'].b
+                    if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
+                        word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
+                        a_b_assoc = word['word_a->b']
+                        a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
 
         # Uprate neighborhood
         for sentence in server_last_replies['sentences']:
             for word in sentence:
+
                 # Filter things that are not relevant to the main information in a sentence
-                if self.nlp(word.text)[0].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                if word['word'].pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                     continue
 
-                for potential_neighbor in sentence:
-                    if word.id != potential_neighbor.id:
+                for neighbor in word['word_neighbors']:
+                    # Filter things that are not relevant to the main information in a sentence
+                    if neighbor.b.pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                        continue
 
-                        if self.nlp(potential_neighbor.text)[0].pos_ \
-                                not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
-                            continue
+                    neighbor.count += 1
+                    neighbor.rating += CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR
 
-                        neighbor = session.query(WordNeighbor). \
-                            join(Word, WordNeighbor.neighbor == Word.id). \
-                            filter(and_(WordNeighbor.word == word.id, Word.id == potential_neighbor.id)).first()
+        self.session.commit()
 
-                        if neighbor is None:
-                            neighbor = WordNeighbor(word=word.id, neighbor=potential_neighbor.id,
-                                                    rating=1 + CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR)
-                            session.add(neighbor)
-                            session.commit()
-                        else:
-                            neighbor.count += 1
-                            neighbor.rating += CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR
+    def learn_url(self, input_msg):
 
-        session.commit()
+        for url in input_msg.args['url']:
 
-    def process_msg(self, io_module, txt, replyrate=1, args=None, owner=False, rebuild_db=False, timestamp=None):
+            the_url = self.session.query(URL).filter(URL.text == url).first()
 
-        # No information so we don't need to process
-        sentences = MarkovAI.format_input_line(txt)
-        if len(sentences) == 0:
-            return
+            if the_url is not None:
+                the_url.count += 1
+            else:
+                self.session.add(URL(text=url, timestamp=input_msg.args['timestamp']))
+
+            self.session.commit()
+
+    def process_msg(self, io_module, input_message, replyrate=0, owner=False, rebuild_db=False):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
             return
 
-        if txt.strip() == '':
+        # Command message?
+        if type(input_message) == MessageInputCommand:
+            reply = self.command(input_message)
+            if reply:
+                output_message = MessageOutput(text=reply)
+                output_message.args['channel'] = input_message.args['channel']
+                output_message.args['timestamp'] = input_message.args['timestamp']
+
+                io_module.output(output_message)
             return
 
+        # Learn URLs
+        self.learn_url(input_message)
+
+        # Log this line only if we are not rebuilding the database
         if not rebuild_db:
-            session = Session()
-            session.add(
-                Line(text=txt, author=args['author'], server_id=int(args['server']), channel=str(args['channel']),
-                     timestamp=args['timestamp']))
-            session.commit()
 
-            # Check for command
-            if txt.startswith("!"):
-                result = self.command(txt, args)
-                if result:
-                    io_module.output(result, args)
-                # We don't want to learn from commands
-                return
+            # Sometimes server_id and channel can be none
+            server_id = None
+            if input_message.args['server'] is not None:
+                server_id = server_id = int(input_message.args['server'])
 
-        if args['learning']:
-            # Get all URLs
-            urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', txt)
-            if len(urls) >= 0:
-                session = Session()
-                for url in urls:
+            channel = None
+            if input_message.args['channel'] is not None:
+                channel = str(input_message.args['channel'])
 
-                    the_url = session.query(URL).filter(URL.text == url).first()
+            self.session.add(
+                Line(text=input_message.message_raw, author=input_message.args['author'],
+                     server_id=server_id, channel=channel,
+                     timestamp=input_message.args['timestamp']))
+            self.session.commit()
 
-                    if the_url is not None:
-                        the_url.count += 1
-                    else:
-                        if timestamp:
-                            session.add(URL(text=url, timestamp=timestamp))
-                        else:
-                            session.add(URL(text=url))
+        # Populate ORM and NLP POS data
+        input_message.load(self.session, self.nlp)
 
-                session.commit()
+        # Decide on a sentence in which to potentially reply
+        reply_sentence = random.randrange(0, len(input_message.sentences))
 
-        sentence_index = 0
-        reply_sentence = random.randrange(0, len(sentences))
+        for sentence_index, sentence in enumerate(input_message.sentences):
 
-        for sentence in sentences:
-            if args['learning']:
+            # Don't learn from ourself
+            if input_message.args['learning'] and not input_message.args['author'] == CONFIG_DISCORD_ME:
 
-                # Don't learn from ourself
-                if str(args['author']) != CONFIG_DISCORD_ME:
-                    self.check_reaction(sentence, args)
-                    self.learn(sentence)
+                # Only want to check reaction when message on a server
+                if input_message.args['server'] is not None:
+                    self.check_reaction(input_message)
 
-            if not rebuild_db:
-                if reply_sentence == sentence_index and (replyrate > random.randrange(0, 100) or args['always_reply']):
+                self.learn(input_message)
 
-                    the_reply = self.reply(sentence, args)
+            # Don't reply when rebuilding the database
+            if not rebuild_db and reply_sentence == sentence_index and (
+                            replyrate > random.randrange(0, 100) or input_message.args['always_reply']):
 
-                    if the_reply is not None:
-                        # Offset timestamp by one second for database ordering
-                        reply_time = args['timestamp'] + timedelta(seconds=1)
+                reply = self.reply(input_message, sentence_index)
 
-                        self.reply_tracker.bot_reply(MarkovAI.db_wordify_sentences([the_reply.split(" ")]), args)
+                if reply is None:
+                    continue
 
-                        # Add response to lines
-                        session = Session()
-                        session.add(Line(text=the_reply, author=CONFIG_DISCORD_ME, server_id=int(args['server']),
-                                         channel=str(args['channel']), timestamp=reply_time))
-                        session.commit()
+                # Add response to lines
+                # Offset timestamp by one second for database ordering
+                reply_time_db = input_message.args['timestamp'] + timedelta(seconds=1)
 
-                        io_module.output(the_reply, args)
+                line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_message.args['server']),
+                            channel=str(input_message.args['channel']), timestamp=reply_time_db)
+                self.session.add(line)
+                self.session.commit()
 
-            sentence_index += 1
+                output_message = MessageOutput(line=line)
+
+                # We want the discord channel object to respond to and the original timestamp
+                output_message.args['channel'] = input_message.args['channel']
+                output_message.args['timestamp'] = input_message.args['timestamp']
+
+                # Load the reply database objects for reaction tracking
+                output_message.load(self.session, self.nlp)
+
+                self.reply_tracker.bot_reply(output_message)
+
+                io_module.output(output_message)
+
+            # If the author is us while we are rebuilding the DB, update the reply tracker
+            elif rebuild_db and input_message.args['author'] == CONFIG_DISCORD_ME:
+                self.reply_tracker.bot_reply(input_message)
