@@ -10,34 +10,35 @@ class MLFeatureAnalyzer(object):
         self.data = data
 
     def analyze(self):
-
         results = []
         for row in self.data:
             results.append(self.analyze_row(row))
 
         return results
 
-    def analyze_row(self,row):
+    def analyze_row(self, row):
         pass
 
 
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
-    def __init__(self,data):
-        MLFeatureAnalyzer.__init__(self,data)
+    def __init__(self, data):
+        MLFeatureAnalyzer.__init__(self, data)
 
-    def analyze_row(self,line):
+    def analyze_row(self, line):
 
-        # Line Length
         line['length'] = len(line['text'])
-
-        # Whitespace
         line['whitespace'] = line['text'].count(" ")
 
         line['letter_diversity_ratio'] = AOLReactionFeatureAnalyzer.letter_diversity_ratio(line['text'])
+
         line['upper_lower_ratio'] = AOLReactionFeatureAnalyzer.upper_lower_ratio(line['text'])
+
         line['letter_symbol_ratio'] = AOLReactionFeatureAnalyzer.letter_symbol_ratio(line['text'])
+
         line['aol_letter_ratio'] = AOLReactionFeatureAnalyzer.aol_letter_ratio(line['text'])
+
         line['repeated_letter_ratio'] = AOLReactionFeatureAnalyzer.repeated_letter_ratio(line['text'])
+
         line['funny_emoji_ratio'] = AOLReactionFeatureAnalyzer.funny_emoji_ratio(line['text'])
 
         return line
@@ -137,6 +138,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
         return len(chars) / len(line)
 
+
 class AOLReactionModel(object):
     def __init__(self, model_dir="models/aol-reaction-model/"):
         self.data = []
@@ -153,10 +155,11 @@ class AOLReactionModel(object):
         fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
         fc_repeated_letter_ratio = tf.feature_column.numeric_column("repeated_letter_ratio")
 
-        fc_emoji_x_symbol = tf.feature_column.crossed_column(["funny_emoji_ratio","letter_symbol_ratio"],hash_bucket_size=100)
+        cc_emoji_x_symbol = tf.feature_column.crossed_column(["funny_emoji_ratio", "letter_symbol_ratio"],
+                                                             hash_bucket_size=100)
 
         base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio,
-                        fc_aol_letter_ratio,fc_repeated_letter_ratio,fc_emoji_x_symbol]
+                        fc_aol_letter_ratio, fc_repeated_letter_ratio, cc_emoji_x_symbol]
 
         return tf.estimator.LinearClassifier(model_dir=self.model_dir, feature_columns=base_columns)
 
