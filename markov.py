@@ -539,8 +539,11 @@ class MarkovAI(object):
 
     def process_msg(self, io_module, input_message, replyrate=0, owner=False, rebuild_db=False):
 
+        if len(input_message.sentences) == 0:
+            return
+
         # Ignore external I/O while rebuilding
-        if self.rebuilding is True and not rebuild_db:
+        elif self.rebuilding is True and not rebuild_db:
             return
 
         # Command message?
