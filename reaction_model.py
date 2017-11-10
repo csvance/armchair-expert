@@ -4,6 +4,17 @@ import re
 import pandas as pd
 import tensorflow as tf
 
+
+def funny_emoji_ratio(line):
+
+    emoji_len = 0.
+
+    for emoji in CONFIG_MARKOV_REACTION_EMOJIS:
+        emoji_len += line.count(emoji) * len(emoji)
+
+    return emoji_len / len(line)
+
+
 def repeated_letter_ratio(line):
 
     repeated_count = 0
@@ -102,13 +113,13 @@ class AOLReactionModel(object):
         fc_whitespace = tf.feature_column.numeric_column("whitespace")
         fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
         fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
-        fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
         fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
         fc_repeated_letter_ratio = tf.feature_column.numeric_column("repeated_letter_ratio")
 
+        fc_emoji_x_symbol = tf.feature_column.crossed_column(["funny_emoji_ratio","letter_symbol_ratio"],hash_bucket_size=100)
+
         base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio,
-                        fc_letter_symbol_ratio,
-                        fc_aol_letter_ratio,fc_repeated_letter_ratio]
+                        fc_aol_letter_ratio,fc_repeated_letter_ratio,fc_emoji_x_symbol]
 
         return tf.estimator.LinearClassifier(model_dir=self.model_dir, feature_columns=base_columns)
 
@@ -194,5 +205,6 @@ class AOLReactionModel(object):
             line['letter_symbol_ratio'] = letter_symbol_ratio(line['text'])
             line['aol_letter_ratio'] = aol_letter_ratio(line['text'])
             line['repeated_letter_ratio'] = repeated_letter_ratio(line['text'])
+            line['funny_emoji_ratio'] = funny_emoji_ratio(line['text'])
 
         return data

@@ -449,6 +449,7 @@ node {
       list {
         type: DT_INT64
         type: DT_DOUBLE
+        type: DT_DOUBLE
         type: DT_INT64
         type: DT_DOUBLE
         type: DT_DOUBLE
@@ -489,6 +490,8 @@ node {
     key: "shapes"
     value {
       list {
+        shape {
+        }
         shape {
         }
         shape {
@@ -596,7 +599,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -625,7 +628,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -683,7 +686,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -712,7 +715,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -741,7 +744,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_STRING
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -770,7 +773,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_STRING
     }
   }
   attr {
@@ -799,7 +802,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -813,6 +816,35 @@ node {
 }
 node {
   name: "enqueue_input/Placeholder_10"
+  op: "Placeholder"
+  device: "/device:CPU:0"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          unknown_rank: true
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        unknown_rank: true
+      }
+    }
+  }
+}
+node {
+  name: "enqueue_input/Placeholder_11"
   op: "Placeholder"
   device: "/device:CPU:0"
   attr {
@@ -855,12 +887,14 @@ node {
   input: "enqueue_input/Placeholder_8"
   input: "enqueue_input/Placeholder_9"
   input: "enqueue_input/Placeholder_10"
+  input: "enqueue_input/Placeholder_11"
   device: "/device:CPU:0"
   attr {
     key: "Tcomponents"
     value {
       list {
         type: DT_INT64
+        type: DT_DOUBLE
         type: DT_DOUBLE
         type: DT_INT64
         type: DT_DOUBLE
@@ -882,35 +916,6 @@ node {
   }
 }
 node {
-  name: "enqueue_input/Placeholder_11"
-  op: "Placeholder"
-  device: "/device:CPU:0"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          unknown_rank: true
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT64
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        unknown_rank: true
-      }
-    }
-  }
-}
-node {
   name: "enqueue_input/Placeholder_12"
   op: "Placeholder"
   device: "/device:CPU:0"
@@ -927,7 +932,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -956,7 +961,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1014,7 +1019,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1043,7 +1048,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1101,7 +1106,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_STRING
+      type: DT_INT64
     }
   }
   attr {
@@ -1159,7 +1164,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_STRING
     }
   }
   attr {
@@ -1188,7 +1193,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1197,47 +1202,6 @@ node {
       shape {
         unknown_rank: true
       }
-    }
-  }
-}
-node {
-  name: "enqueue_input/random_shuffle_queue_EnqueueMany_1"
-  op: "QueueEnqueueManyV2"
-  input: "enqueue_input/random_shuffle_queue"
-  input: "enqueue_input/Placeholder_11"
-  input: "enqueue_input/Placeholder_12"
-  input: "enqueue_input/Placeholder_13"
-  input: "enqueue_input/Placeholder_14"
-  input: "enqueue_input/Placeholder_15"
-  input: "enqueue_input/Placeholder_16"
-  input: "enqueue_input/Placeholder_17"
-  input: "enqueue_input/Placeholder_18"
-  input: "enqueue_input/Placeholder_19"
-  input: "enqueue_input/Placeholder_20"
-  input: "enqueue_input/Placeholder_21"
-  device: "/device:CPU:0"
-  attr {
-    key: "Tcomponents"
-    value {
-      list {
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_STRING
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_INT64
-      }
-    }
-  }
-  attr {
-    key: "timeout_ms"
-    value {
-      i: -1
     }
   }
 }
@@ -1287,7 +1251,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1296,6 +1260,49 @@ node {
       shape {
         unknown_rank: true
       }
+    }
+  }
+}
+node {
+  name: "enqueue_input/random_shuffle_queue_EnqueueMany_1"
+  op: "QueueEnqueueManyV2"
+  input: "enqueue_input/random_shuffle_queue"
+  input: "enqueue_input/Placeholder_12"
+  input: "enqueue_input/Placeholder_13"
+  input: "enqueue_input/Placeholder_14"
+  input: "enqueue_input/Placeholder_15"
+  input: "enqueue_input/Placeholder_16"
+  input: "enqueue_input/Placeholder_17"
+  input: "enqueue_input/Placeholder_18"
+  input: "enqueue_input/Placeholder_19"
+  input: "enqueue_input/Placeholder_20"
+  input: "enqueue_input/Placeholder_21"
+  input: "enqueue_input/Placeholder_22"
+  input: "enqueue_input/Placeholder_23"
+  device: "/device:CPU:0"
+  attr {
+    key: "Tcomponents"
+    value {
+      list {
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_STRING
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_INT64
+      }
+    }
+  }
+  attr {
+    key: "timeout_ms"
+    value {
+      i: -1
     }
   }
 }
@@ -1461,7 +1468,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_STRING
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1490,7 +1497,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1519,7 +1526,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1548,7 +1555,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_STRING
     }
   }
   attr {
@@ -1557,47 +1564,6 @@ node {
       shape {
         unknown_rank: true
       }
-    }
-  }
-}
-node {
-  name: "enqueue_input/random_shuffle_queue_EnqueueMany_2"
-  op: "QueueEnqueueManyV2"
-  input: "enqueue_input/random_shuffle_queue"
-  input: "enqueue_input/Placeholder_22"
-  input: "enqueue_input/Placeholder_23"
-  input: "enqueue_input/Placeholder_24"
-  input: "enqueue_input/Placeholder_25"
-  input: "enqueue_input/Placeholder_26"
-  input: "enqueue_input/Placeholder_27"
-  input: "enqueue_input/Placeholder_28"
-  input: "enqueue_input/Placeholder_29"
-  input: "enqueue_input/Placeholder_30"
-  input: "enqueue_input/Placeholder_31"
-  input: "enqueue_input/Placeholder_32"
-  device: "/device:CPU:0"
-  attr {
-    key: "Tcomponents"
-    value {
-      list {
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_DOUBLE
-        type: DT_STRING
-        type: DT_DOUBLE
-        type: DT_INT64
-        type: DT_INT64
-      }
-    }
-  }
-  attr {
-    key: "timeout_ms"
-    value {
-      i: -1
     }
   }
 }
@@ -1618,7 +1584,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1647,7 +1613,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1689,6 +1655,49 @@ node {
   }
 }
 node {
+  name: "enqueue_input/random_shuffle_queue_EnqueueMany_2"
+  op: "QueueEnqueueManyV2"
+  input: "enqueue_input/random_shuffle_queue"
+  input: "enqueue_input/Placeholder_24"
+  input: "enqueue_input/Placeholder_25"
+  input: "enqueue_input/Placeholder_26"
+  input: "enqueue_input/Placeholder_27"
+  input: "enqueue_input/Placeholder_28"
+  input: "enqueue_input/Placeholder_29"
+  input: "enqueue_input/Placeholder_30"
+  input: "enqueue_input/Placeholder_31"
+  input: "enqueue_input/Placeholder_32"
+  input: "enqueue_input/Placeholder_33"
+  input: "enqueue_input/Placeholder_34"
+  input: "enqueue_input/Placeholder_35"
+  device: "/device:CPU:0"
+  attr {
+    key: "Tcomponents"
+    value {
+      list {
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_DOUBLE
+        type: DT_STRING
+        type: DT_DOUBLE
+        type: DT_INT64
+        type: DT_INT64
+      }
+    }
+  }
+  attr {
+    key: "timeout_ms"
+    value {
+      i: -1
+    }
+  }
+}
+node {
   name: "enqueue_input/Placeholder_36"
   op: "Placeholder"
   device: "/device:CPU:0"
@@ -1705,7 +1714,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1763,7 +1772,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_INT64
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1792,7 +1801,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_DOUBLE
+      type: DT_INT64
     }
   }
   attr {
@@ -1821,7 +1830,7 @@ node {
   attr {
     key: "dtype"
     value {
-      type: DT_STRING
+      type: DT_DOUBLE
     }
   }
   attr {
@@ -1908,6 +1917,122 @@ node {
   attr {
     key: "dtype"
     value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        unknown_rank: true
+      }
+    }
+  }
+}
+node {
+  name: "enqueue_input/Placeholder_44"
+  op: "Placeholder"
+  device: "/device:CPU:0"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          unknown_rank: true
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_STRING
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        unknown_rank: true
+      }
+    }
+  }
+}
+node {
+  name: "enqueue_input/Placeholder_45"
+  op: "Placeholder"
+  device: "/device:CPU:0"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          unknown_rank: true
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        unknown_rank: true
+      }
+    }
+  }
+}
+node {
+  name: "enqueue_input/Placeholder_46"
+  op: "Placeholder"
+  device: "/device:CPU:0"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          unknown_rank: true
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        unknown_rank: true
+      }
+    }
+  }
+}
+node {
+  name: "enqueue_input/Placeholder_47"
+  op: "Placeholder"
+  device: "/device:CPU:0"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          unknown_rank: true
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
       type: DT_INT64
     }
   }
@@ -1924,9 +2049,6 @@ node {
   name: "enqueue_input/random_shuffle_queue_EnqueueMany_3"
   op: "QueueEnqueueManyV2"
   input: "enqueue_input/random_shuffle_queue"
-  input: "enqueue_input/Placeholder_33"
-  input: "enqueue_input/Placeholder_34"
-  input: "enqueue_input/Placeholder_35"
   input: "enqueue_input/Placeholder_36"
   input: "enqueue_input/Placeholder_37"
   input: "enqueue_input/Placeholder_38"
@@ -1935,12 +2057,17 @@ node {
   input: "enqueue_input/Placeholder_41"
   input: "enqueue_input/Placeholder_42"
   input: "enqueue_input/Placeholder_43"
+  input: "enqueue_input/Placeholder_44"
+  input: "enqueue_input/Placeholder_45"
+  input: "enqueue_input/Placeholder_46"
+  input: "enqueue_input/Placeholder_47"
   device: "/device:CPU:0"
   attr {
     key: "Tcomponents"
     value {
       list {
         type: DT_INT64
+        type: DT_DOUBLE
         type: DT_DOUBLE
         type: DT_INT64
         type: DT_DOUBLE
@@ -2335,6 +2462,11 @@ node {
             size: -1
           }
         }
+        shape {
+          dim {
+            size: -1
+          }
+        }
       }
     }
   }
@@ -2343,6 +2475,7 @@ node {
     value {
       list {
         type: DT_INT64
+        type: DT_DOUBLE
         type: DT_DOUBLE
         type: DT_INT64
         type: DT_DOUBLE
@@ -3013,6 +3146,2564 @@ node {
   }
 }
 node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims/dim"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims"
+  op: "ExpandDims"
+  input: "random_shuffle_queue_DequeueUpTo:2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims/dim"
+  attr {
+    key: "T"
+    value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "Tdim"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims_1/dim"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims_1"
+  op: "ExpandDims"
+  input: "random_shuffle_queue_DequeueUpTo:5"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims_1/dim"
+  attr {
+    key: "T"
+    value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "Tdim"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ToInt64"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ToInt64_1"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ExpandDims_1"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_DOUBLE
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseCross"
+  op: "SparseCross"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ToInt64"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/ToInt64_1"
+  attr {
+    key: "N"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 2
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dense_types"
+    value {
+      list {
+        type: DT_INT64
+        type: DT_INT64
+      }
+    }
+  }
+  attr {
+    key: "hash_key"
+    value {
+      i: 956888297470
+    }
+  }
+  attr {
+    key: "hashed_output"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "internal_type"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "num_buckets"
+    value {
+      i: 100
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "sparse_types"
+    value {
+      list {
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Shape/Cast"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseCross:2"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice"
+  op: "StridedSlice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Shape/Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast/x/1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast/x"
+  op: "Pack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/strided_slice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast/x/1"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast/x"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape"
+  op: "SparseReshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseCross"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseCross:2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/Cast"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 2
+          }
+        }
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape/Identity"
+  op: "Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseCross:1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Initializer/zeros"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 100
+        }
+        dim {
+          size: 1
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Assign"
+  op: "Assign"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/read"
+  op: "Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice/begin"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice/size"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice"
+  op: "Slice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape:1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice/begin"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice/size"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Const"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Prod"
+  op: "Prod"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "keep_dims"
+    value {
+      b: false
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather/indices"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather"
+  op: "Gather"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape:1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather/indices"
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "validate_indices"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Cast/x"
+  op: "Pack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Prod"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape"
+  op: "SparseReshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape:1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Cast/x"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 2
+          }
+        }
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape/Identity"
+  op: "Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape/Identity"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/GreaterEqual/y"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT64
+        tensor_shape {
+        }
+        int64_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/GreaterEqual"
+  op: "GreaterEqual"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape/Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/GreaterEqual/y"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Where"
+  op: "Where"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/GreaterEqual"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape/shape"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape"
+  op: "Reshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Where"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather_1"
+  op: "Gather"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape"
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "validate_indices"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather_2"
+  op: "Gather"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape/Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape"
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "validate_indices"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Identity"
+  op: "Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseReshape:1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/Const"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT64
+        tensor_shape {
+        }
+        int64_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/SparseFillEmptyRows"
+  op: "SparseFillEmptyRows"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Gather_2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Identity"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/Const"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 2
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\000\000\000\000\001\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\001\000\000\000\001\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice"
+  op: "StridedSlice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/SparseFillEmptyRows"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 2
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Cast"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/strided_slice"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique"
+  op: "Unique"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/SparseFillEmptyRows:1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_idx"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup"
+  op: "Gather"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/read"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique"
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "validate_indices"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse"
+  op: "SparseSegmentSum"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique:1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Cast"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_1/shape"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "\377\377\377\377\001\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_1"
+  op: "Reshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/SparseFillEmptyRows/SparseFillEmptyRows:2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_1/shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_BOOL
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Shape"
+  op: "Shape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 2
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice"
+  op: "StridedSlice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Shape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/stack/0"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/stack"
+  op: "Pack"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/stack/0"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/strided_slice"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "axis"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Tile"
+  op: "Tile"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/stack"
+  attr {
+    key: "T"
+    value {
+      type: DT_BOOL
+    }
+  }
+  attr {
+    key: "Tmultiples"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/zeros_like"
+  op: "ZerosLike"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum"
+  op: "Select"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Tile"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/zeros_like"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Cast_1"
+  op: "Cast"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/SparseReshape:1"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1/begin"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1/size"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1"
+  op: "Slice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Cast_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1/begin"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1/size"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Shape_1"
+  op: "Shape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2/begin"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2/size"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: -1
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2"
+  op: "Slice"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Shape_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2/begin"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2/size"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/concat/axis"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/concat"
+  op: "ConcatV2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Slice_2"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/concat/axis"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2"
+  op: "Reshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/concat"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
   name: "linear/linear_model/length/ExpandDims/dim"
   op: "Const"
   input: "^add"
@@ -3046,7 +5737,7 @@ node {
 node {
   name: "linear/linear_model/length/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:2"
+  input: "random_shuffle_queue_DequeueUpTo:3"
   input: "linear/linear_model/length/ExpandDims/dim"
   attr {
     key: "T"
@@ -3695,7 +6386,7 @@ node {
 node {
   name: "linear/linear_model/letter_diversity_ratio/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:3"
+  input: "random_shuffle_queue_DequeueUpTo:4"
   input: "linear/linear_model/letter_diversity_ratio/ExpandDims/dim"
   attr {
     key: "T"
@@ -4311,655 +7002,6 @@ node {
   }
 }
 node {
-  name: "linear/linear_model/letter_symbol_ratio/ExpandDims/dim"
-  op: "Const"
-  input: "^add"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-        }
-        int_val: -1
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/ExpandDims"
-  op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:4"
-  input: "linear/linear_model/letter_symbol_ratio/ExpandDims/dim"
-  attr {
-    key: "T"
-    value {
-      type: DT_DOUBLE
-    }
-  }
-  attr {
-    key: "Tdim"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/ToFloat"
-  op: "Cast"
-  input: "linear/linear_model/letter_symbol_ratio/ExpandDims"
-  attr {
-    key: "DstT"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "SrcT"
-    value {
-      type: DT_DOUBLE
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/Shape"
-  op: "Shape"
-  input: "linear/linear_model/letter_symbol_ratio/ToFloat"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 2
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "out_type"
-    value {
-      type: DT_INT32
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/strided_slice/stack"
-  op: "Const"
-  input: "^add"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        int_val: 0
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/strided_slice/stack_1"
-  op: "Const"
-  input: "^add"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        int_val: 1
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/strided_slice/stack_2"
-  op: "Const"
-  input: "^add"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-          dim {
-            size: 1
-          }
-        }
-        int_val: 1
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/strided_slice"
-  op: "StridedSlice"
-  input: "linear/linear_model/letter_symbol_ratio/Shape"
-  input: "linear/linear_model/letter_symbol_ratio/strided_slice/stack"
-  input: "linear/linear_model/letter_symbol_ratio/strided_slice/stack_1"
-  input: "linear/linear_model/letter_symbol_ratio/strided_slice/stack_2"
-  attr {
-    key: "Index"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "T"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "begin_mask"
-    value {
-      i: 0
-    }
-  }
-  attr {
-    key: "ellipsis_mask"
-    value {
-      i: 0
-    }
-  }
-  attr {
-    key: "end_mask"
-    value {
-      i: 0
-    }
-  }
-  attr {
-    key: "new_axis_mask"
-    value {
-      i: 0
-    }
-  }
-  attr {
-    key: "shrink_axis_mask"
-    value {
-      i: 1
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/Reshape/shape/1"
-  op: "Const"
-  input: "^add"
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_INT32
-        tensor_shape {
-        }
-        int_val: 1
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/Reshape/shape"
-  op: "Pack"
-  input: "linear/linear_model/letter_symbol_ratio/strided_slice"
-  input: "linear/linear_model/letter_symbol_ratio/Reshape/shape/1"
-  attr {
-    key: "N"
-    value {
-      i: 2
-    }
-  }
-  attr {
-    key: "T"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 2
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "axis"
-    value {
-      i: 0
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/Reshape"
-  op: "Reshape"
-  input: "linear/linear_model/letter_symbol_ratio/ToFloat"
-  input: "linear/linear_model/letter_symbol_ratio/Reshape/shape"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "Tshape"
-    value {
-      type: DT_INT32
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weights/part_0/Initializer/zeros"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.0
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weights/part_0/Assign"
-  op: "Assign"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0/Initializer/zeros"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weights/part_0/read"
-  op: "Identity"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weights"
-  op: "Identity"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0/read"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear_model/letter_symbol_ratio/weighted_sum"
-  op: "MatMul"
-  input: "linear/linear_model/letter_symbol_ratio/Reshape"
-  input: "linear/linear_model/letter_symbol_ratio/weights"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: false
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: false
-    }
-  }
-}
-node {
   name: "linear/linear_model/repeated_letter_ratio/ExpandDims/dim"
   op: "Const"
   input: "^add"
@@ -4993,7 +7035,7 @@ node {
 node {
   name: "linear/linear_model/repeated_letter_ratio/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:6"
+  input: "random_shuffle_queue_DequeueUpTo:7"
   input: "linear/linear_model/repeated_letter_ratio/ExpandDims/dim"
   attr {
     key: "T"
@@ -5642,7 +7684,7 @@ node {
 node {
   name: "linear/linear_model/upper_lower_ratio/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:8"
+  input: "random_shuffle_queue_DequeueUpTo:9"
   input: "linear/linear_model/upper_lower_ratio/ExpandDims/dim"
   attr {
     key: "T"
@@ -6291,7 +8333,7 @@ node {
 node {
   name: "linear/linear_model/whitespace/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:9"
+  input: "random_shuffle_queue_DequeueUpTo:10"
   input: "linear/linear_model/whitespace/ExpandDims/dim"
   attr {
     key: "T"
@@ -6910,9 +8952,9 @@ node {
   name: "linear/linear_model/weighted_sum_no_bias"
   op: "AddN"
   input: "linear/linear_model/aol_letter_ratio/weighted_sum"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2"
   input: "linear/linear_model/length/weighted_sum"
   input: "linear/linear_model/letter_diversity_ratio/weighted_sum"
-  input: "linear/linear_model/letter_symbol_ratio/weighted_sum"
   input: "linear/linear_model/repeated_letter_ratio/weighted_sum"
   input: "linear/linear_model/upper_lower_ratio/weighted_sum"
   input: "linear/linear_model/whitespace/weighted_sum"
@@ -7953,7 +9995,7 @@ node {
 node {
   name: "linear/head/maybe_expand_dim/ExpandDims"
   op: "ExpandDims"
-  input: "random_shuffle_queue_DequeueUpTo:10"
+  input: "random_shuffle_queue_DequeueUpTo:11"
   input: "linear/head/maybe_expand_dim/ExpandDims/dim"
   attr {
     key: "T"
@@ -14019,9 +16061,71 @@ node {
   }
 }
 node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2_grad/Shape"
+  op: "Shape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2_grad/Reshape"
+  op: "Reshape"
+  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_1"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2_grad/Shape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
   name: "linear/gradients/linear/linear_model/length/weighted_sum_grad/MatMul"
   op: "MatMul"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_1"
+  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_2"
   input: "linear/linear_model/length/weights"
   attr {
     key: "T"
@@ -14061,7 +16165,7 @@ node {
   name: "linear/gradients/linear/linear_model/length/weighted_sum_grad/MatMul_1"
   op: "MatMul"
   input: "linear/linear_model/length/Reshape"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_1"
+  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_2"
   attr {
     key: "T"
     value {
@@ -14176,7 +16280,7 @@ node {
 node {
   name: "linear/gradients/linear/linear_model/letter_diversity_ratio/weighted_sum_grad/MatMul"
   op: "MatMul"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_2"
+  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_3"
   input: "linear/linear_model/letter_diversity_ratio/weights"
   attr {
     key: "T"
@@ -14216,7 +16320,7 @@ node {
   name: "linear/gradients/linear/linear_model/letter_diversity_ratio/weighted_sum_grad/MatMul_1"
   op: "MatMul"
   input: "linear/linear_model/letter_diversity_ratio/Reshape"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_2"
+  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_3"
   attr {
     key: "T"
     value {
@@ -14309,161 +16413,6 @@ node {
     value {
       list {
         s: "loc:@linear/gradients/linear/linear_model/letter_diversity_ratio/weighted_sum_grad/MatMul_1"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul"
-  op: "MatMul"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_3"
-  input: "linear/linear_model/letter_symbol_ratio/weights"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: false
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul_1"
-  op: "MatMul"
-  input: "linear/linear_model/letter_symbol_ratio/Reshape"
-  input: "linear/gradients/linear/linear_model/weighted_sum_no_bias_grad/tuple/control_dependency_3"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "transpose_a"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "transpose_b"
-    value {
-      b: false
-    }
-  }
-}
-node {
-  name: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
-  op: "NoOp"
-  input: "^add"
-  input: "^linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul"
-  input: "^linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul_1"
-}
-node {
-  name: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency"
-  op: "Identity"
-  input: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul"
-  input: "^linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: -1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency_1"
-  op: "Identity"
-  input: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul_1"
-  input: "^linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/MatMul_1"
       }
     }
   }
@@ -14949,6 +16898,910 @@ node {
   }
 }
 node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/zeros_like"
+  op: "ZerosLike"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/zeros_like"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select"
+  op: "Select"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Tile"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2_grad/Reshape"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/zeros_like"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select_1"
+  op: "Select"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Tile"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/zeros_like"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/Reshape_2_grad/Reshape"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
+  op: "NoOp"
+  input: "^add"
+  input: "^linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select"
+  input: "^linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select_1"
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency"
+  op: "Identity"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select"
+  input: "^linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency_1"
+  op: "Identity"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select_1"
+  input: "^linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/group_deps"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/Select_1"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/Shape"
+  op: "Shape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice"
+  op: "StridedSlice"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/Shape"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack_1"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/Gather"
+  op: "Gather"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency_1"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Cast"
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tparams"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "validate_indices"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/UnsortedSegmentSum"
+  op: "UnsortedSegmentSum"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/Gather"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique:1"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/strided_slice"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Shape"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT64
+        tensor_shape {
+          dim {
+            size: 2
+          }
+        }
+        tensor_content: "d\000\000\000\000\000\000\000\001\000\000\000\000\000\000\000"
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ToInt32"
+  op: "Cast"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Shape"
+  attr {
+    key: "DstT"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "SrcT"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Size"
+  op: "Size"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ExpandDims/dim"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ExpandDims"
+  op: "ExpandDims"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Size"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ExpandDims/dim"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tdim"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice"
+  op: "StridedSlice"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ToInt32"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack_1"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 1
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 0
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/concat/axis"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/concat"
+  op: "ConcatV2"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ExpandDims"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/strided_slice"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/concat/axis"
+  attr {
+    key: "N"
+    value {
+      i: 2
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "Tidx"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 2
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Reshape"
+  op: "Reshape"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse_grad/UnsortedSegmentSum"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/concat"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Reshape_1"
+  op: "Reshape"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/Unique"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/ExpandDims"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "Tshape"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+}
+node {
   name: "linear/Const"
   op: "Const"
   attr {
@@ -15333,6 +18186,384 @@ node {
     key: "_class"
     value {
       list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+        float_val: 0.10000000149011612
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 100
+        }
+        dim {
+          size: 1
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl/Assign"
+  op: "Assign"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  input: "linear/Const_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl/read"
+  op: "Identity"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/Initializer/zeros"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_FLOAT
+        tensor_shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+        float_val: 0.0
+      }
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  op: "VariableV2"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "container"
+    value {
+      s: ""
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "shape"
+    value {
+      shape {
+        dim {
+          size: 100
+        }
+        dim {
+          size: 1
+        }
+      }
+    }
+  }
+  attr {
+    key: "shared_name"
+    value {
+      s: ""
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/Assign"
+  op: "Assign"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/Initializer/zeros"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: true
+    }
+  }
+  attr {
+    key: "validate_shape"
+    value {
+      b: true
+    }
+  }
+}
+node {
+  name: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/read"
+  op: "Identity"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/Const_2"
+  op: "Const"
+  attr {
+    key: "_class"
+    value {
+      list {
         s: "loc:@linear/linear_model/length/weights/part_0"
       }
     }
@@ -15438,7 +18669,7 @@ node {
   name: "linear/linear/linear_model/length/weights/part_0/Ftrl/Assign"
   op: "Assign"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl"
-  input: "linear/Const_1"
+  input: "linear/Const_2"
   attr {
     key: "T"
     value {
@@ -15705,7 +18936,7 @@ node {
   }
 }
 node {
-  name: "linear/Const_2"
+  name: "linear/Const_3"
   op: "Const"
   attr {
     key: "_class"
@@ -15816,7 +19047,7 @@ node {
   name: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl/Assign"
   op: "Assign"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
-  input: "linear/Const_2"
+  input: "linear/Const_3"
   attr {
     key: "T"
     value {
@@ -16063,384 +19294,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/Const_3"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.10000000149011612
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl/Assign"
-  op: "Assign"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  input: "linear/Const_3"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl/read"
-  op: "Identity"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/Initializer/zeros"
-  op: "Const"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "value"
-    value {
-      tensor {
-        dtype: DT_FLOAT
-        tensor_shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-        float_val: 0.0
-      }
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  op: "VariableV2"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "container"
-    value {
-      s: ""
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "shape"
-    value {
-      shape {
-        dim {
-          size: 1
-        }
-        dim {
-          size: 1
-        }
-      }
-    }
-  }
-  attr {
-    key: "shared_name"
-    value {
-      s: ""
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/Assign"
-  op: "Assign"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/Initializer/zeros"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: true
-    }
-  }
-  attr {
-    key: "validate_shape"
-    value {
-      b: true
-    }
-  }
-}
-node {
-  name: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/read"
-  op: "Identity"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -18139,6 +20992,383 @@ node {
   }
 }
 node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Unique"
+  op: "Unique"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Reshape_1"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+        }
+        shape {
+          dim {
+            size: -1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_idx"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Shape"
+  op: "Shape"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Unique"
+  attr {
+    key: "T"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "out_type"
+    value {
+      type: DT_INT32
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 0
+      }
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack_1"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack_2"
+  op: "Const"
+  input: "^add"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "value"
+    value {
+      tensor {
+        dtype: DT_INT32
+        tensor_shape {
+          dim {
+            size: 1
+          }
+        }
+        int_val: 1
+      }
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice"
+  op: "StridedSlice"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Shape"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack_1"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice/stack_2"
+  attr {
+    key: "Index"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "T"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "begin_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "ellipsis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "end_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "new_axis_mask"
+    value {
+      i: 0
+    }
+  }
+  attr {
+    key: "shrink_axis_mask"
+    value {
+      i: 1
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/UnsortedSegmentSum"
+  op: "UnsortedSegmentSum"
+  input: "linear/gradients/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weighted_sum/embedding_lookup_sparse/embedding_lookup_grad/Reshape"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Unique:1"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/strided_slice"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT32
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: -1
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+}
+node {
+  name: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/SparseApplyFtrl"
+  op: "SparseApplyFtrl"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/UnsortedSegmentSum"
+  input: "linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Unique"
+  input: "linear/Ftrl/learning_rate"
+  input: "linear/Ftrl/l1_regularization_strength"
+  input: "linear/Ftrl/l2_regularization_strength"
+  input: "linear/Ftrl/learning_rate_power"
+  attr {
+    key: "T"
+    value {
+      type: DT_FLOAT
+    }
+  }
+  attr {
+    key: "Tindices"
+    value {
+      type: DT_INT64
+    }
+  }
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+          dim {
+            size: 100
+          }
+          dim {
+            size: 1
+          }
+        }
+      }
+    }
+  }
+  attr {
+    key: "use_locking"
+    value {
+      b: false
+    }
+  }
+}
+node {
   name: "linear/Ftrl/update_linear/linear_model/length/weights/part_0/ApplyFtrl"
   op: "ApplyFtrl"
   input: "linear/linear_model/length/weights/part_0"
@@ -18207,53 +21437,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-          dim {
-            size: 1
-          }
-          dim {
-            size: 1
-          }
-        }
-      }
-    }
-  }
-  attr {
-    key: "use_locking"
-    value {
-      b: false
-    }
-  }
-}
-node {
-  name: "linear/Ftrl/update_linear/linear_model/letter_symbol_ratio/weights/part_0/ApplyFtrl"
-  op: "ApplyFtrl"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  input: "linear/gradients/linear/linear_model/letter_symbol_ratio/weighted_sum_grad/tuple/control_dependency_1"
-  input: "linear/Ftrl/learning_rate"
-  input: "linear/Ftrl/l1_regularization_strength"
-  input: "linear/Ftrl/l2_regularization_strength"
-  input: "linear/Ftrl/learning_rate_power"
-  attr {
-    key: "T"
-    value {
-      type: DT_FLOAT
-    }
-  }
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -18469,9 +21652,9 @@ node {
   op: "NoOp"
   input: "^add"
   input: "^linear/Ftrl/update_linear/linear_model/aol_letter_ratio/weights/part_0/ApplyFtrl"
+  input: "^linear/Ftrl/update_linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/SparseApplyFtrl"
   input: "^linear/Ftrl/update_linear/linear_model/length/weights/part_0/ApplyFtrl"
   input: "^linear/Ftrl/update_linear/linear_model/letter_diversity_ratio/weights/part_0/ApplyFtrl"
-  input: "^linear/Ftrl/update_linear/linear_model/letter_symbol_ratio/weights/part_0/ApplyFtrl"
   input: "^linear/Ftrl/update_linear/linear_model/repeated_letter_ratio/weights/part_0/ApplyFtrl"
   input: "^linear/Ftrl/update_linear/linear_model/upper_lower_ratio/weights/part_0/ApplyFtrl"
   input: "^linear/Ftrl/update_linear/linear_model/whitespace/weights/part_0/ApplyFtrl"
@@ -18557,21 +21740,21 @@ node {
   op: "NoOp"
   input: "^global_step/Assign"
   input: "^linear/linear_model/aol_letter_ratio/weights/part_0/Assign"
+  input: "^linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Assign"
   input: "^linear/linear_model/length/weights/part_0/Assign"
   input: "^linear/linear_model/letter_diversity_ratio/weights/part_0/Assign"
-  input: "^linear/linear_model/letter_symbol_ratio/weights/part_0/Assign"
   input: "^linear/linear_model/repeated_letter_ratio/weights/part_0/Assign"
   input: "^linear/linear_model/upper_lower_ratio/weights/part_0/Assign"
   input: "^linear/linear_model/whitespace/weights/part_0/Assign"
   input: "^linear/linear_model/bias_weights/part_0/Assign"
   input: "^linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl/Assign"
   input: "^linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl_1/Assign"
+  input: "^linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl/Assign"
+  input: "^linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/Assign"
   input: "^linear/linear/linear_model/length/weights/part_0/Ftrl/Assign"
   input: "^linear/linear/linear_model/length/weights/part_0/Ftrl_1/Assign"
   input: "^linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl/Assign"
   input: "^linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1/Assign"
-  input: "^linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl/Assign"
-  input: "^linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/Assign"
   input: "^linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl/Assign"
   input: "^linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl_1/Assign"
   input: "^linear/linear/linear_model/upper_lower_ratio/weights/part_0/Ftrl/Assign"
@@ -18650,6 +21833,34 @@ node {
 node {
   name: "report_uninitialized_variables/IsVariableInitialized_2"
   op: "IsVariableInitialized"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables/IsVariableInitialized_3"
+  op: "IsVariableInitialized"
   input: "linear/linear_model/length/weights/part_0"
   attr {
     key: "_class"
@@ -18676,7 +21887,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_3"
+  name: "report_uninitialized_variables/IsVariableInitialized_4"
   op: "IsVariableInitialized"
   input: "linear/linear_model/letter_diversity_ratio/weights/part_0"
   attr {
@@ -18684,34 +21895,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_4"
-  op: "IsVariableInitialized"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -18902,6 +22085,62 @@ node {
 node {
   name: "report_uninitialized_variables/IsVariableInitialized_11"
   op: "IsVariableInitialized"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables/IsVariableInitialized_12"
+  op: "IsVariableInitialized"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables/IsVariableInitialized_13"
+  op: "IsVariableInitialized"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl"
   attr {
     key: "_class"
@@ -18928,7 +22167,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_12"
+  name: "report_uninitialized_variables/IsVariableInitialized_14"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
   attr {
@@ -18956,7 +22195,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_13"
+  name: "report_uninitialized_variables/IsVariableInitialized_15"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
   attr {
@@ -18984,7 +22223,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables/IsVariableInitialized_14"
+  name: "report_uninitialized_variables/IsVariableInitialized_16"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
   attr {
@@ -18992,62 +22231,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_15"
-  op: "IsVariableInitialized"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables/IsVariableInitialized_16"
-  op: "IsVariableInitialized"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -19403,21 +22586,21 @@ node {
         }
         string_val: "global_step"
         string_val: "linear/linear_model/aol_letter_ratio/weights/part_0"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
         string_val: "linear/linear_model/length/weights/part_0"
         string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0"
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0"
         string_val: "linear/linear_model/repeated_letter_ratio/weights/part_0"
         string_val: "linear/linear_model/upper_lower_ratio/weights/part_0"
         string_val: "linear/linear_model/whitespace/weights/part_0"
         string_val: "linear/linear_model/bias_weights/part_0"
         string_val: "linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl_1"
+        string_val: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+        string_val: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/length/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
-        string_val: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-        string_val: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/upper_lower_ratio/weights/part_0/Ftrl"
@@ -20376,6 +23559,34 @@ node {
 node {
   name: "report_uninitialized_variables_1/IsVariableInitialized_2"
   op: "IsVariableInitialized"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables_1/IsVariableInitialized_3"
+  op: "IsVariableInitialized"
   input: "linear/linear_model/length/weights/part_0"
   attr {
     key: "_class"
@@ -20402,7 +23613,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_3"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_4"
   op: "IsVariableInitialized"
   input: "linear/linear_model/letter_diversity_ratio/weights/part_0"
   attr {
@@ -20410,34 +23621,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_4"
-  op: "IsVariableInitialized"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -20628,6 +23811,62 @@ node {
 node {
   name: "report_uninitialized_variables_1/IsVariableInitialized_11"
   op: "IsVariableInitialized"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables_1/IsVariableInitialized_12"
+  op: "IsVariableInitialized"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
+  attr {
+    key: "_class"
+    value {
+      list {
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
+      }
+    }
+  }
+  attr {
+    key: "_output_shapes"
+    value {
+      list {
+        shape {
+        }
+      }
+    }
+  }
+  attr {
+    key: "dtype"
+    value {
+      type: DT_FLOAT
+    }
+  }
+}
+node {
+  name: "report_uninitialized_variables_1/IsVariableInitialized_13"
+  op: "IsVariableInitialized"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl"
   attr {
     key: "_class"
@@ -20654,7 +23893,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_12"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_14"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
   attr {
@@ -20682,7 +23921,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_13"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_15"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
   attr {
@@ -20710,7 +23949,7 @@ node {
   }
 }
 node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_14"
+  name: "report_uninitialized_variables_1/IsVariableInitialized_16"
   op: "IsVariableInitialized"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
   attr {
@@ -20718,62 +23957,6 @@ node {
     value {
       list {
         s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_15"
-  op: "IsVariableInitialized"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
-      }
-    }
-  }
-  attr {
-    key: "_output_shapes"
-    value {
-      list {
-        shape {
-        }
-      }
-    }
-  }
-  attr {
-    key: "dtype"
-    value {
-      type: DT_FLOAT
-    }
-  }
-}
-node {
-  name: "report_uninitialized_variables_1/IsVariableInitialized_16"
-  op: "IsVariableInitialized"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
-  attr {
-    key: "_class"
-    value {
-      list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -21129,21 +24312,21 @@ node {
         }
         string_val: "global_step"
         string_val: "linear/linear_model/aol_letter_ratio/weights/part_0"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
         string_val: "linear/linear_model/length/weights/part_0"
         string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0"
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0"
         string_val: "linear/linear_model/repeated_letter_ratio/weights/part_0"
         string_val: "linear/linear_model/upper_lower_ratio/weights/part_0"
         string_val: "linear/linear_model/whitespace/weights/part_0"
         string_val: "linear/linear_model/bias_weights/part_0"
         string_val: "linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/aol_letter_ratio/weights/part_0/Ftrl_1"
+        string_val: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+        string_val: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/length/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
-        string_val: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-        string_val: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear/linear_model/upper_lower_ratio/weights/part_0/Ftrl"
@@ -22033,7 +25216,7 @@ node {
         dtype: DT_STRING
         tensor_shape {
         }
-        string_val: "_temp_b5c9cfe9898a4a60ba60be1ba11a0080/part"
+        string_val: "_temp_88bb8f652d4b4feca1fb5691d071ff9c/part"
       }
     }
   }
@@ -22179,15 +25362,15 @@ node {
         string_val: "linear/linear_model/bias_weights"
         string_val: "linear/linear_model/bias_weights/part_0/Ftrl"
         string_val: "linear/linear_model/bias_weights/part_0/Ftrl_1"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear_model/length/weights"
         string_val: "linear/linear_model/length/weights/part_0/Ftrl"
         string_val: "linear/linear_model/length/weights/part_0/Ftrl_1"
         string_val: "linear/linear_model/letter_diversity_ratio/weights"
         string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
-        string_val: "linear/linear_model/letter_symbol_ratio/weights"
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
         string_val: "linear/linear_model/repeated_letter_ratio/weights"
         string_val: "linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl"
         string_val: "linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl_1"
@@ -22239,9 +25422,9 @@ node {
         string_val: "1 0,1"
         string_val: "1 0,1"
         string_val: "1 0,1"
-        string_val: "1 1 0,1:0,1"
-        string_val: "1 1 0,1:0,1"
-        string_val: "1 1 0,1:0,1"
+        string_val: "100 1 0,100:0,1"
+        string_val: "100 1 0,100:0,1"
+        string_val: "100 1 0,100:0,1"
         string_val: "1 1 0,1:0,1"
         string_val: "1 1 0,1:0,1"
         string_val: "1 1 0,1:0,1"
@@ -22274,15 +25457,15 @@ node {
   input: "linear/linear_model/bias_weights/part_0/read"
   input: "linear/linear/linear_model/bias_weights/part_0/Ftrl/read"
   input: "linear/linear/linear_model/bias_weights/part_0/Ftrl_1/read"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/read"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl/read"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1/read"
   input: "linear/linear_model/length/weights/part_0/read"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl/read"
   input: "linear/linear/linear_model/length/weights/part_0/Ftrl_1/read"
   input: "linear/linear_model/letter_diversity_ratio/weights/part_0/read"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl/read"
   input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1/read"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0/read"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl/read"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1/read"
   input: "linear/linear_model/repeated_letter_ratio/weights/part_0/read"
   input: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl/read"
   input: "linear/linear/linear_model/repeated_letter_ratio/weights/part_0/Ftrl_1/read"
@@ -23469,7 +26652,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/length/weights"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights"
       }
     }
   }
@@ -23505,7 +26688,7 @@ node {
             size: 1
           }
         }
-        string_val: "1 1 0,1:0,1"
+        string_val: "100 1 0,100:0,1"
       }
     }
   }
@@ -23522,7 +26705,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23543,7 +26726,7 @@ node {
 node {
   name: "save/Assign_7"
   op: "Assign"
-  input: "linear/linear_model/length/weights/part_0"
+  input: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
   input: "save/RestoreV2_7"
   attr {
     key: "T"
@@ -23555,7 +26738,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/length/weights/part_0"
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -23565,7 +26748,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23618,7 +26801,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/length/weights/part_0/Ftrl"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
       }
     }
   }
@@ -23654,7 +26837,7 @@ node {
             size: 1
           }
         }
-        string_val: "1 1 0,1:0,1"
+        string_val: "100 1 0,100:0,1"
       }
     }
   }
@@ -23671,7 +26854,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23692,7 +26875,7 @@ node {
 node {
   name: "save/Assign_8"
   op: "Assign"
-  input: "linear/linear/linear_model/length/weights/part_0/Ftrl"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl"
   input: "save/RestoreV2_8"
   attr {
     key: "T"
@@ -23704,7 +26887,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/length/weights/part_0"
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -23714,7 +26897,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23767,7 +26950,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/length/weights/part_0/Ftrl_1"
+        string_val: "linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
       }
     }
   }
@@ -23803,7 +26986,7 @@ node {
             size: 1
           }
         }
-        string_val: "1 1 0,1:0,1"
+        string_val: "100 1 0,100:0,1"
       }
     }
   }
@@ -23820,7 +27003,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23841,7 +27024,7 @@ node {
 node {
   name: "save/Assign_9"
   op: "Assign"
-  input: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
+  input: "linear/linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0/Ftrl_1"
   input: "save/RestoreV2_9"
   attr {
     key: "T"
@@ -23853,7 +27036,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/length/weights/part_0"
+        s: "loc:@linear/linear_model/funny_emoji_ratio_X_letter_symbol_ratio/weights/part_0"
       }
     }
   }
@@ -23863,7 +27046,7 @@ node {
       list {
         shape {
           dim {
-            size: 1
+            size: 100
           }
           dim {
             size: 1
@@ -23916,7 +27099,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_diversity_ratio/weights"
+        string_val: "linear/linear_model/length/weights"
       }
     }
   }
@@ -23990,7 +27173,7 @@ node {
 node {
   name: "save/Assign_10"
   op: "Assign"
-  input: "linear/linear_model/letter_diversity_ratio/weights/part_0"
+  input: "linear/linear_model/length/weights/part_0"
   input: "save/RestoreV2_10"
   attr {
     key: "T"
@@ -24002,7 +27185,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/length/weights/part_0"
       }
     }
   }
@@ -24065,7 +27248,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
+        string_val: "linear/linear_model/length/weights/part_0/Ftrl"
       }
     }
   }
@@ -24139,7 +27322,7 @@ node {
 node {
   name: "save/Assign_11"
   op: "Assign"
-  input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
+  input: "linear/linear/linear_model/length/weights/part_0/Ftrl"
   input: "save/RestoreV2_11"
   attr {
     key: "T"
@@ -24151,7 +27334,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/length/weights/part_0"
       }
     }
   }
@@ -24214,7 +27397,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
+        string_val: "linear/linear_model/length/weights/part_0/Ftrl_1"
       }
     }
   }
@@ -24288,7 +27471,7 @@ node {
 node {
   name: "save/Assign_12"
   op: "Assign"
-  input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
+  input: "linear/linear/linear_model/length/weights/part_0/Ftrl_1"
   input: "save/RestoreV2_12"
   attr {
     key: "T"
@@ -24300,7 +27483,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/length/weights/part_0"
       }
     }
   }
@@ -24363,7 +27546,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_symbol_ratio/weights"
+        string_val: "linear/linear_model/letter_diversity_ratio/weights"
       }
     }
   }
@@ -24437,7 +27620,7 @@ node {
 node {
   name: "save/Assign_13"
   op: "Assign"
-  input: "linear/linear_model/letter_symbol_ratio/weights/part_0"
+  input: "linear/linear_model/letter_diversity_ratio/weights/part_0"
   input: "save/RestoreV2_13"
   attr {
     key: "T"
@@ -24449,7 +27632,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
       }
     }
   }
@@ -24512,7 +27695,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
+        string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
       }
     }
   }
@@ -24586,7 +27769,7 @@ node {
 node {
   name: "save/Assign_14"
   op: "Assign"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl"
+  input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl"
   input: "save/RestoreV2_14"
   attr {
     key: "T"
@@ -24598,7 +27781,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
       }
     }
   }
@@ -24661,7 +27844,7 @@ node {
             size: 1
           }
         }
-        string_val: "linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
+        string_val: "linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
       }
     }
   }
@@ -24735,7 +27918,7 @@ node {
 node {
   name: "save/Assign_15"
   op: "Assign"
-  input: "linear/linear/linear_model/letter_symbol_ratio/weights/part_0/Ftrl_1"
+  input: "linear/linear/linear_model/letter_diversity_ratio/weights/part_0/Ftrl_1"
   input: "save/RestoreV2_15"
   attr {
     key: "T"
@@ -24747,7 +27930,7 @@ node {
     key: "_class"
     value {
       list {
-        s: "loc:@linear/linear_model/letter_symbol_ratio/weights/part_0"
+        s: "loc:@linear/linear_model/letter_diversity_ratio/weights/part_0"
       }
     }
   }
