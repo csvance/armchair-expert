@@ -515,7 +515,7 @@ class MarkovAI(object):
 
             self.session.commit()
 
-    def process_msg(self, io_module, input_msg, replyrate=1, owner=False, rebuild_db=False):
+    def process_msg(self, io_module, input_msg, replyrate=0, owner=False, rebuild_db=False):
 
         # Ignore external I/O while rebuilding
         if self.rebuilding is True and not rebuild_db:
