@@ -2,6 +2,7 @@ import asyncio
 
 from config import *
 from ftbot import *
+import os
 
 if __name__ == '__main__':
 

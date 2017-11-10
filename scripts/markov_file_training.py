@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     print("Training...")
 
-    path = "training/file_training"
+    path = "training/markov_training_files"
     process_files = []
     root, dirs, files = os.walk(path).__next__()
     for filename in files:
