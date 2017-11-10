@@ -6,7 +6,7 @@ from config import *
 import emoji
 import re
 from markov_schema import *
-
+import numpy as np
 
 class MessageBase(object):
     def __init__(self,message=None,line=None):
@@ -17,9 +17,6 @@ class MessageBase(object):
         self.message_filtered = None
         self.args = {}
         self.sentences = []
-
-        # Used to keep track of the sentences[] being handled
-        self.sentence_index = 0
 
         # Helpers
         self.re_emoji_emojify = re.compile(r":[a-z]+:")
@@ -56,8 +53,6 @@ class MessageBase(object):
         else:
             return None
 
-
-
     def process(self, raw_message):
 
         # Filter at line level
@@ -86,11 +81,9 @@ class MessageBase(object):
 
         return pos
 
-    # Called when ORM objects are needed
-    def load(self, session, nlp):
 
+    def load_pos(self,session, nlp):
         for sentence in self.sentences:
-
             # First, load POS
             for word_index, word in enumerate(sentence):
 
@@ -125,23 +118,18 @@ class MessageBase(object):
                     session.commit()
                 word['pos_a->b'] = pos_a_b
 
-            # Used to break up words into reasonable neighborhood sizes (num_words^2 complexity)
-            word_objs = []
-            backref_objs = []
+    def load_words(self,session,nlp):
+        for sentence in self.sentences:
 
             # Load words and relationships
             for word_index, word in enumerate(sentence):
 
                 word_a = session.query(Word).filter(Word.text == word['word_text']).first()
                 if word_a is None:
-                    word_a = Word(text=word['word_text'])
+                    word_a = Word(text=word['word_text'], pos_id = word['pos'].id)
                     session.add(word_a)
                     session.commit()
                 word['word'] = word_a
-
-                # Store the word, and align add a backreference to the word in the sentence
-                word_objs.append(word_a)
-                backref_objs.append(word)
 
                 # If we are on the last word, there is no word b or a->b relationship
                 if word_index >= len(sentence) - 1:
@@ -151,7 +139,7 @@ class MessageBase(object):
                 word_b = session.query(Word).filter(
                     Word.text == sentence[word_index + 1]['word_text']).first()
                 if word_b is None:
-                    word_b = Word(text=word['word_text'])
+                    word_b = Word(text=sentence[word_index + 1]['word_text'], pos_id = sentence[word_index + 1]['pos'].id)
                     session.add(word_b)
                     session.commit()
                 sentence[word_index + 1]['word'] = word_b
@@ -164,51 +152,57 @@ class MessageBase(object):
                     session.commit()
                 word['word_a->b'] = word_a_b
 
-            # Used to break up words into reasonable neighborhood sizes (num_words^2 complexity)
-            def chunks(l, n):
-                """Yield successive n-sized chunks from l."""
-                for i in range(0, len(l), n):
-                    yield l[i:i + n]
+    def load_neighbors(self,session,nlp):
 
-            backref_iterator = iter(backref_objs)
+        permutations = 0
 
-            # Load neighbors
-            chunk_word_objs = chunks(word_objs, CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
+        for sentence in self.sentences:
 
-            for chunk in chunk_word_objs:
+            chunks = np.array_split(sentence,len(sentence) / float(CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK))
+
+            for chunk in chunks:
+
+                print("Chunk: %s" % len(chunk))
 
                 for word in chunk:
+                    print(word['word'].text)
 
-                    # Load the backreference to the word in which we are loading neighbors for
-                    word_backref = backref_iterator.__next__()
+                    word['word_neighbors'] = []
 
                     # Filter things that are not relevant to the main information in a sentence
-                    if word.pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                    if word['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                         continue
 
-                    for potential_neighbor in chunk:
-                        if word.id != potential_neighbor.id:
 
-                            if potential_neighbor.pos.text \
+                    for neighbor_index,potential_neighbor in enumerate(chunk):
+
+                        if word['word'].id != potential_neighbor['word'].id:
+
+                            if potential_neighbor['pos'].text \
                                     not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
                                 continue
 
                             neighbor = session.query(WordNeighbor). \
                                 join(Word, WordNeighbor.b_id == Word.id). \
-                                filter(and_(WordNeighbor.a_id == word.id,
-                                            Word.id == potential_neighbor.id)).first()
+                                filter(and_(WordNeighbor.a_id == word['word'].id,
+                                            Word.id == potential_neighbor['word'].id)).first()
 
                             if neighbor is None:
-                                neighbor = WordNeighbor(a_id=word.id, b_id=potential_neighbor.id)
+                                neighbor = WordNeighbor(a_id=word['word'].id, b_id=potential_neighbor['word'].id)
                                 session.add(neighbor)
                                 session.commit()
 
-                            try:
-                                word_backref['word_neighbors'].append(neighbor)
-                            except KeyError:
-                                word_backref['word_neighbors'] = []
-                                word_backref['word_neighbors'].append(neighbor)
+                            word['word_neighbors'].append(neighbor)
 
+                        permutations += 1
+
+        print(permutations)
+
+    # Called when ORM objects are needed
+    def load(self, session, nlp):
+            self.load_pos(session,nlp)
+            self.load_words(session,nlp)
+            self.load_neighbors(session,nlp)
             session.commit()
 
 

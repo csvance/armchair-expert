@@ -83,7 +83,7 @@ class MarkovAI(object):
         for line in lines:
 
             input_message = MessageInput(line=line)
-            input_message.load(self.session, self.nlp)
+            #input_message.load(self.session, self.nlp)
 
             print(input_message.message_filtered)
 
@@ -161,6 +161,8 @@ class MarkovAI(object):
                 for neighbor in word['word_neighbors']:
                     neighbor.count += 1
                     neighbor.rating += 1
+
+        self.session.commit()
 
     def cmd_stats(self):
         words = self.session.query(Word.id).count()
