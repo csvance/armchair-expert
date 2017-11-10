@@ -305,13 +305,13 @@ class MessageInput(MessageBase):
         message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
                          message)
 
-        # Demojify
-        message = emoji.demojize(message)
-
         # Convert everything to lowercase
         message = message.lower()
 
         # Strip out undesirable characters to reduce entropy
         message = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
+
+        # Demojify
+        message = emoji.demojize(message)
 
         return message
