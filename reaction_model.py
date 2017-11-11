@@ -5,22 +5,7 @@ import pandas as pd
 import tensorflow as tf
 
 from config import *
-
-
-class MLFeatureAnalyzer(object):
-    def __init__(self, data: list):
-        self.data = data
-
-    def analyze(self) -> list:
-        results = []
-        for row in self.data:
-            results.append(self.analyze_row(row))
-
-        return results
-
-    def analyze_row(self, row):
-        pass
-
+from machine_learning import *
 
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
     def __init__(self, data: list):
