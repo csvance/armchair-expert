@@ -3,7 +3,6 @@ from typing import Optional
 
 import discord
 import emoji
-import numpy as np
 from sqlalchemy import and_
 
 from markov_schema import *
@@ -115,7 +114,7 @@ class MessageBase(object):
         # Split by lines
         for line in self.message_filtered.split("\n"):
             # Split by sentence
-            for sentence in re.split(r'[.!?]', line):
+            for sentence in re.split(CONFIG_MARKOV_SENTENCE_GROUP_SPLIT, line):
                 filtered_sentence = self.process_sentence(sentence)
                 if filtered_sentence is not None:
                     self.sentences.append(filtered_sentence)
@@ -218,44 +217,37 @@ class MessageBase(object):
 
         for sentence in self.sentences:
 
-            if len(sentence) <= CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK:
-                num_chunks = 1
-            else:
-                num_chunks = len(sentence) / float(CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK)
+            for word_index, word in enumerate(sentence):
 
-            chunks = np.array_split(sentence, num_chunks)
+                word['word_neighbors'] = []
 
-            for chunk in chunks:
+                # Filter things that are not relevant to the main information in a sentence
+                if word['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                    continue
 
-                for word_index,word in enumerate(chunk):
+                for neighbor_index, potential_neighbor in enumerate(sentence):
 
-                    word['word_neighbors'] = []
+                    # A word cannot be a neighbor with itself either (case == 0)
+                    # We don't care if a word is right next to another as WordRelation already tracks that (case == 1)
+                    # We don't care if a word is outside the window (case <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE)
+                    if abs(word_index - neighbor_index) > 1 and abs(
+                                    word_index - neighbor_index) <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE:
 
-                    # Filter things that are not relevant to the main information in a sentence
-                    if word['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
-                        continue
+                        if potential_neighbor['pos'].text \
+                                not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                            continue
 
-                    for neighbor_index, potential_neighbor in enumerate(chunk):
+                        neighbor = session.query(WordNeighbor). \
+                            join(Word, WordNeighbor.b_id == Word.id). \
+                            filter(and_(WordNeighbor.a_id == word['word'].id,
+                                        Word.id == potential_neighbor['word'].id)).first()
 
-                        # A word cannot be a neighbor with itself either (case 0)
-                        # We don't care if a word is right next to another as WordRelation already tracks that (case 1)
-                        if abs(word_index-neighbor_index) > 1:
+                        if neighbor is None:
+                            neighbor = WordNeighbor(a_id=word['word'].id, b_id=potential_neighbor['word'].id)
+                            session.add(neighbor)
+                            session.commit()
 
-                            if potential_neighbor['pos'].text \
-                                    not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
-                                continue
-
-                            neighbor = session.query(WordNeighbor). \
-                                join(Word, WordNeighbor.b_id == Word.id). \
-                                filter(and_(WordNeighbor.a_id == word['word'].id,
-                                            Word.id == potential_neighbor['word'].id)).first()
-
-                            if neighbor is None:
-                                neighbor = WordNeighbor(a_id=word['word'].id, b_id=potential_neighbor['word'].id)
-                                session.add(neighbor)
-                                session.commit()
-
-                            word['word_neighbors'].append(neighbor)
+                        word['word_neighbors'].append(neighbor)
 
     # Called when ORM objects are needed
     def load(self, session, nlp) -> None:
@@ -300,7 +292,7 @@ class MessageInput(MessageBase):
         message = message.lower()
 
         # Strip out characters which pollute the database with useless information for our purposes
-        message = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
+        message = re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
 
         # Demojify
         message = emoji.demojize(message)

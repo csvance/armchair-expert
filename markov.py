@@ -9,6 +9,7 @@ from sqlalchemy.sql.functions import coalesce, sum
 
 from messages import *
 from reaction_model import AOLReactionModel
+import numpy as np
 
 
 class BotReplyTracker(object):
@@ -466,12 +467,12 @@ class MarkovAI(object):
             for word in sentence:
 
                 # Filter things that are not relevant to the main information in a sentence
-                if word['word'].pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                if word['word'].pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
                     continue
 
                 for neighbor in word['word_neighbors']:
                     # Filter things that are not relevant to the main information in a sentence
-                    if neighbor.b.pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
+                    if neighbor.b.pos.text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
                         continue
 
                     neighbor.count += 1
