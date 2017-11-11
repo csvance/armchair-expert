@@ -1,17 +1,16 @@
 import asyncio
+import os
 
-from config import *
 from ftbot import *
 from messages import *
-import os
 
 
 class TXTFileFeeder(object):
-    def __init__(self,path):
-        data = open(path,'r').read()
+    def __init__(self, data_file_path):
+        data = open(data_file_path, 'r').read()
         self.lines = self.filter_lines(data.split("\n"))
 
-    def filter_lines(self,lines):
+    def filter_lines(self, lines):
 
         filtered_line_list = []
 
@@ -23,9 +22,8 @@ class TXTFileFeeder(object):
 
 
 def feed(ai, training_files):
-
-    def get_extension(filename):
-        return filename.split(".")[1]
+    def get_extension(file_name):
+        return file_name.split(".")[1]
 
     for file in training_files:
 
@@ -39,7 +37,7 @@ def feed(ai, training_files):
         for line in feeder.lines:
             print(line)
             input_message = MessageInput(text=line)
-            ai.process_msg(None,input_message,replyrate=0)
+            ai.process_msg(None, input_message, replyrate=0)
 
 
 if __name__ == '__main__':
@@ -53,8 +51,7 @@ if __name__ == '__main__':
     process_files = []
     root, dirs, files = os.walk(path).__next__()
     for filename in files:
-        process_files.append("%s/%s" % (root,filename))
-    feed(ftbot.ai,process_files)
+        process_files.append("%s/%s" % (root, filename))
+    feed(ftbot.ai, process_files)
 
     print("All Done!")
-

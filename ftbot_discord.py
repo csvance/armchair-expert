@@ -1,10 +1,6 @@
 import asyncio
-import re
 from concurrent import futures
 
-import discord
-import spacy
-from config import *
 from ftbot import *
 from messages import *
 
@@ -15,13 +11,13 @@ async def reply_queue_handler():
     await client.wait_until_ready()
     while not client.is_closed:
         output_message = await ftbot.get_reply()
+        # TODO: Figure out this warning
         await client.send_message(output_message.args['channel'], output_message.message_filtered)
 
 
 @client.event
 @asyncio.coroutine
 def on_message(message: discord.message.Message) -> None:
-
     # Prevent feedback loop / learning from ourself
     if str(message.author) == CONFIG_DISCORD_ME:
         return
@@ -29,8 +25,6 @@ def on_message(message: discord.message.Message) -> None:
     # Ignore messages in NSFW channels
     elif str(message.channel) in CONFIG_DISCORD_IGNORE_CHANNELS:
         return
-
-
 
     # Handle Comands
     if message.content.startswith("!"):
@@ -56,13 +50,12 @@ def on_message(message: discord.message.Message) -> None:
         ftbot.process_message(MessageInput(message=message))
 
 
-
 print("Starting FTBot")
 loop = asyncio.get_event_loop()
 ftbot = FTBot(event_loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
-CONFIG_DISCORD_CLIENT_ID))
+    CONFIG_DISCORD_CLIENT_ID))
 
 pool = futures.ThreadPoolExecutor(1)
 loop.run_in_executor(pool, client.run, CONFIG_DISCORD_TOKEN)

@@ -1,12 +1,14 @@
-from config import *
 import csv
 import re
+
 import pandas as pd
 import tensorflow as tf
 
+from config import *
+
 
 class MLFeatureAnalyzer(object):
-    def __init__(self, data: dict):
+    def __init__(self, data: list):
         self.data = data
 
     def analyze(self) -> list:
@@ -21,7 +23,7 @@ class MLFeatureAnalyzer(object):
 
 
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
-    def __init__(self, data: dict):
+    def __init__(self, data: list):
         MLFeatureAnalyzer.__init__(self, data)
 
     def analyze_row(self, line: dict) -> dict:
@@ -140,7 +142,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
 
 class AOLReactionModel(object):
-    def __init__(self, model_dir: str="models/aol-reaction-model/"):
+    def __init__(self, model_dir: str = "models/aol-reaction-model/"):
         self.data = []
         self.training_data = None
         self.y_label = None
@@ -193,7 +195,7 @@ class AOLReactionModel(object):
             shuffle=shuffle,
             num_threads=4)
 
-    def eval_data_input_fn(self, data: dict):
+    def eval_data_input_fn(self, data: list):
 
         data_rows = []
 
@@ -230,6 +232,6 @@ class AOLReactionModel(object):
         for key in sorted(results):
             print("%s: %s" % (key, results[key]))
 
-    def train(self, file_path: str, epochs: int=1):
+    def train(self, file_path: str, epochs: int = 1):
         self.classifier.train(input_fn=self.training_file_input_fn(file_path, num_epochs=epochs, shuffle=True),
                               steps=None)

@@ -1,6 +1,5 @@
 import janus
 
-from config import *
 from markov import MarkovAI
 from messages import *
 
@@ -63,4 +62,3 @@ class FTBot(IOModule):
                 self.ai.process_msg(self, input_message, self.replyrate)
             elif self.shutup_flag is True:
                 self.ai.process_msg(self, input_message, 0)
-

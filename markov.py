@@ -1,15 +1,14 @@
-from markov_schema import *
-from config import *
-from sqlalchemy import and_, or_, desc
-from sqlalchemy import func, update, delete
-from sqlalchemy.sql.functions import coalesce, sum
-from sqlalchemy.orm import aliased
-from datetime import timedelta
 import random
-import numpy as np
-from reaction_model import AOLReactionModel
-from messages import *
+from datetime import timedelta
+
 import spacy
+from sqlalchemy import func
+from sqlalchemy import or_, desc
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.functions import coalesce, sum
+
+from messages import *
+from reaction_model import AOLReactionModel
 
 
 class BotReplyTracker(object):
@@ -58,7 +57,7 @@ class MarkovAI(object):
 
         self.session = Session()
 
-    def rebuild_db(self, ignore: list=[]) -> None:
+    def rebuild_db(self, ignore: list = []) -> None:
 
         if self.rebuilding:
             return
@@ -175,7 +174,7 @@ class MarkovAI(object):
                 feedback_reply_output = MessageOutput(text=reply)
                 feedback_reply_output.args['author_mention'] = command_message.args['author_mention']
 
-                feedback_reply_output.load(self.session,self.nlp)
+                feedback_reply_output.load(self.session, self.nlp)
 
                 reply = self.reply(feedback_reply_output, 0, no_url=True)
                 if reply is None:
@@ -194,7 +193,7 @@ class MarkovAI(object):
 
         return txt
 
-    def reply(self, input_message: MessageInput, sentence_index: int, no_url=False) -> str:
+    def reply(self, input_message: MessageInput, sentence_index: int, no_url=False) -> Optional[str]:
 
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
@@ -500,7 +499,8 @@ class MarkovAI(object):
 
             self.session.commit()
 
-    def process_msg(self, io_module, input_message: MessageInput, replyrate: int=0, owner: bool=False, rebuild_db: bool=False) -> None:
+    def process_msg(self, io_module, input_message: MessageInput, replyrate: int = 0, owner: bool = False,
+                    rebuild_db: bool = False) -> None:
 
         if len(input_message.sentences) == 0:
             return

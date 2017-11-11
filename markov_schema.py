@@ -1,10 +1,12 @@
 import datetime
-from config import *
+
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger, Index
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker, scoped_session
+
+from config import *
 
 Base = declarative_base()
 
@@ -27,11 +29,11 @@ class WordNeighbor(Base):
     id = Column(Integer, index=True, primary_key=True)
     a_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     b_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
-    a = relationship("Word",foreign_keys=[a_id])
-    b = relationship("Word",foreign_keys=[b_id])
+    a = relationship("Word", foreign_keys=[a_id])
+    b = relationship("Word", foreign_keys=[b_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    idx_wordneighbor_a_b = Index('idx_wordneighbor_a_b','a_id','b_id',unique=True)
+    idx_wordneighbor_a_b = Index('idx_wordneighbor_a_b', 'a_id', 'b_id', unique=True)
 
 
 class Pos(Base):
@@ -49,11 +51,11 @@ class PosRelation(Base):
     id = Column(Integer, index=True, primary_key=True)
     a_id = Column(Integer, ForeignKey('pos.id'), index=True, nullable=False)
     b_id = Column(Integer, ForeignKey('pos.id'), index=True, nullable=False)
-    a = relationship("Pos",foreign_keys=[a_id])
-    b = relationship("Pos",foreign_keys=[b_id])
+    a = relationship("Pos", foreign_keys=[a_id])
+    b = relationship("Pos", foreign_keys=[b_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    idx_posrelation_a_b = Index('idx_posrelation_a_b','a_id','b_id',unique=True)
+    idx_posrelation_a_b = Index('idx_posrelation_a_b', 'a_id', 'b_id', unique=True)
 
 
 class WordRelation(Base):
@@ -61,11 +63,11 @@ class WordRelation(Base):
     id = Column(Integer, index=True, primary_key=True)
     a_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     b_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
-    a = relationship("Word",foreign_keys=[a_id])
-    b = relationship("Word",foreign_keys=[a_id])
+    a = relationship("Word", foreign_keys=[a_id])
+    b = relationship("Word", foreign_keys=[a_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    idx_wordrelation_a_b = Index('idx_wordrelation_a_b','a_id','b_id',unique=True)
+    idx_wordrelation_a_b = Index('idx_wordrelation_a_b', 'a_id', 'b_id', unique=True)
 
 
 class Line(Base):
@@ -87,7 +89,6 @@ class URL(Base):
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     text = Column(String(512), index=True, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
-
 
     def __repr__(self):
         return self.text

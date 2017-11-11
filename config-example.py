@@ -14,7 +14,7 @@ CONFIG_DATABASE_SQLITE = 2
 
 CONFIG_DATABASE = CONFIG_DATABASE_MYSQL
 
-#CONFIG_DATABASE_CONNECT = 'sqlite:///markov.db'
+# CONFIG_DATABASE_CONNECT = 'sqlite:///markov.db'
 CONFIG_DATABASE_CONNECT = 'mysql+pymysql://root@localhost/markov?charset=utf8mb4'
 
 # Markov configuration settings, don't mess with this unless you know what you are doing
