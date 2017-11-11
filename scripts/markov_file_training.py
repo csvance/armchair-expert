@@ -10,6 +10,7 @@ class TXTFileFeeder(object):
         data = open(data_file_path, 'r').read()
         self.lines = self.filter_lines(data.split("\n"))
 
+    # noinspection PyMethodMayBeStatic
     def filter_lines(self, lines):
 
         filtered_line_list = []
@@ -27,7 +28,6 @@ def feed(ai, training_files):
 
     for file in training_files:
 
-        feeder = None
         if get_extension(file) == "txt":
             feeder = TXTFileFeeder(file)
         else:

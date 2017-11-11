@@ -18,12 +18,12 @@ class BotReplyTracker(object):
     # Creates relevant nodes in reply tracker for server and channel
     def branch_(self, args: dict) -> None:
         try:
-            server = self.replies[int(args['server'])]
+            self.replies[int(args['server'])]
         except KeyError:
             self.replies[int(args['server'])] = {}
 
         try:
-            channel = self.replies[int(args['server'])][str(args['channel'])]
+            self.replies[int(args['server'])][str(args['channel'])]
         except KeyError:
             self.replies[int(args['server'])][str(args['channel'])] = {'timestamp': None, 'sentences': [],
                                                                        'fresh': False}
@@ -57,8 +57,10 @@ class MarkovAI(object):
 
         self.session = Session()
 
-    def rebuild_db(self, ignore: list = []) -> None:
+    def rebuild_db(self, ignore: Optional[list]=None) -> None:
 
+        if ignore is None:
+            ignore = []
         if self.rebuilding:
             return
 
@@ -151,12 +153,9 @@ class MarkovAI(object):
 
         command_message.load(self.session, self.nlp)
 
-        subject = command_message.message_raw.split(" ")[1]
-
         def random_punct():
             return [".", "!", "?"][random.randrange(0, 3)]
 
-        s = subject.lower()
         txt = ""
 
         for p in range(0, 5):
@@ -176,6 +175,7 @@ class MarkovAI(object):
 
                 feedback_reply_output.load(self.session, self.nlp)
 
+                # noinspection PyTypeChecker
                 reply = self.reply(feedback_reply_output, 0, no_url=True)
                 if reply is None:
                     txt = "I don't know that word well enough!"
@@ -230,9 +230,6 @@ class MarkovAI(object):
             selected_topic_id.append(topic['word'].id)
             selected_topic_text.append(topic['word_text'])
 
-        potential_subject = None
-        subject_word = None
-
         # Find potential exact matches, weigh by occurance
         subject_words = self.session.query(Word.id, Word.text, Word.pos_id, sum(Word.count).label('rating')).filter(
             Word.id.in_(selected_topic_id)).order_by(desc('rating')).all()
@@ -274,8 +271,6 @@ class MarkovAI(object):
                 return None
 
             choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
-
-            r_index = None
 
             # Most Intelligent search for next word (neighbor and pos)
             word_a = aliased(Word)
@@ -349,8 +344,6 @@ class MarkovAI(object):
                 return None
 
             choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
-
-            results = self.session.query()
 
             # Most Intelligent search for next word (neighbor and pos)
             word_a = aliased(Word)
@@ -499,7 +492,7 @@ class MarkovAI(object):
 
             self.session.commit()
 
-    def process_msg(self, io_module, input_message: MessageInput, replyrate: int = 0, owner: bool = False,
+    def process_msg(self, io_module, input_message: MessageInput, replyrate: int = 0,
                     rebuild_db: bool = False) -> None:
 
         if len(input_message.sentences) == 0:
@@ -511,6 +504,7 @@ class MarkovAI(object):
 
         # Command message?
         if type(input_message) == MessageInputCommand:
+            # noinspection PyTypeChecker
             reply = self.command(input_message)
             if reply:
                 output_message = MessageOutput(text=reply)
@@ -529,6 +523,7 @@ class MarkovAI(object):
             # Sometimes server_id and channel can be none
             server_id = None
             if input_message.args['server'] is not None:
+                # noinspection PyUnusedLocal
                 server_id = server_id = int(input_message.args['server'])
 
             channel = None
@@ -591,4 +586,5 @@ class MarkovAI(object):
 
             # If the author is us while we are rebuilding the DB, update the reply tracker
             elif rebuild_db and input_message.args['author'] == CONFIG_DISCORD_ME:
+                # noinspection PyTypeChecker
                 self.reply_tracker.bot_reply(input_message)

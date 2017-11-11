@@ -1,7 +1,7 @@
 import asyncio
 
 from config import *
-from ftbot import *
+from ftbot import FTBot
 
 if __name__ == '__main__':
 

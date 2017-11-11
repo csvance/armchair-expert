@@ -38,6 +38,7 @@ class MessageBase(object):
 
         self.process()
 
+    # noinspection PyUnusedLocal
     def args_from_text(self, text: str) -> None:
         self.args = {'learning': True, 'mentioned': False, 'channel': None, 'server': None, 'author': 'text_loader',
                      'always_reply': False, 'author_mention': None, 'timestamp': datetime.datetime.now()}
@@ -52,11 +53,10 @@ class MessageBase(object):
     def args_from_message(self, message: discord.message.Message) -> None:
 
         # Check for Private Message
-        server = None
         try:
             server = message.channel.server.id
         except AttributeError:
-            server = 0
+            server = None
 
         self.args = {'channel': message.channel,
                      'author': str(message.author),
@@ -88,6 +88,7 @@ class MessageBase(object):
     def filter_line(self, raw_message: str) -> str:
         pass
 
+    # noinspection PyMethodMayBeStatic
     def process_word(self, word: str) -> Optional[dict]:
 
         if word == '':
@@ -125,8 +126,6 @@ class MessageBase(object):
 
     def nlp_pos_query(self, nlp, word: str) -> str:
 
-        pos = None
-
         # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
         if self.re_emoji_custom.match(word) or self.re_emoji_emojify.match(word):
             pos = 'EMOJI'
@@ -141,7 +140,6 @@ class MessageBase(object):
     def load_pos(self, session, nlp) -> None:
         for sentence in self.sentences:
 
-            pos_a = None
             pos_b = None
 
             for word_index, word in enumerate(sentence):
@@ -181,10 +179,9 @@ class MessageBase(object):
                     session.commit()
                 word['pos_a->b'] = pos_a_b
 
-    def load_words(self, session, nlp) -> None:
+    def load_words(self, session) -> None:
         for sentence in self.sentences:
 
-            word_a = None
             word_b = None
 
             # Load words and relationships
@@ -221,11 +218,10 @@ class MessageBase(object):
                     session.commit()
                 word['word_a->b'] = word_a_b
 
-    def load_neighbors(self, session, nlp) -> None:
+    def load_neighbors(self, session) -> None:
 
         for sentence in self.sentences:
 
-            num_chunks = None
             if len(sentence) <= CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK:
                 num_chunks = 1
             else:
@@ -266,8 +262,8 @@ class MessageBase(object):
     # Called when ORM objects are needed
     def load(self, session, nlp) -> None:
         self.load_pos(session, nlp)
-        self.load_words(session, nlp)
-        self.load_neighbors(session, nlp)
+        self.load_words(session)
+        self.load_neighbors(session)
         session.commit()
 
 
@@ -295,11 +291,11 @@ class MessageInput(MessageBase):
         message = re.sub(r'<@[!]?[0-9]+>', '#nick', message)
 
         # Extract URLs
-        self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+        self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
                                       message)
 
         # Remove URLs
-        message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
+        message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
                          message)
 
         # Convert everything to lowercase

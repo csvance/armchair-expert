@@ -82,7 +82,6 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         max_ratio = 0.0
 
         signal_sum = 0
-        noise_sum = 0
 
         for check_letters in CONFIG_MARKOV_REACTION_CHARS:
             letters_found = {}
@@ -103,10 +102,6 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
     @staticmethod
     def upper_lower_ratio(line: str) -> float:
-        letter_count = 0.0
-        upper_count = 0.0
-        lower_count = 0.0
-
         lower_count = len(re.findall(r"[a-z]+", line))
         upper_count = len(re.findall(r"[A-Z]+", line))
 
@@ -120,10 +115,6 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
     @staticmethod
     def letter_symbol_ratio(line: str) -> float:
         char_count = len(line)
-        letter_count = 0.0
-        upper_count = 0.0
-        lower_count = 0.0
-
         letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
 
         return letter_count / char_count
@@ -181,7 +172,7 @@ class AOLReactionModel(object):
             analyzer = AOLReactionFeatureAnalyzer(input_data)
             input_data = analyzer.analyze()
 
-            pd_eval_data = pd.DataFrame.from_dict(input_data)
+            pd_eval_data = pd.DataFrame.from_records(input_data)
             pd_eval_data = pd_eval_data.dropna(how="any", axis=0)
 
             self.training_data = pd_eval_data
@@ -195,6 +186,7 @@ class AOLReactionModel(object):
             shuffle=shuffle,
             num_threads=4)
 
+    # noinspection PyMethodMayBeStatic
     def eval_data_input_fn(self, data: list):
 
         data_rows = []
@@ -205,7 +197,7 @@ class AOLReactionModel(object):
         analyzer = AOLReactionFeatureAnalyzer(data_rows)
         data_rows = analyzer.analyze()
 
-        pd_eval_data = pd.DataFrame.from_dict(data_rows)
+        pd_eval_data = pd.DataFrame.from_records(data_rows)
 
         return tf.estimator.inputs.pandas_input_fn(
             x=pd_eval_data,
