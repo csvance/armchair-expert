@@ -17,7 +17,7 @@ class BotReplyTracker(object):
         self.replies = {}
 
     # Creates relevant nodes in reply tracker for server and channel
-    def branch_(self, args):
+    def branch_(self, args: dict) -> None:
         try:
             server = self.replies[int(args['server'])]
         except KeyError:
@@ -30,21 +30,21 @@ class BotReplyTracker(object):
                                                                        'fresh': False}
 
     # Called whenever the bot sends a message in a channel
-    def bot_reply(self, output_message):
+    def bot_reply(self, output_message: MessageOutput) -> None:
         self.branch_(output_message.args)
         self.replies[int(output_message.args['server'])][str(output_message.args['channel'])] = {
             'sentences': output_message.sentences,
             'timestamp': output_message.args['timestamp'], 'fresh': True}
 
     # Called whenever a human sends a message to a channel
-    def human_reply(self, input_msg):
-        self.branch_(input_msg.args)
-        self.get_reply(input_msg)['fresh'] = False
+    def human_reply(self, input_message: MessageInput) -> None:
+        self.branch_(input_message.args)
+        self.get_reply(input_message)['fresh'] = False
 
     # Gets the last bot reply in a channel
-    def get_reply(self, input_msg):
-        self.branch_(input_msg.args)
-        return self.replies[int(input_msg.args['server'])][str(input_msg.args['channel'])]
+    def get_reply(self, input_message: MessageInput) -> dict:
+        self.branch_(input_message.args)
+        return self.replies[int(input_message.args['server'])][str(input_message.args['channel'])]
 
 
 class MarkovAI(object):
@@ -58,7 +58,7 @@ class MarkovAI(object):
 
         self.session = Session()
 
-    def rebuild_db(self, ignore=[]):
+    def rebuild_db(self, ignore: list=[]) -> None:
 
         if self.rebuilding:
             return
@@ -100,37 +100,7 @@ class MarkovAI(object):
 
         print("Rebuilding DB Complete!")
 
-    def clean_db(self):  # TODO: Update this function to effect WordNeighborhood ratings
-
-        print("Cleaning DB...")
-
-        # Subtract Rating by 1
-        self.session.execute(update(WordRelation, values={
-            WordRelation.rating: WordRelation.rating - CONFIG_MARKOV_TICK_RATING_DAILY_REDUCE}))
-        self.session.commit()
-
-        # Remove all forwards associations with no score
-        self.session.query(WordRelation).filter(WordRelation.rating <= 0).delete()
-        self.session.commit()
-
-        # Check if we have any forward associations left
-        results = self.session.query(Word.id). \
-            outerjoin(WordRelation, WordRelation.a == Word.id). \
-            group_by(Word.id). \
-            having(func.count(WordRelation.id) == 0).all()
-
-        # Go through each word with no forward associations left
-        for result in results:
-            # First delete all associations backwards from this word to other words
-            self.session.query(WordRelation).filter(WordRelation.b == result.id).delete()
-            # Next delete the word
-            self.session.query(Word).filter(Word.id == result.id).delete()
-
-        self.session.commit()
-
-        print("Cleaning DB Complete!")
-
-    def learn(self, input_message):
+    def learn(self, input_message: MessageInput) -> None:
 
         for sentence in input_message.sentences:
             for word_index, word in enumerate(sentence):
@@ -158,7 +128,7 @@ class MarkovAI(object):
 
         self.session.commit()
 
-    def cmd_stats(self):
+    def cmd_stats(self) -> str:
         words = self.session.query(Word.id).count()
         lines = self.session.query(Line.id).filter(Line.author != CONFIG_DISCORD_ME).count()
         assoc = self.session.query(WordRelation).count()
@@ -166,7 +136,7 @@ class MarkovAI(object):
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
             words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
-    def command(self, command_message):
+    def command(self, command_message: MessageInputCommand) -> str:
 
         result = None
 
@@ -176,16 +146,9 @@ class MarkovAI(object):
         if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "essay"):
             result = self.essay(command_message)
 
-        if command_message.args['is_owner'] is False:
-            return result
-
-        # Admin Only Commands
-        if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "clean"):
-            self.clean_db()
-
         return result
 
-    def essay(self, command_message):
+    def essay(self, command_message: MessageInputCommand) -> str:
 
         command_message.load(self.session, self.nlp)
 
@@ -231,7 +194,7 @@ class MarkovAI(object):
 
         return txt
 
-    def reply(self, input_message, sentence_index, no_url=False):
+    def reply(self, input_message: MessageInput, sentence_index: int, no_url=False) -> str:
 
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
@@ -464,29 +427,29 @@ class MarkovAI(object):
 
         return " ".join(reply)
 
-    def check_reaction(self, input_msg):
+    def check_reaction(self, input_message: MessageInput) -> None:
 
-        bot_reply = self.reply_tracker.get_reply(input_msg)
+        bot_reply = self.reply_tracker.get_reply(input_message)
 
         # Check if reply exists
         if bot_reply['timestamp'] is None:
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds or if the message is fresh
-        elif bot_reply['fresh'] is not True and input_msg.args['timestamp'] > bot_reply['timestamp'] + \
+        elif bot_reply['fresh'] is not True and input_message.args['timestamp'] > bot_reply['timestamp'] + \
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.classify_data([input_msg.message_filtered])[0]:
-            self.handle_reaction(input_msg)
+        if self.reaction_model.classify_data([input_message.message_filtered])[0]:
+            self.handle_reaction(input_message)
             return
 
         # If this wasn't a reaction, end the chain
-        self.reply_tracker.human_reply(input_msg)
+        self.reply_tracker.human_reply(input_message)
 
-    def handle_reaction(self, input_msg):
+    def handle_reaction(self, input_message: MessageInput) -> None:
 
-        server_last_replies = self.reply_tracker.get_reply(input_msg)
+        server_last_replies = self.reply_tracker.get_reply(input_message)
 
         # Uprate words and relations
         for sentence_index, sentence in enumerate(server_last_replies['sentences']):
@@ -524,20 +487,20 @@ class MarkovAI(object):
 
         self.session.commit()
 
-    def learn_url(self, input_msg):
+    def learn_url(self, input_message: MessageInput) -> None:
 
-        for url in input_msg.args['url']:
+        for url in input_message.args['url']:
 
             the_url = self.session.query(URL).filter(URL.text == url).first()
 
             if the_url is not None:
                 the_url.count += 1
             else:
-                self.session.add(URL(text=url, timestamp=input_msg.args['timestamp']))
+                self.session.add(URL(text=url, timestamp=input_message.args['timestamp']))
 
             self.session.commit()
 
-    def process_msg(self, io_module, input_message, replyrate=0, owner=False, rebuild_db=False):
+    def process_msg(self, io_module, input_message: MessageInput, replyrate: int=0, owner: bool=False, rebuild_db: bool=False) -> None:
 
         if len(input_message.sentences) == 0:
             return

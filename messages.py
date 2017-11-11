@@ -4,13 +4,15 @@ from sqlalchemy.sql.functions import coalesce, sum
 from sqlalchemy.orm import aliased
 from config import *
 import emoji
+import discord
 import re
 from markov_schema import *
 import numpy as np
 import datetime
 
+
 class MessageBase(object):
-    def __init__(self, message=None, line=None, text=None):
+    def __init__(self, message: discord.message.Message=None, line: Line=None, text: str=None):
         # Class Data
         self.message = message
         self.line = line
@@ -38,7 +40,7 @@ class MessageBase(object):
 
         self.process()
 
-    def args_from_text(self, text):
+    def args_from_text(self, text: str) -> None:
         self.args = {'learning': True, 'mentioned': False, 'channel': None, 'server': None, 'author': 'text_loader',
                      'always_reply': False, 'author_mention': None, 'timestamp': datetime.datetime.now()}
 
@@ -49,7 +51,7 @@ class MessageBase(object):
                      'mentioned': False, 'author_mention': None, 'learning': True}
 
     # From discord client
-    def args_from_message(self, message):
+    def args_from_message(self, message: discord.message.Message) -> None:
 
         # Check for Private Message
         server = None
@@ -85,10 +87,10 @@ class MessageBase(object):
         else:
             self.args['learning'] = False
 
-    def filter_line(self, raw_message):
+    def filter_line(self, raw_message: str) -> str:
         pass
 
-    def process_word(self, word):
+    def process_word(self, word: str) -> dict:
 
         if word == '':
             return None
@@ -97,7 +99,7 @@ class MessageBase(object):
 
         return word_dict
 
-    def process_sentence(self, sentence):
+    def process_sentence(self, sentence) -> list:
 
         filtered_words = []
         for word in sentence.split(" "):
@@ -110,7 +112,7 @@ class MessageBase(object):
         else:
             return None
 
-    def process(self):
+    def process(self) -> None:
 
         # Filter at line level
         self.message_filtered = self.filter_line(self.message_raw)
@@ -123,7 +125,7 @@ class MessageBase(object):
                 if filtered_sentence is not None:
                     self.sentences.append(filtered_sentence)
 
-    def nlp_pos_query(self, nlp, word):
+    def nlp_pos_query(self, nlp, word: str) -> str:
 
         pos = None
 
@@ -138,7 +140,7 @@ class MessageBase(object):
 
         return pos
 
-    def load_pos(self, session, nlp):
+    def load_pos(self, session, nlp) -> None:
         for sentence in self.sentences:
 
             pos_a = None
@@ -181,7 +183,7 @@ class MessageBase(object):
                     session.commit()
                 word['pos_a->b'] = pos_a_b
 
-    def load_words(self, session, nlp):
+    def load_words(self, session, nlp) -> None:
         for sentence in self.sentences:
 
             word_a = None
@@ -221,7 +223,7 @@ class MessageBase(object):
                     session.commit()
                 word['word_a->b'] = word_a_b
 
-    def load_neighbors(self, session, nlp):
+    def load_neighbors(self, session, nlp) -> None:
 
         for sentence in self.sentences:
 
@@ -264,7 +266,7 @@ class MessageBase(object):
                             word['word_neighbors'].append(neighbor)
 
     # Called when ORM objects are needed
-    def load(self, session, nlp):
+    def load(self, session, nlp) -> None:
         self.load_pos(session, nlp)
         self.load_words(session, nlp)
         self.load_neighbors(session, nlp)
@@ -274,10 +276,10 @@ class MessageBase(object):
 # A message from the bot
 class MessageOutput(MessageBase):
     # message is just a string, not a discord message object
-    def __init__(self, line=None, text=None):
+    def __init__(self, line: Line=None, text: str=None):
         MessageBase.__init__(self, line=line, text=text)
 
-    def filter_line(self, raw_message):
+    def filter_line(self, raw_message: str) -> str:
         return emoji.emojize(raw_message)
 
 
@@ -285,10 +287,10 @@ class MessageOutput(MessageBase):
 class MessageInput(MessageBase):
     # message is a discord message object
     # line is a orm object for the line table
-    def __init__(self, message=None, line=None, text=None):
+    def __init__(self, message: discord.message.Message=None, line: Line=None, text: str=None):
         MessageBase.__init__(self, message=message, line=line, text=text)
 
-    def filter_line(self, raw_message):
+    def filter_line(self, raw_message: str) -> str:
         message = raw_message
 
         # Replace mention with nick
@@ -315,7 +317,7 @@ class MessageInput(MessageBase):
 
 
 class MessageInputCommand(MessageInput):
-    def __init__(self, message=None, line=None, text=None):
+    def __init__(self, message: discord.message.Message=None, line=None, text=None):
         MessageInput.__init__(self, message=message, line=line, text=text)
 
 

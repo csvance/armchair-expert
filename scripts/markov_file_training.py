@@ -45,7 +45,7 @@ def feed(ai, training_files):
 if __name__ == '__main__':
 
     print("Starting FTBot")
-    ftbot = FTBot(loop=asyncio.get_event_loop())
+    ftbot = FTBot(event_loop=asyncio.get_event_loop())
 
     print("Training...")
 

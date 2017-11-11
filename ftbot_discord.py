@@ -20,7 +20,7 @@ async def reply_queue_handler():
 
 @client.event
 @asyncio.coroutine
-def on_message(message):
+def on_message(message: discord.message.Message) -> None:
 
     # Prevent feedback loop / learning from ourself
     if str(message.author) == CONFIG_DISCORD_ME:
@@ -59,7 +59,7 @@ def on_message(message):
 
 print("Starting FTBot")
 loop = asyncio.get_event_loop()
-ftbot = FTBot(loop=loop)
+ftbot = FTBot(event_loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
 CONFIG_DISCORD_CLIENT_ID))

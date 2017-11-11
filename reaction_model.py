@@ -6,10 +6,10 @@ import tensorflow as tf
 
 
 class MLFeatureAnalyzer(object):
-    def __init__(self, data):
+    def __init__(self, data: dict):
         self.data = data
 
-    def analyze(self):
+    def analyze(self) -> list:
         results = []
         for row in self.data:
             results.append(self.analyze_row(row))
@@ -21,10 +21,10 @@ class MLFeatureAnalyzer(object):
 
 
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
-    def __init__(self, data):
+    def __init__(self, data: dict):
         MLFeatureAnalyzer.__init__(self, data)
 
-    def analyze_row(self, line):
+    def analyze_row(self, line: dict) -> dict:
 
         line['length'] = len(line['text'])
         line['whitespace'] = line['text'].count(" ")
@@ -44,7 +44,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         return line
 
     @staticmethod
-    def funny_emoji_ratio(line):
+    def funny_emoji_ratio(line: str) -> float:
 
         emoji_len = 0.
 
@@ -54,7 +54,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         return emoji_len / len(line)
 
     @staticmethod
-    def repeated_letter_ratio(line):
+    def repeated_letter_ratio(line: str) -> float:
 
         repeated_count = 0
         not_repeated_count = 0
@@ -74,7 +74,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
             return 0.0
 
     @staticmethod
-    def aol_letter_ratio(line):
+    def aol_letter_ratio(line: str) -> float:
         txt_lower = line.lower()
 
         max_ratio = 0.0
@@ -100,7 +100,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         return max_ratio
 
     @staticmethod
-    def upper_lower_ratio(line):
+    def upper_lower_ratio(line: str) -> float:
         letter_count = 0.0
         upper_count = 0.0
         lower_count = 0.0
@@ -116,7 +116,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
             return 0.0
 
     @staticmethod
-    def letter_symbol_ratio(line):
+    def letter_symbol_ratio(line: str) -> float:
         char_count = len(line)
         letter_count = 0.0
         upper_count = 0.0
@@ -127,7 +127,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         return letter_count / char_count
 
     @staticmethod
-    def letter_diversity_ratio(line):
+    def letter_diversity_ratio(line: str) -> float:
         chars = {}
 
         for c in line:
@@ -140,7 +140,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
 
 class AOLReactionModel(object):
-    def __init__(self, model_dir="models/aol-reaction-model/"):
+    def __init__(self, model_dir: str="models/aol-reaction-model/"):
         self.data = []
         self.training_data = None
         self.y_label = None
@@ -166,7 +166,7 @@ class AOLReactionModel(object):
     def reset_training_data(self):
         self.training_data = None
 
-    def training_file_input_fn(self, data_file, num_epochs, shuffle):
+    def training_file_input_fn(self, data_file: str, num_epochs: int, shuffle: bool):
 
         input_data = []
         if self.training_data is None:
@@ -193,7 +193,7 @@ class AOLReactionModel(object):
             shuffle=shuffle,
             num_threads=4)
 
-    def eval_data_input_fn(self, data):
+    def eval_data_input_fn(self, data: dict):
 
         data_rows = []
 
@@ -210,7 +210,7 @@ class AOLReactionModel(object):
             num_epochs=1,
             shuffle=False)
 
-    def classify_data(self, data):
+    def classify_data(self, data: list) -> list:
 
         classifications = []
 
@@ -222,7 +222,7 @@ class AOLReactionModel(object):
 
         return classifications
 
-    def print_evaluation(self, file_path):
+    def print_evaluation(self, file_path: str) -> None:
         results = self.classifier.evaluate(
             input_fn=self.training_file_input_fn(file_path, num_epochs=1, shuffle=False),
             steps=None)
@@ -230,6 +230,6 @@ class AOLReactionModel(object):
         for key in sorted(results):
             print("%s: %s" % (key, results[key]))
 
-    def train(self, file_path, epochs=1):
+    def train(self, file_path: str, epochs: int=1):
         self.classifier.train(input_fn=self.training_file_input_fn(file_path, num_epochs=epochs, shuffle=True),
                               steps=None)

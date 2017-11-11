@@ -1,5 +1,5 @@
 import datetime
-
+from config import *
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger, Index
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -92,8 +92,8 @@ class URL(Base):
     def __repr__(self):
         return self.text
 
-# engine = create_engine('sqlite:///markov.db')
-engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4')
+
+engine = create_engine(CONFIG_DATABASE_CONNECT)
 
 Base.metadata.create_all(engine)
 
