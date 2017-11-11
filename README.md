@@ -1,18 +1,15 @@
 # About
-Inspired by old IRC bots that created a markov chain from chat text, regurgitating it back in unintentionally hilarious ways.
+Chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. Regurgitating what it learns from you in unintentionally hilarious ways. 
 
 # Features
-- Uses NLP to detect words' POS, allowing for more accurate topic selection
-- Uses several factors to generate output, including markov A->B relationships and whether a word is used together with another in a sentence
-- Uses scoring system with linear distribution when selecting choices
-- Capable of determining when people react with extreme AOL speak using machine learning, upranking words and A->B relationships that cause reactions
-- Seperate markov chain for POS relationships
-
-# Requirements
-- python 3.6
+- Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
+- NLP assisted topic selection. When choosing a subject in a sentence to reply to, undesirable parts of speech such as pronouns and conjunctions are ignored.
+- In addition to an A->B word embedding system with a Markov Decision Process, words farther than one away are also embedded using a system which performs faster than a Skip-gram model with a window size greater-than one, but is less precise.
+- Analyzes reactions to its messages to fuel reinforcement learning, making word combinations that are funny appear more often.
 
 # Dependencies
-- spacy (Uses 'en' dataset by default, you will need to download this in addition to installing spacy: 'python -m spacy download en')
+- python 3.6
+- spacy
 - tensorflow
 - sqlalchemy
 - discord.py
@@ -23,15 +20,20 @@ Inspired by old IRC bots that created a markov chain from chat text, regurgitati
 
 # Database
 Currently supports both MySQL and SQLite as DB backends. I recommend using MySQL as the performance is orders of magnitude better.
-In theory you should be able to set it up with any modern SQL DBMS.
+In theory you should be able to set it up with any modern RDBMS.
 
 # Configuration
 
-Copy config-example.py to config.py and fill in the fields.
-You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
-Convert the application to a bot account to get your token. After that you will need to join it to your guild using OAuth2
-Take the client id of your application and fill in this link to join it: https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID_GOES_HERE&scope=bot&permissions=0
+- You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
+- Once you register it take note of the Client ID, Username, Bot ID, and Token
+- Copy config-example.py to config.py and fill in everything above the database connection string
+- If using MySQL you will need to manually create the database and enter your connection string.
+- Otherwise just select SQLite and use the included connection string for it.
+- Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 
 # Run It
-python ftbot_discord.py
+- python ftbot_discord.py
+- When the bot starts you should get a message with a link which will allow you control which servers the bot joins to.
+
+
 
