@@ -227,7 +227,7 @@ class MessageBase(object):
 
             for chunk in chunks:
 
-                for word in chunk:
+                for word_index,word in enumerate(chunk):
 
                     word['word_neighbors'] = []
 
@@ -237,7 +237,9 @@ class MessageBase(object):
 
                     for neighbor_index, potential_neighbor in enumerate(chunk):
 
-                        if word['word'].id != potential_neighbor['word'].id:
+                        # A word cannot be a neighbor with itself either (case 0)
+                        # We don't care if a word is right next to another as WordRelation already tracks that (case 1)
+                        if abs(word_index-neighbor_index) > 1:
 
                             if potential_neighbor['pos'].text \
                                     not in CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT:
