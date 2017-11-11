@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 
 from config import *
-from machine_learning import *
+from ml_common import *
 
 
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
