@@ -9,5 +9,5 @@ class MLFeatureAnalyzer(object):
 
         return results
 
-    def analyze_row(self, row):
+    def analyze_row(self, row) -> dict:
         pass

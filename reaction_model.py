@@ -7,6 +7,7 @@ import tensorflow as tf
 from config import *
 from machine_learning import *
 
+
 class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
     def __init__(self, data: list):
         MLFeatureAnalyzer.__init__(self, data)
