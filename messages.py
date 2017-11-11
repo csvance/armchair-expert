@@ -297,7 +297,7 @@ class MessageInput(MessageBase):
         # Convert everything to lowercase
         message = message.lower()
 
-        # Strip out undesirable characters to reduce entropy
+        # Strip out characters which pollute the database with useless information for our purposes
         message = re.sub(r',|"|;|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
 
         # Demojify
