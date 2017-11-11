@@ -19,10 +19,6 @@ class MessageBase(object):
         self.args = {}
         self.sentences = []
 
-        # Helpers
-        self.re_emoji_emojify = re.compile(r":[a-z]+:")
-        self.re_emoji_custom = re.compile(r"<:[a-z]+:[0-9]+>")
-
         # Create args based on the type of message
         if text:
             self.message_raw = text
@@ -127,7 +123,7 @@ class MessageBase(object):
     def nlp_pos_query(self, nlp, word: str) -> str:
 
         # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if self.re_emoji_custom.match(word) or self.re_emoji_emojify.match(word):
+        if re.match(r"<:[a-z]+:[0-9]+>",word) or re.match(r":[a-z]+:",word):
             pos = 'EMOJI'
         elif word == '#nick':
             pos = 'NOUN'
