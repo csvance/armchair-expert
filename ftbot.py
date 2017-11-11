@@ -25,11 +25,15 @@ class FTBot(object):
 
     def shutup(self, args):
         self.shutup_flag = True
-        self.output(MessageOutput(text=CONFIG_MESSAGE_SHUTUP, channel=args['channel']))
+        message_output = MessageOutput(text=CONFIG_MESSAGE_SHUTUP)
+        message_output.args['channel'] = args['channel']
+        self.output(message_output)
 
     def wakeup(self, args):
         self.shutup_flag = False
-        self.output(MessageOutput(text=CONFIG_MESSAGE_WAKEUP, channel=args['channel']))
+        message_output = MessageOutput(text=CONFIG_MESSAGE_WAKEUP)
+        message_output.args['channel'] = args['channel']
+        self.output(MessageOutput(text=CONFIG_MESSAGE_WAKEUP))
 
     def process_message(self, msg):
         self.message_queue.sync_q.put(msg)
