@@ -30,7 +30,7 @@ CONFIG_MARKOV_WEIGHT_RELATION = 20
 CONFIG_MARKOV_WEIGHT_WORDCOUNT = 0
 CONFIG_MARKOV_GENERATE_LIMIT = 20
 
-# Limits maximum complexity of neighborhood relations to n*n
+# Limits maximum complexity of neighborhood relations to n^2
 CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_SIZE_CHUNK = 8
 CONFIG_MARKOV_NEIGHBORHOOD_SENTENCE_POS_ACCEPT = ['NOUN', 'VERB', 'ADJ', 'ADV', 'X', 'EMOJI']
 
