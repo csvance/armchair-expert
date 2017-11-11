@@ -40,7 +40,7 @@ class MessageBase(object):
                      'always_reply': False, 'author_mention': None, 'timestamp': datetime.datetime.now()}
 
     # From line db table. Only called when rebuilding the database
-    def args_from_line(self, line):
+    def args_from_line(self, line: Line) -> None:
         self.args = {'timestamp': line.timestamp, 'channel': line.channel,
                      'server': line.server_id, 'author': line.author, 'always_reply': False,
                      'mentioned': False, 'author_mention': None, 'learning': True}
@@ -123,7 +123,7 @@ class MessageBase(object):
     def nlp_pos_query(self, nlp, word: str) -> str:
 
         # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if re.match(r"<:[a-z]+:[0-9]+>",word) or re.match(r":[a-z]+:",word):
+        if re.match(r"<:[a-z]+:[0-9]+>", word) or re.match(r":[a-z]+:", word):
             pos = 'EMOJI'
         elif word == '#nick':
             pos = 'NOUN'
