@@ -33,7 +33,7 @@ In theory you should be able to set it up with any modern RDBMS.
 
 # Run It
 - python ftbot_discord.py
-- When the bot starts you should get a message with a link which will allow you control which servers the bot joins to.
+- When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
 
 
 
