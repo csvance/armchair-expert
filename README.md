@@ -1,5 +1,5 @@
 # About
-Chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. Regurgitating what it learns from you in unintentionally hilarious ways. 
+Chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. Regurgitates what it learns from you in unintentionally hilarious ways. 
 
 # Features
 - Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
