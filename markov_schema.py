@@ -19,7 +19,7 @@ class Word(Base):
     rating = Column(Integer, nullable=False, default=1)
 
     def __repr__(self):
-        return "id: %s text: %s" % (self.id, self.text)
+        return self.text
 
 
 class WordNeighbor(Base):
@@ -39,6 +39,9 @@ class Pos(Base):
     id = Column(Integer, index=True, primary_key=True)
     text = Column(String(16), index=True, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=0)
+
+    def __repr__(self):
+        return self.text
 
 
 class PosRelation(Base):
@@ -65,8 +68,6 @@ class WordRelation(Base):
     idx_wordrelation_a_b = Index('idx_wordrelation_a_b','a_id','b_id',unique=True)
 
 
-
-
 class Line(Base):
     __tablename__ = "line"
     id = Column(Integer, index=True, primary_key=True)
@@ -76,6 +77,9 @@ class Line(Base):
     author = Column(String(32), nullable=False)
     text = Column(Text, nullable=False)
 
+    def __repr__(self):
+        return self.text
+
 
 class URL(Base):
     __tablename__ = "url"
@@ -84,6 +88,9 @@ class URL(Base):
     text = Column(String(512), index=True, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
+
+    def __repr__(self):
+        return self.text
 
 # engine = create_engine('sqlite:///markov.db')
 engine = create_engine('mysql+pymysql://root@localhost/markov?charset=utf8mb4')
