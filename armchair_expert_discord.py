@@ -1,7 +1,7 @@
 import asyncio
 from concurrent import futures
 
-from ftbot import *
+from armchair_expert import *
 from messages import *
 
 client = discord.Client()
@@ -50,12 +50,12 @@ def on_message(message: discord.message.Message) -> None:
         ftbot.process_message(MessageInput(message=message))
 
 
-print("Starting FTBot")
+print("Starting ArmchairExpert")
 loop = asyncio.get_event_loop()
-ftbot = FTBot(event_loop=loop)
+ftbot = ArmchairExpert(event_loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
-    CONFIG_DISCORD_CLIENT_ID))
+    CONFIG_DISCORD_BOTID))
 
 pool = futures.ThreadPoolExecutor(1)
 loop.run_in_executor(pool, client.run, CONFIG_DISCORD_TOKEN)

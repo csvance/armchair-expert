@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from ftbot import *
+from armchair_expert import *
 from messages import *
 
 
@@ -42,10 +42,7 @@ def feed(ai, training_files):
 
 if __name__ == '__main__':
 
-    print("Starting FTBot")
-    ftbot = FTBot(event_loop=asyncio.get_event_loop())
-
-    print("Training...")
+    ftbot = ArmchairExpert(event_loop=asyncio.get_event_loop())
 
     path = "training/markov_training_files"
     process_files = []

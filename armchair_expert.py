@@ -15,7 +15,7 @@ class IOModule(object):
         pass
 
 
-class FTBot(IOModule):
+class ArmchairExpert(IOModule):
     def __init__(self, event_loop):
         IOModule.__init__(self)
         self.ai = MarkovAI()

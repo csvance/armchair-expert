@@ -1,5 +1,5 @@
 # About
-Chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. Regurgitates what it learns from you in unintentionally hilarious ways. 
+Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 # Features
 - Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.

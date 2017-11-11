@@ -62,7 +62,7 @@ class MessageBase(object):
                      'timestamp': message.timestamp}
 
         # Fill in the rest of the flags based on the raw content
-        if message.content.find(CONFIG_DISCORD_MENTION_ME) != -1:
+        if message.content.find("<@%d>" % CONFIG_DISCORD_BOTID) != -1:
             self.args['mentioned'] = True
         else:
             self.args['mentioned'] = False
