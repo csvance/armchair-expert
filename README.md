@@ -4,7 +4,7 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 ## Features
 - Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
 - NLP assisted topic selection. When choosing a subject in a sentence to reply to, undesirable parts of speech such as pronouns and conjunctions are ignored.
-- In addition to an A->B word embedding system with a Markov Decision Process, words farther than one away are also embedded using a system which performs faster than a Skip-gram model with a window size greater-than one, but is less precise.
+- In addition to an A->B word embedding system with a Markov Decision Process, words farther than one away are also embedded using a Skip-gram window system which has been extensively optimized for this particular application.
 - Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
 - Writes entire essays with the !essay command
 
