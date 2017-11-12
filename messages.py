@@ -268,7 +268,9 @@ class MessageOutput(MessageBase):
         MessageBase.__init__(self, line=line, text=text)
 
     def filter_line(self, raw_message: str) -> str:
-        return emoji.emojize(raw_message)
+        message = emoji.emojize(raw_message)
+        message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(), 'i think')
+        return message
 
 
 # A message received from discord, loaded from the database line table, or from raw text
@@ -280,7 +282,6 @@ class MessageInput(MessageBase):
 
     def filter_line(self, raw_message: str) -> str:
         message = raw_message
-
 
         # Extract URLs
         self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
