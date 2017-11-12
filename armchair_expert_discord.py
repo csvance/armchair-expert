@@ -12,6 +12,7 @@ user_id_cache = {}
 
 people = []
 
+
 async def get_member_list():
 
     names = []
@@ -28,11 +29,24 @@ async def replace_mention_with_nick(content: str):
 
     user_ids = re.findall(r'<@[!]?([0-9]+)>', message)
     for user_id in user_ids:
+        user = None
+
         if user_id in user_id_cache:
             user = user_id_cache[user_id]
         else:
-            user = await client.get_user_info(int(user_id))
+            # Try to look user up in server list
+            for server in client.servers:
+                for member in server.members:
+                    if member.id == user_id:
+                        user = member
+                        break
+                if user is not None:
+                    break
+
+            if user is None:
+                user = await client.get_user_info(user_id)
             user_id_cache[user_id] = user
+
         message = re.sub(r'<@[!]?[0-9]+>', user.name, message)
 
     return message
