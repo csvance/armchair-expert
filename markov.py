@@ -201,6 +201,7 @@ class MarkovAI(object):
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
                             x['word_text'] not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+        potential_subject = None
 
         # TODO: Fix hack
         if type(input_message) == MessageInputCommand:
@@ -213,15 +214,6 @@ class MarkovAI(object):
 
             if potential_subject_pos in CONFIG_MARKOV_TOPIC_SELECTION_POS:
                 selected_topics.append(word)
-
-        # If we are mentioned, we don't want to use the mention as a subject besides as a fallback
-        if input_message.args['mentioned']:
-            for word in selected_topics:
-                if word['word_text'] == '#nick':
-                    try:
-                        selected_topics.remove(word)
-                    except ValueError:
-                        pass
 
         if len(selected_topics) == 0:
             selected_topics = input_message.sentences[sentence_index]
@@ -242,9 +234,6 @@ class MarkovAI(object):
             potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
         elif len(subject_words) == 1:
             potential_subject = subject_words[0]
-        else:
-            # Fallback to #nick
-            potential_subject = self.session.query(Word.id, Word.text, Word.pos.id).filter(Word.text == '#nick')
 
         if potential_subject is None:
             return None

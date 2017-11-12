@@ -9,7 +9,7 @@ from markov_schema import *
 
 
 class MessageBase(object):
-    def __init__(self, message: discord.message.Message = None, line: Line = None, text: str = None):
+    def __init__(self, message: discord.Message = None, line: Line = None, text: str = None, people: list = None):
         # Class Data
         self.message = message
         self.line = line
@@ -17,6 +17,7 @@ class MessageBase(object):
         self.message_filtered = None
         self.args = {}
         self.sentences = []
+        self.people = people
 
         # Create args based on the type of message
         if text:
@@ -45,7 +46,7 @@ class MessageBase(object):
                      'mentioned': False, 'author_mention': None, 'learning': True}
 
     # From discord client
-    def args_from_message(self, message: discord.message.Message) -> None:
+    def args_from_message(self, message: discord.Message) -> None:
 
         # Check for Private Message
         try:
@@ -61,7 +62,7 @@ class MessageBase(object):
                      'timestamp': message.timestamp}
 
         # Fill in the rest of the flags based on the raw content
-        if message.content.find("<@%d>" % CONFIG_DISCORD_BOTID) != -1:
+        if message.content.find(CONFIG_DISCORD_ME_SHORT) != -1:
             self.args['mentioned'] = True
         else:
             self.args['mentioned'] = False
@@ -121,11 +122,14 @@ class MessageBase(object):
 
     def nlp_pos_query(self, nlp, word: str) -> str:
 
+        # Better than using NLP for nicknames if available
+        if self.people is not None:
+            if word in self.people:
+                return 'NOUN'
+
         # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
         if re.match(r"<:[a-z]+:[0-9]+>", word) or re.match(r":[a-z]+:", word):
             pos = 'EMOJI'
-        elif word == '#nick':
-            pos = 'NOUN'
         else:
             nlp_doc = nlp(word)
             pos = nlp_doc[0].pos_
@@ -271,14 +275,12 @@ class MessageOutput(MessageBase):
 class MessageInput(MessageBase):
     # message is a discord message object
     # line is a orm object for the line table
-    def __init__(self, message: discord.message.Message = None, line: Line = None, text: str = None):
-        MessageBase.__init__(self, message=message, line=line, text=text)
+    def __init__(self, message: discord.Message = None, line: Line = None, text: str = None, people: list = None):
+        MessageBase.__init__(self, message=message, line=line, text=text, people=people)
 
     def filter_line(self, raw_message: str) -> str:
         message = raw_message
 
-        # Replace mention with nick
-        message = re.sub(r'<@[!]?[0-9]+>', '#nick', message)
 
         # Extract URLs
         self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
@@ -301,5 +303,5 @@ class MessageInput(MessageBase):
 
 
 class MessageInputCommand(MessageInput):
-    def __init__(self, message: discord.message.Message = None, line=None, text=None):
-        MessageInput.__init__(self, message=message, line=line, text=text)
+    def __init__(self, message: discord.Message = None, line=None, text=None, people: list = None):
+        MessageInput.__init__(self, message=message, line=line, text=text, people=people)
