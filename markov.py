@@ -201,6 +201,11 @@ class MarkovAI(object):
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
                             x['word_text'] not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+
+        # If we are mentioned, we don't want things to be about us
+        if input_message.args['mentioned']:
+            potential_topics = [x for x in potential_topics if x['word_text'] != CONFIG_DISCORD_ME_SHORT.lower()]
+
         potential_subject = None
 
         # TODO: Fix hack
@@ -236,13 +241,9 @@ class MarkovAI(object):
             potential_subject = subject_words[0]
 
         if potential_subject is None:
-            return None
+            subject_word = self.session.query(Word).filter(Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
         else:
             subject_word = potential_subject
-
-        # TODO: Figure out why this is needed
-        if subject_word is None:
-            return None
 
         last_word = subject_word
 
