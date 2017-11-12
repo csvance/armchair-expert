@@ -1,15 +1,15 @@
 import random
 from datetime import timedelta
 
+import numpy as np
 import spacy
 from sqlalchemy import func
-from sqlalchemy import or_, desc
+from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
 from messages import *
 from reaction_model import AOLReactionModel
-import numpy as np
 
 
 class BotReplyTracker(object):
@@ -58,7 +58,7 @@ class MarkovAI(object):
 
         self.session = Session()
 
-    def rebuild_db(self, ignore: Optional[list]=None) -> None:
+    def rebuild_db(self, ignore: Optional[list] = None, author: Optional[list] = None) -> None:
 
         if ignore is None:
             ignore = []
@@ -81,34 +81,39 @@ class MarkovAI(object):
 
         self.session.commit()
 
-        lines = self.session.query(Line).order_by(Line.timestamp.asc()).all()
+        if author is None:
+            lines = self.session.query(Line).filter(or_(not_(Line.channel.in_(ignore)), Line.channel == None)).order_by(
+                Line.timestamp.asc()).all()
+        else:
+            lines = self.session.query(Line).filter(
+                and_(or_(not_(Line.channel.in_(ignore)), Line.channel == None), Line.author.in_(author))).order_by(
+                Line.timestamp.asc()).all()
+
         for line in lines:
 
             input_message = MessageInput(line=line)
 
             print(input_message.message_filtered)
 
-            if str(line.channel) in ignore:
-                continue
-            elif line.server_id == 0:
+            if line.server_id == 0:
                 continue
 
             self.process_msg(None, input_message, rebuild_db=True)
 
-        self.rebuilding = False
+            self.rebuilding = False
 
-        if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
-            self.session.execute("VACUUM")
+            if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
+                self.session.execute("VACUUM")
 
         print("Rebuilding DB Complete!")
 
     def learn(self, input_message: MessageInput) -> None:
-
         for sentence in input_message.sentences:
             for word_index, word in enumerate(sentence):
 
                 # Uprate Words
                 word['word'].count += 1
+                word['word'].rating += 1
 
                 # Uprate Word Relations
                 if word_index < len(sentence) - 1:
@@ -139,7 +144,6 @@ class MarkovAI(object):
             words, assoc, float(assoc) / float(words), neigh, float(neigh) / float(words), lines)
 
     def command(self, command_message: MessageInputCommand) -> str:
-
         result = None
 
         if command_message.message_raw.startswith(CONFIG_COMMAND_TOKEN + "stats"):
@@ -151,7 +155,6 @@ class MarkovAI(object):
         return result
 
     def essay(self, command_message: MessageInputCommand) -> str:
-
         command_message.load(self.session, self.nlp)
 
         def random_punct():
@@ -195,7 +198,6 @@ class MarkovAI(object):
         return txt
 
     def reply(self, input_message: MessageInput, sentence_index: int, no_url=False) -> Optional[str]:
-
         selected_topics = []
         potential_topics = [x for x in input_message.sentences[sentence_index] if
                             x['word_text'] not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
@@ -421,7 +423,6 @@ class MarkovAI(object):
         return " ".join(reply)
 
     def check_reaction(self, input_message: MessageInput) -> None:
-
         bot_reply = self.reply_tracker.get_reply(input_message)
 
         # Check if reply exists
@@ -441,7 +442,6 @@ class MarkovAI(object):
         self.reply_tracker.human_reply(input_message)
 
     def handle_reaction(self, input_message: MessageInput) -> None:
-
         server_last_replies = self.reply_tracker.get_reply(input_message)
 
         # Uprate words and relations
@@ -481,7 +481,6 @@ class MarkovAI(object):
         self.session.commit()
 
     def learn_url(self, input_message: MessageInput) -> None:
-
         for url in input_message.args['url']:
 
             the_url = self.session.query(URL).filter(URL.text == url).first()
@@ -495,7 +494,6 @@ class MarkovAI(object):
 
     def process_msg(self, io_module, input_message: MessageInput, replyrate: int = 0,
                     rebuild_db: bool = False) -> None:
-
         if len(input_message.sentences) == 0:
             return
 
