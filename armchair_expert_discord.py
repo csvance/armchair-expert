@@ -82,7 +82,7 @@ def on_message(message: discord.Message) -> None:
     # Handle Comands
     if message.content.startswith("!"):
 
-        command_message = MessageInputCommand(message=message,people=people)
+        command_message = MessageInputCommand(message=message)
 
         if message.content.startswith(CONFIG_COMMAND_TOKEN + 'shutup'):
             ftbot.shutup(command_message.args)
@@ -99,7 +99,7 @@ def on_message(message: discord.Message) -> None:
 
     # Hand the message off to the markov layer
     else:
-        ftbot.process_message(MessageInput(message=message, people=people))
+        ftbot.process_message(MessageInput(message=message, people=people.copy()))
 
 
 print("Starting ArmchairExpert")
