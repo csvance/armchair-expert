@@ -62,7 +62,7 @@ class MessageBase(object):
                      'timestamp': message.timestamp}
 
         # Fill in the rest of the flags based on the raw content
-        if message.content.find(CONFIG_DISCORD_ME_SHORT) != -1:
+        if message.content.lower().find(CONFIG_DISCORD_ME_SHORT.lower()) != -1:
             self.args['mentioned'] = True
         else:
             self.args['mentioned'] = False
