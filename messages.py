@@ -269,11 +269,18 @@ class MessageOutput(MessageBase):
         MessageBase.__init__(self, line=line, text=text)
 
     def filter_line(self, raw_message: str) -> str:
+
+        token = str(random.random())
+
         message = emoji.emojize(raw_message)
-        message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
-                                  CONFIG_DISCORD_ME_SHORT.lower() + ' ' + CONFIG_SELF_EXPRESSION[
-                                      random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)])
-        return message
+
+        for index in range(0,message.count(CONFIG_DISCORD_ME_SHORT.lower())):
+            message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
+                                      token + ' ' + CONFIG_SELF_EXPRESSION[
+                                          random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)], 1)
+
+        return message.replace(token,CONFIG_DISCORD_ME_SHORT.lower())
+
 
 
 # A message received from discord, loaded from the database line table, or from raw text
