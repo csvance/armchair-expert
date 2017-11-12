@@ -56,6 +56,6 @@ CONFIG_MARKOV_REACTION_UPRATE_RELATION = 5
 CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR = 1
 
 CONFIG_SELF_EXPRESSION_COMMON = ['say', 'think', 'want', 'need', 'have', 'know', 'discovered', 'realized', 'found out',
-                                 'learned', 'read','mastered']
+                                 'learned', 'read','mastered', 'caught']
 CONFIG_SELF_EXPRESSION_CUSTOM = []
 CONFIG_SELF_EXPRESSION = CONFIG_SELF_EXPRESSION_COMMON + CONFIG_SELF_EXPRESSION_CUSTOM
