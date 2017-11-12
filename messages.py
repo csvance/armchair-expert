@@ -271,7 +271,8 @@ class MessageOutput(MessageBase):
     def filter_line(self, raw_message: str) -> str:
         message = emoji.emojize(raw_message)
         message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
-                                  'i ' + CONFIG_SELF_EXPRESSION[random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)])
+                                  CONFIG_DISCORD_ME_SHORT.lower() + ' ' + CONFIG_SELF_EXPRESSION[
+                                      random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)])
         return message
 
 
