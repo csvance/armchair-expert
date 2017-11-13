@@ -23,7 +23,6 @@ CONFIG_MESSAGE_WAKEUP = "Yawn"
 CONFIG_MESSAGE_SHUTUP = "ZzZzZzZz"
 
 # Markov configuration settings, don't mess with this unless you know what you are doing
-CONFIG_MARKOV_VECTOR_LENGTH = 7
 CONFIG_MARKOV_URL_CHANCE = 10
 CONFIG_MARKOV_WEIGHT_NEIGHBOR = 50
 CONFIG_MARKOV_WEIGHT_RELATION = 20

@@ -1,7 +1,7 @@
 import random
 import re
 from typing import Optional
-
+from pos_tree_model import PosTreeModel
 import discord
 import emoji
 from sqlalchemy import and_
@@ -128,14 +128,7 @@ class MessageBase(object):
             if word in self.people:
                 return 'NOUN'
 
-        # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if re.match(r"<:[a-z]+:[0-9]+>", word) or re.match(r":[a-z]+:", word):
-            pos = 'EMOJI'
-        else:
-            nlp_doc = nlp(word)
-            pos = nlp_doc[0].pos_
-
-        return pos
+        return PosTreeModel.pos_from_word(word, nlp)
 
     def load_pos(self, session, nlp) -> None:
         for sentence in self.sentences:
@@ -146,38 +139,17 @@ class MessageBase(object):
 
                 word['pos_text'] = self.nlp_pos_query(nlp, word['word_text'])
 
-                # Check if pos exists already
-                if not pos_b:
-                    pos_a = session.query(Pos).filter(Pos.text == word['pos_text']).first()
-                    if pos_a is None:
-                        pos_a = Pos(text=word['pos_text'])
-                        session.add(pos_a)
-                        session.commit()
-                else:
-                    pos_a = pos_b
 
-                word['pos'] = pos_a
+                pos = session.query(Pos).filter(Pos.text == word['pos_text']).first()
+                if pos is None:
+                    pos = Pos(text=word['pos_text'])
+                    session.add(pos)
+                    session.commit()
 
-                if word_index >= len(sentence) - 1:
-                    word['pos_a->b'] = None
+                word['pos'] = pos
+
+                if word_index >= len(sentence):
                     break
-
-                sentence[word_index + 1]['pos_text'] = self.nlp_pos_query(nlp, sentence[word_index + 1]['word_text'])
-
-                # Check if pos exists already
-                pos_b = session.query(Pos).filter(Pos.text == sentence[word_index + 1]['pos_text']).first()
-                if pos_b is None:
-                    pos_b = Pos(text=sentence[word_index + 1]['pos_text'])
-                    session.add(pos_b)
-                    session.commit()
-
-                pos_a_b = session.query(PosRelation).filter(
-                    and_(PosRelation.a_id == pos_a.id, PosRelation.b_id == pos_b.id)).first()
-                if pos_a_b is None:
-                    pos_a_b = PosRelation(a_id=pos_a.id, b_id=pos_b.id)
-                    session.add(pos_a_b)
-                    session.commit()
-                word['pos_a->b'] = pos_a_b
 
     def load_words(self, session) -> None:
         for sentence in self.sentences:
@@ -274,10 +246,11 @@ class MessageOutput(MessageBase):
 
         message = emoji.emojize(raw_message)
 
-        for index in range(0,message.count(CONFIG_DISCORD_ME_SHORT.lower())):
-            message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
-                                      token + ' ' + CONFIG_SELF_EXPRESSION[
-                                          random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)], 1)
+        # TODO: Make expressions NLP aware, prob need to move into reply function
+        #for index in range(0,message.count(CONFIG_DISCORD_ME_SHORT.lower())):
+        #    message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
+        #                              token + ' ' + CONFIG_SELF_EXPRESSION[
+        #                                  random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)], 1)
 
         return message.replace(token,CONFIG_DISCORD_ME_SHORT.lower())
 

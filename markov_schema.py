@@ -46,18 +46,6 @@ class Pos(Base):
         return self.text
 
 
-class PosRelation(Base):
-    __tablename__ = "posrelation"
-    id = Column(Integer, index=True, primary_key=True)
-    a_id = Column(Integer, ForeignKey('pos.id'), index=True, nullable=False)
-    b_id = Column(Integer, ForeignKey('pos.id'), index=True, nullable=False)
-    a = relationship("Pos", foreign_keys=[a_id])
-    b = relationship("Pos", foreign_keys=[b_id])
-    count = Column(Integer, nullable=False, default=0)
-    rating = Column(Integer, nullable=False, default=0)
-    idx_posrelation_a_b = Index('idx_posrelation_a_b', 'a_id', 'b_id', unique=True)
-
-
 class WordRelation(Base):
     __tablename__ = "wordrelation"
     id = Column(Integer, index=True, primary_key=True)

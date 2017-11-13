@@ -53,8 +53,9 @@ class MarkovAI(object):
         print("Loading NLP DB...")
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
-        print("Loading ML model...")
+        print("Loading ML models...")
         self.reaction_model = AOLReactionModel()
+        self.pos_tree_model = PosTreeModel()
 
         self.session = Session()
 
@@ -76,7 +77,6 @@ class MarkovAI(object):
         self.session.query(WordRelation).delete()
         self.session.query(WordNeighbor).delete()
         self.session.query(Word).delete()
-        self.session.query(PosRelation).delete()
         self.session.query(Pos).delete()
 
         self.session.commit()
@@ -122,11 +122,6 @@ class MarkovAI(object):
 
                 # Uprate POS
                 word['pos'].count += 1
-
-                # Uprate POS Relations
-                if word_index < len(sentence) - 1:
-                    word['pos_a->b'].count += 1
-                    word['pos_a->b'].rating += 1
 
                 # Uprate Word Neighbors
                 for neighbor in word['word_neighbors']:
@@ -231,39 +226,47 @@ class MarkovAI(object):
             selected_topic_text.append(topic['word_text'])
 
         # Find potential exact matches, weigh by occurance
-        subject_words = self.session.query(Word.id, Word.text, Word.pos_id, sum(Word.count).label('rating')).filter(
-            Word.id.in_(selected_topic_id)).order_by(desc('rating')).all()
+        subject_words = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text'), Word.count.label('rating')).filter(
+            and_(Word.id.in_(selected_topic_id),Word.pos_id == Pos.id)).order_by(desc('rating')).all()
 
         if len(subject_words) > 1:
             # Linear distribution to choose word
-            potential_subject = subject_words[np.random.triangular(0.0, 0.0, 1.0) * len(subject_words)]
+            potential_subject = subject_words[int(np.random.triangular(0.0, 0.0, 1.0) * len(subject_words))]
         elif len(subject_words) == 1:
             potential_subject = subject_words[0]
 
         if potential_subject is None:
-            subject_word = self.session.query(Word).filter(Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
+            subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,Pos.id == Word.pos_id).filter(Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
         else:
             subject_word = potential_subject
 
-        last_word = subject_word
+        last_word = subject_word.pos_text
+
+        sentence_structure = self.pos_tree_model.generate_sentence(words=[])
+
+        pos_index = None
+
+        for p_idx,pos in enumerate(sentence_structure):
+            if pos == potential_subject.pos_text:
+                pos_index = p_idx
+                break
+
+        if not pos_index:
+            return None
+
+        pos_index_forward = pos_index
+        pos_index_backward = pos_index
+        
+        forward_count = len(sentence_structure) - (pos_index + 1)
+        back_count = pos_index + 1
 
         # Generate Backwards
         backwards_words = []
         f_id = subject_word.id
-
-        back_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
         count = 0
         while count < back_count:
-
-            choices = self.session.query(PosRelation, Pos.text). \
-                join(Pos, PosRelation.a_id == Pos.id). \
-                filter(PosRelation.b_id == last_word.pos_id). \
-                order_by(desc(PosRelation.rating)).all()
-
-            if len(choices) == 0:
-                return None
-
-            choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
+            pos_index_backward -= 1
+            choice = sentence_structure[pos_index_backward]
 
             # Most Intelligent search for next word (neighbor and pos)
             word_a = aliased(Word)
@@ -324,19 +327,12 @@ class MarkovAI(object):
         # Generate Forwards
         forward_words = []
         f_id = subject_word.id
-        forward_count = random.randrange(0, CONFIG_MARKOV_VECTOR_LENGTH)
 
         count = 0
         while count < forward_count:
-            choices = self.session.query(PosRelation, Pos.text). \
-                join(Pos, PosRelation.b_id == Pos.id). \
-                filter(PosRelation.a_id == last_word.pos_id). \
-                order_by(desc(PosRelation.rating)).all()
 
-            if len(choices) == 0:
-                return None
-
-            choice = choices[int(np.random.triangular(0.0, 0.0, 1.0) * len(choices))].text
+            pos_index += 1
+            choice = sentence_structure[pos_index_forward]
 
             # Most Intelligent search for next word (neighbor and pos)
             word_a = aliased(Word)

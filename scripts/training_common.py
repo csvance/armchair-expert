@@ -1,18 +1,3 @@
-class MLFeatureAnalyzer(object):
-    def __init__(self, data: list):
-        self.data = data
-
-    def analyze(self) -> list:
-        results = []
-        for row in self.data:
-            results.append(self.analyze_row(row))
-
-        return results
-
-    def analyze_row(self, row) -> dict:
-        pass
-
-
 class TXTFileFeeder(object):
     def __init__(self, data_file_path):
         data = open(data_file_path, 'r').read()
