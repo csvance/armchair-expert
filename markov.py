@@ -1,4 +1,3 @@
-import random
 from datetime import timedelta
 
 import numpy as np
@@ -226,8 +225,9 @@ class MarkovAI(object):
             selected_topic_text.append(topic['word_text'])
 
         # Find potential exact matches, weigh by occurance
-        subject_words = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text'), Word.count.label('rating')).filter(
-            and_(Word.id.in_(selected_topic_id),Word.pos_id == Pos.id)).order_by(desc('rating')).all()
+        subject_words = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text'),
+                                           Word.count.label('rating')).filter(
+            and_(Word.id.in_(selected_topic_id), Word.pos_id == Pos.id)).order_by(desc('rating')).all()
 
         if len(subject_words) > 1:
             # Linear distribution to choose word
@@ -236,17 +236,24 @@ class MarkovAI(object):
             potential_subject = subject_words[0]
 
         if potential_subject is None:
-            subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,Pos.id == Word.pos_id).filter(Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
+            subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,
+                                                                                                                Pos.id == Word.pos_id).filter(
+                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
         else:
             subject_word = potential_subject
 
-        last_word = subject_word.pos_text
+        last_word = subject_word
 
-        sentence_structure = self.pos_tree_model.generate_sentence(words=[])
+        # TODO: Optimize this, give preference to the POS we are looking for when generating the sentence structure in PosTreeModel.generate_sentence
+        loops = 0
+        sentence_structure = []
+        while potential_subject.pos_text not in sentence_structure and loops < 100:
+            sentence_structure = self.pos_tree_model.generate_sentence(words=[])
+            loops += 1
 
         pos_index = None
 
-        for p_idx,pos in enumerate(sentence_structure):
+        for p_idx, pos in enumerate(sentence_structure):
             if pos == potential_subject.pos_text:
                 pos_index = p_idx
                 break
@@ -256,7 +263,7 @@ class MarkovAI(object):
 
         pos_index_forward = pos_index
         pos_index_backward = pos_index
-        
+
         forward_count = len(sentence_structure) - (pos_index + 1)
         back_count = pos_index + 1
 
