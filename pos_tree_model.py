@@ -113,9 +113,9 @@ class PosTreeModel(object):
 
     def save(self,path: str=None) -> None:
         if path is None:
-            open(self.path,'w').write(json.dumps(self.tree))
+            open(self.path,'w').write(json.dumps(self.tree,separators=(',', ':')))
         else:
-            open(path, 'w').write(json.dumps(self.tree))
+            open(path, 'w').write(json.dumps(self.tree,separators=(',', ':')))
 
     def load(self,path: str) -> None:
         try:
