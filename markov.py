@@ -206,11 +206,14 @@ class MarkovAI(object):
         if input_message.args['mentioned']:
             potential_topics = [x for x in potential_topics if x['word_text'] != CONFIG_DISCORD_ME_SHORT.lower()]
 
+        if CONFIG_MARKOV_DEBUG:
+            print("Potential topics: %s" % (str(potential_topics)))
+
         potential_subject = None
 
         # TODO: Fix hack
         if type(input_message) == MessageInputCommand:
-            potential_topics = [x for x in input_message.sentences[sentence_index] if
+            potential_topics = [x for x in potential_topics if
                                 "essay" not in x['word_text']]
 
         for word in potential_topics:
@@ -220,6 +223,11 @@ class MarkovAI(object):
             if potential_subject_pos in CONFIG_MARKOV_TOPIC_SELECTION_POS:
                 selected_topics.append(word)
 
+        # Fallback to without PoS filter
+        if len(selected_topics) == 0:
+            selected_topics = potential_topics
+
+        # Fallback to any word in sentence
         if len(selected_topics) == 0:
             selected_topics = input_message.sentences[sentence_index]
 
@@ -235,6 +243,9 @@ class MarkovAI(object):
                                            Word.count.label('rating')).filter(
             and_(Word.id.in_(selected_topic_id), Word.pos_id == Pos.id)).order_by(desc('rating')).all()
 
+        if CONFIG_MARKOV_DEBUG:
+            print("Subject Words: %s" % (str(subject_words)))
+
         if len(subject_words) > 1:
             # Linear distribution to choose word
             potential_subject = subject_words[int(np.random.triangular(0.0, 0.0, 1.0) * len(subject_words))]
@@ -242,9 +253,11 @@ class MarkovAI(object):
             potential_subject = subject_words[0]
 
         if potential_subject is None:
+            if CONFIG_MARKOV_DEBUG:
+                print("Subject Fallback!")
             subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,
-                                                                                                                Pos.id == Word.pos_id).filter(
-                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
+                                                Pos.id == Word.pos_id).filter(
+                                                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
         else:
             subject_word = potential_subject
 

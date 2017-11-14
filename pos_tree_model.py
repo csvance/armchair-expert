@@ -145,8 +145,6 @@ class PosTreeModel(object):
         else:
             tree_branch['_e_c'] = 1
 
-
-
     def save(self,path: str=None) -> None:
         if path is None:
             open(self.path,'w').write(json.dumps(self.tree,separators=(',', ':')))
