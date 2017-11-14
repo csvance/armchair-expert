@@ -243,7 +243,7 @@ class AOLReactionModelPredictor(object):
         self.sess = tf.Session()
         loader.load(self.sess, ['serve'], saved_model_dir)
 
-    def predict(self, sentence):
+    def predict(self, sentence: str) -> list:
         reaction_analyer = AOLReactionFeatureAnalyzer([{'text': sentence}])
 
         keys = reaction_analyer.analyze()[0]
