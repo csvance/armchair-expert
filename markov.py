@@ -8,7 +8,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
 from messages import *
-from reaction_model import AOLReactionModel
+from reaction_model import AOLReactionModelPredictor
 
 
 class BotReplyTracker(object):
@@ -53,7 +53,7 @@ class MarkovAI(object):
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
         print("Loading ML models...")
-        self.reaction_model = AOLReactionModel()
+        self.reaction_model = AOLReactionModelPredictor()
         self.pos_tree_model = PosTreeModel()
 
         self.session = Session()
@@ -103,6 +103,13 @@ class MarkovAI(object):
 
             if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
                 self.session.execute("VACUUM")
+            elif CONFIG_DATABASE == CONFIG_DATABASE_MYSQL:
+                self.session.execute("OPTIMIZE TABLE WORD")
+                self.session.execute("OPTIMIZE TABLE POS")
+                self.session.execute("OPTIMIZE TABLE WORDRELATION")
+                self.session.execute("OPTIMIZE TABLE WORDNEIGHBOR")
+                self.session.execute("OPTIMIZE TABLE URL")
+
 
         print("Rebuilding DB Complete!")
 
@@ -427,7 +434,7 @@ class MarkovAI(object):
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.classify_data([input_message.message_filtered])[0]:
+        if self.reaction_model.predict(input_message.message_filtered)[0]:
             self.handle_reaction(input_message)
             return
 

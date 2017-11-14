@@ -255,7 +255,6 @@ class MessageOutput(MessageBase):
         return message.replace(token,CONFIG_DISCORD_ME_SHORT.lower())
 
 
-
 # A message received from discord, loaded from the database line table, or from raw text
 class MessageInput(MessageBase):
     # message is a discord message object
@@ -278,7 +277,7 @@ class MessageInput(MessageBase):
         message = message.lower()
 
         # Strip out characters which pollute the database with useless information for our purposes
-        message = re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", message)
+        message = re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|\\|/', "", message)
 
         # Demojify
         message = emoji.demojize(message)

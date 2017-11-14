@@ -53,6 +53,8 @@ CONFIG_MARKOV_REACTION_SCORE_POS = ['NOUN', 'VERB', 'ADJ', 'ADV', 'X', 'EMOJI']
 CONFIG_MARKOV_REACTION_UPRATE_WORD = 1
 CONFIG_MARKOV_REACTION_UPRATE_RELATION = 5
 CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR = 1
+CONFIG_MARKOV_REACTION_TRAINING_MODEL_PATH = "models/aol-reaction-model/"
+CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH = "models/aol-reaction-model/1510632114"
 
 CONFIG_SELF_EXPRESSION_COMMON = ['say', 'think', 'want', 'need', 'have', 'know', 'discovered', 'realized', 'found out',
                                  'learned', 'read','mastered', 'caught']

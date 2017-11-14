@@ -97,7 +97,7 @@ config.py
 serve/*
 training/*
 backup/*
-models/eval/*
-models/events.out*
+models/aol-reaction-model/eval/*
+models/aol-reaction-model/events.out*
 
 markov.db-journal
