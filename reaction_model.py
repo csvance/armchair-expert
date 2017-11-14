@@ -3,14 +3,12 @@ import re
 
 import pandas as pd
 import tensorflow as tf
-
-from config import *
-from ml_common import *
-
 from tensorflow.contrib.saved_model.python.saved_model import reader
 from tensorflow.contrib.saved_model.python.saved_model import signature_def_utils
 from tensorflow.python.saved_model import loader
 
+from config import *
+from ml_common import *
 
 
 def export_fn():
@@ -142,8 +140,8 @@ class AOLReactionModelTrainer(object):
         self.classifier = self.create_tensor()
 
     def create_tensor(self):
-        fc_length = tf.feature_column.numeric_column("length",dtype=tf.int32)
-        fc_whitespace = tf.feature_column.numeric_column("whitespace",dtype=tf.int32)
+        fc_length = tf.feature_column.numeric_column("length", dtype=tf.int32)
+        fc_whitespace = tf.feature_column.numeric_column("whitespace", dtype=tf.int32)
         fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
         fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
         fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
@@ -233,7 +231,7 @@ class AOLReactionModelTrainer(object):
 
 
 class AOLReactionModelPredictor(object):
-    def __init__(self, saved_model_dir: str=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH):
+    def __init__(self, saved_model_dir: str = CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH):
         self.model = reader.read_saved_model(saved_model_dir=saved_model_dir)
         self.meta_graph = None
         for meta_graph_def in self.model.meta_graphs:
@@ -245,7 +243,7 @@ class AOLReactionModelPredictor(object):
         self.sess = tf.Session()
         loader.load(self.sess, ['serve'], saved_model_dir)
 
-    def predict(self,sentence):
+    def predict(self, sentence):
         reaction_analyer = AOLReactionFeatureAnalyzer([{'text': sentence}])
 
         keys = reaction_analyer.analyze()[0]
@@ -260,20 +258,5 @@ class AOLReactionModelPredictor(object):
             self.signature_def.inputs['letter_symbol_ratio'].name: [keys['letter_symbol_ratio']]
         }
 
-        outputs = self.sess.run(self.output_tensor,feed_dict=inputs_feed_dict)
+        outputs = self.sess.run(self.output_tensor, feed_dict=inputs_feed_dict)
         return outputs
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
