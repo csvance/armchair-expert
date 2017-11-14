@@ -3,15 +3,30 @@ import json
 import numpy as np
 import re
 
+from markov_schema import *
+
+
+def rebuild_pos_tree_from_db(nlp):
+    pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS, rebuild=True)
+
+    # Process database lines
+    session = Session()
+    lines = session.query(Line).filter(Line.author != CONFIG_DISCORD_ME).order_by(Line.timestamp).all()
+    for line in lines:
+        print(line)
+        pos_tree_model.process_sentence(line.text)
+
+    pos_tree_model.update_probabilities()
+    pos_tree_model.save()
 
 class PosTreeModel(object):
-    def __init__(self, nlp=None, path: str="models/pos-tree-model.json", people: dict=None):
+    def __init__(self, nlp=None, path: str=CONFIG_POS_TREE_CONFIG_PATH, people: dict=None, rebuild: bool=False):
         self.tree = {}
         self.nlp = nlp
         self.path = path
         self.people = people
 
-        if path is not None:
+        if path is not None and not rebuild:
             self.load(path)
 
     @staticmethod
@@ -62,7 +77,7 @@ class PosTreeModel(object):
 
         return self.generate_sentence(tree_start[choice],words)
 
-    def update_probabilities(self, tree_branch=None) -> None:
+    def update_probabilities(self, tree_branch=None, deep: bool=True) -> None:
 
         start = False
         if tree_branch is None:
@@ -88,12 +103,15 @@ class PosTreeModel(object):
         else:
             tree_branch['_e_p'] = 0.
 
+        if not deep:
+            return
+
         # Recurse through each child
         for pos in tree_branch:
             if pos[0] != "_":
                 self.update_probabilities(tree_branch[pos])
 
-    def process_sentence(self, sentence: str) -> None:
+    def process_sentence(self, sentence: str, update_prob: bool=False) -> None:
         tree_branch = self.tree
 
         for word in sentence.split(" "):
@@ -121,6 +139,9 @@ class PosTreeModel(object):
             tree_branch['_e_c'] += 1
         else:
             tree_branch['_e_c'] = 1
+
+        if update_prob:
+            self.update_probabilities(tree_branch, deep=False)
 
     def save(self,path: str=None) -> None:
         if path is None:
