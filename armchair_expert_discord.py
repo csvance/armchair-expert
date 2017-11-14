@@ -14,7 +14,6 @@ people = []
 
 
 async def get_member_list():
-
     names = []
 
     for server in client.servers:
@@ -23,7 +22,7 @@ async def get_member_list():
     return names
 
 
-async def replace_mention_with_nick(content: str):
+async def replace_mention_with_nick(content: str) -> str:
     message = content
 
     user_ids = re.findall(r'<@[!]?([0-9]+)>', message)

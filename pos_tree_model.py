@@ -134,6 +134,9 @@ class PosTreeModel(object):
                 tree_branch[nlp_pos] = {}
                 tree_branch[nlp_pos]['_c'] = 1
 
+            if update_prob:
+                self.update_probabilities(tree_branch, deep=False)
+
             tree_branch = tree_branch[nlp_pos]
 
         if '_e_c' in tree_branch:
@@ -141,8 +144,7 @@ class PosTreeModel(object):
         else:
             tree_branch['_e_c'] = 1
 
-        if update_prob:
-            self.update_probabilities(tree_branch, deep=False)
+
 
     def save(self,path: str=None) -> None:
         if path is None:
