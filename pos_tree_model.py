@@ -134,8 +134,9 @@ class PosTreeModel(object):
                 tree_branch[nlp_pos] = {}
                 tree_branch[nlp_pos]['_c'] = 1
 
-            if update_prob:
-                self.update_probabilities(tree_branch, deep=False)
+            # TODO: Fix this, it breaks something
+            # if update_prob:
+            #     self.update_probabilities(tree_branch, deep=False)
 
             tree_branch = tree_branch[nlp_pos]
 
