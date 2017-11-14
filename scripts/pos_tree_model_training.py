@@ -1,10 +1,8 @@
-from pos_tree_model import PosTreeModel
-
 import os
-import spacy
-from messages import *
-import emoji
 
+import spacy
+
+from messages import *
 from ml_common import TXTFileFeeder
 
 
@@ -24,17 +22,20 @@ def feed(pos_model, training_files):
             print(line)
             pos_model.process_text(emoji.demojize(line))
 
+
 if __name__ == '__main__':
 
     path = "training/markov_training_files"
     nlp = spacy.load('en')
     process_files = []
+    pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
+
+    # Process Training Files
     root, dirs, files = os.walk(path).__next__()
     for filename in files:
         process_files.append("%s/%s" % (root, filename))
+        feed(pos_tree_model, process_files)
 
-    pos_tree_model = PosTreeModel(nlp=nlp)
-    feed(pos_tree_model, process_files)
     pos_tree_model.update_probabilities()
     pos_tree_model.save()
 

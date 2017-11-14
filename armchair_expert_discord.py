@@ -20,7 +20,6 @@ async def get_member_list():
     for server in client.servers:
         for member in server.members:
             names.append(member.name.lower())
-
     return names
 
 

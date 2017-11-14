@@ -5,18 +5,25 @@ import re
 
 
 class PosTreeModel(object):
-    def __init__(self, nlp=None, path="models/pos-tree-model/tree.json"):
+    def __init__(self, nlp=None, path: str="models/pos-tree-model.json", people: dict=None):
         self.tree = {}
         self.nlp = nlp
         self.path = path
+        self.people = people
 
         if path is not None:
             self.load(path)
 
     @staticmethod
-    def pos_from_word(word: str, nlp) -> str:
+    def pos_from_word(word: str, nlp, people: list=None) -> str:
+
+        # Makeup for shortcomings of NLP detecting online nicknames
+        if people is not None:
+            if word in people:
+                return 'NOUN'
+
         # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if re.match(r"<:[a-z]+:[0-9]+>", word) or re.match(r":[a-z]+:", word):
+        if re.match(r"<:[a-z0-9_]+:[0-9_]+>", word) or re.match(r":[a-z_]+:", word):
             pos = 'EMOJI'
         else:
             nlp_doc = nlp(word)
@@ -94,9 +101,13 @@ class PosTreeModel(object):
             if len(word) == 0:
                 continue
 
-            nlp_pos = PosTreeModel.pos_from_word(word,self.nlp)
-            if str(nlp_pos) == 'PUNCT':
-                print(word)
+            nlp_pos = None
+            if self.people is not None:
+                if word in self.people:
+                    nlp_pos = "NOUN"
+
+            if nlp_pos is None:
+                nlp_pos = PosTreeModel.pos_from_word(word,self.nlp, people=self.people)
 
             if nlp_pos in tree_branch:
                 tree_branch[nlp_pos]['_c'] += 1
@@ -130,4 +141,7 @@ class PosTreeModel(object):
 
     def process_text(self, text: str) -> None:
         for line in text.split("\n"):
-            self.process_line(re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|_|\\|/', "", line))
+            self.process_line(re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|\\|/', "", line))
+
+    def update_people(self, people: str) -> None:
+        self.people = people

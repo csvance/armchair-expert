@@ -101,15 +101,14 @@ class MarkovAI(object):
 
             self.rebuilding = False
 
-            if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
-                self.session.execute("VACUUM")
-            elif CONFIG_DATABASE == CONFIG_DATABASE_MYSQL:
-                self.session.execute("OPTIMIZE TABLE WORD")
-                self.session.execute("OPTIMIZE TABLE POS")
-                self.session.execute("OPTIMIZE TABLE WORDRELATION")
-                self.session.execute("OPTIMIZE TABLE WORDNEIGHBOR")
-                self.session.execute("OPTIMIZE TABLE URL")
-
+        if CONFIG_DATABASE == CONFIG_DATABASE_SQLITE:
+            self.session.execute("VACUUM")
+        elif CONFIG_DATABASE == CONFIG_DATABASE_MYSQL:
+            self.session.execute("OPTIMIZE TABLE WORD")
+            self.session.execute("OPTIMIZE TABLE POS")
+            self.session.execute("OPTIMIZE TABLE WORDRELATION")
+            self.session.execute("OPTIMIZE TABLE WORDNEIGHBOR")
+            self.session.execute("OPTIMIZE TABLE URL")
 
         print("Rebuilding DB Complete!")
 
@@ -251,6 +250,9 @@ class MarkovAI(object):
 
         last_word = subject_word
 
+        if CONFIG_MARKOV_DEBUG:
+            print("Subject: %s Pos: %s" % (potential_subject.text, potential_subject.pos_text))
+
         # TODO: Optimize this, give preference to the POS we are looking for when generating the sentence structure in PosTreeModel.generate_sentence
         loops = 0
         sentence_structure = []
@@ -265,8 +267,12 @@ class MarkovAI(object):
                 pos_index = p_idx
                 break
 
-        if not pos_index:
+        if pos_index is None:
             return None
+
+        if CONFIG_MARKOV_DEBUG:
+            print("Sentence Structure: %s" % str(sentence_structure))
+
 
         pos_index_forward = pos_index
         pos_index_backward = pos_index
@@ -515,6 +521,10 @@ class MarkovAI(object):
 
         # Learn URLs
         self.learn_url(input_message)
+
+        # Keep pos_tree_model up to date with names of people for PoS detection
+        if input_message.people is not None:
+            self.pos_tree_model.update_people(input_message.people)
 
         # Log this line only if we are not rebuilding the database
         if not rebuild_db:
