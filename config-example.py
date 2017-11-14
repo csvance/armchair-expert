@@ -58,9 +58,4 @@ CONFIG_MARKOV_REACTION_UPRATE_NEIGHBOR = 1
 CONFIG_MARKOV_REACTION_TRAINING_MODEL_PATH = "models/aol-reaction-model/"
 CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH = "models/aol-reaction-model/1510632114"
 
-CONFIG_SELF_EXPRESSION_COMMON = ['say', 'think', 'want', 'need', 'have', 'know', 'discovered', 'realized', 'found out',
-                                 'learned', 'read','mastered', 'caught']
-CONFIG_SELF_EXPRESSION_CUSTOM = []
-CONFIG_SELF_EXPRESSION = CONFIG_SELF_EXPRESSION_COMMON + CONFIG_SELF_EXPRESSION_CUSTOM
-
 CONFIG_POS_TREE_CONFIG_PATH = "models/pos-tree-model.json"

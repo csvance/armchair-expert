@@ -54,7 +54,7 @@ async def replace_mention_with_nick(content: str):
 async def reply_queue_handler():
     await client.wait_until_ready()
     while not client.is_closed:
-        output_message = await ftbot.get_reply()
+        output_message = await armchair_expert.get_reply()
         # TODO: Figure out this warning
         await client.send_message(output_message.args['channel'], output_message.message_filtered)
 
@@ -84,26 +84,26 @@ def on_message(message: discord.Message) -> None:
         command_message = MessageInputCommand(message=message)
 
         if message.content.startswith(CONFIG_COMMAND_TOKEN + 'shutup'):
-            ftbot.shutup(command_message.args)
+            armchair_expert.shutup(command_message.args)
         elif message.content.startswith(CONFIG_COMMAND_TOKEN + 'wakeup'):
-            ftbot.wakeup(command_message.args)
+            armchair_expert.wakeup(command_message.args)
         elif message.content.startswith(CONFIG_COMMAND_TOKEN + 'replyrate'):
             try:
-                ftbot.replyrate = int(message.content.split(" ")[1])
-                yield from client.send_message(message.channel, "New reply rate: %s" % ftbot.replyrate)
+                armchair_expert.replyrate = int(message.content.split(" ")[1])
+                yield from client.send_message(message.channel, "New reply rate: %s" % armchair_expert.replyrate)
             except KeyError:
                 yield from client.send_message(message.channel, 'Command Syntax error.')
         else:
-            ftbot.process_message(command_message)
+            armchair_expert.process_message(command_message)
 
     # Hand the message off to the markov layer
     else:
-        ftbot.process_message(MessageInput(message=message, people=people.copy()))
+        armchair_expert.process_message(MessageInput(message=message, people=people.copy()))
 
 
-print("Starting ArmchairExpert")
+print("Starting armchair-expert")
 loop = asyncio.get_event_loop()
-ftbot = ArmchairExpert(event_loop=loop)
+armchair_expert = ArmchairExpert(event_loop=loop)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
     CONFIG_DISCORD_BOTID))
@@ -113,4 +113,4 @@ loop.run_in_executor(pool, client.run, CONFIG_DISCORD_TOKEN)
 
 loop.create_task(reply_queue_handler())
 
-ftbot.message_handler()
+armchair_expert.message_handler()
