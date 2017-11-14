@@ -273,18 +273,21 @@ class MarkovAI(object):
         if CONFIG_MARKOV_DEBUG:
             print("Sentence Structure: %s" % str(sentence_structure))
 
-
         pos_index_forward = pos_index
         pos_index_backward = pos_index
 
-        forward_count = len(sentence_structure) - (pos_index + 1)
-        back_count = pos_index + 1
+        if len(sentence_structure) != 1:
+            forward_count = len(sentence_structure) - (pos_index + 1)
+            backward_count = pos_index + 1
+        else:
+            forward_count = 0
+            backward_count = 0
 
         # Generate Backwards
         backwards_words = []
         f_id = subject_word.id
         count = 0
-        while count < back_count:
+        while count < backward_count:
             pos_index_backward -= 1
             choice = sentence_structure[pos_index_backward]
 

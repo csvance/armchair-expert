@@ -127,8 +127,6 @@ class MessageBase(object):
     def load_pos(self, session, nlp) -> None:
         for sentence in self.sentences:
 
-            pos_b = None
-
             for word_index, word in enumerate(sentence):
 
                 word['pos_text'] = self.nlp_pos_query(nlp, word['word_text'])
