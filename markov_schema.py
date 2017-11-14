@@ -82,7 +82,11 @@ class URL(Base):
         return self.text
 
 
-engine = create_engine(CONFIG_DATABASE_CONNECT)
+echo = None
+if CONFIG_DATABASE_DEBUG:
+    echo = 'debug'
+
+engine = create_engine(CONFIG_DATABASE_CONNECT,echo=echo)
 
 Base.metadata.create_all(engine)
 
