@@ -54,7 +54,7 @@ class MarkovAI(object):
         self.reply_tracker = BotReplyTracker()
         print("Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()
-        self.pos_tree_model = PosTreeModel()
+        self.pos_tree_model = PosTreeModel(nlp=self.nlp)
 
         self.session = Session()
 
@@ -561,6 +561,7 @@ class MarkovAI(object):
                     self.check_reaction(input_message)
 
                 self.learn(input_message)
+                self.pos_tree_model.process_sentence(input_message.message_filtered)
 
             # Don't reply when rebuilding the database
             if not rebuild_db and reply_sentence == sentence_index and (

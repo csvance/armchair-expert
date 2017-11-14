@@ -19,6 +19,7 @@ def rebuild_pos_tree_from_db(nlp):
     pos_tree_model.update_probabilities()
     pos_tree_model.save()
 
+
 class PosTreeModel(object):
     def __init__(self, nlp=None, path: str=CONFIG_POS_TREE_CONFIG_PATH, people: dict=None, rebuild: bool=False):
         self.tree = {}
@@ -125,7 +126,7 @@ class PosTreeModel(object):
                     nlp_pos = "NOUN"
 
             if nlp_pos is None:
-                nlp_pos = PosTreeModel.pos_from_word(word,self.nlp, people=self.people)
+                nlp_pos = PosTreeModel.pos_from_word(word, self.nlp, people=self.people)
 
             if nlp_pos in tree_branch:
                 tree_branch[nlp_pos]['_c'] += 1
@@ -162,7 +163,7 @@ class PosTreeModel(object):
 
     def process_text(self, text: str) -> None:
         for line in text.split("\n"):
-            self.process_line(re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|\\|/', "", line))
+            self.process_line(re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", line))
 
     def update_people(self, people: str) -> None:
         self.people = people

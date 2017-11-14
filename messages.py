@@ -270,7 +270,7 @@ class MessageInput(MessageBase):
         message = message.lower()
 
         # Strip out characters which pollute the database with useless information for our purposes
-        message = re.sub(r'"|\(|\)|\[|\]|{|}|%|@|$|\^|&|\*|\\|/', "", message)
+        message = re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", message)
 
         # Demojify
         message = emoji.demojize(message)
