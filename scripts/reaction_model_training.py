@@ -6,12 +6,9 @@ def file_to_utf8(path):
     utf8_data = b_data.decode('utf-8', 'ignore')
     return str(utf8_data)
 
-
-
-
 if __name__ == '__main__':
 
-    train = False
+    train = True
     reaction = AOLReactionModelTrainer()
 
     if train:
@@ -24,7 +21,7 @@ if __name__ == '__main__':
         reaction.train(data_path, epochs=10)
         reaction.print_evaluation(data_path)
         export_dir = reaction.classifier.export_savedmodel("models/aol-reaction-model/", export_fn())
-
+        print("New export_dir: %s" % export_dir)
     classify = ['roflcopter', 'wat', 'lol', 'haha', 'llooolololo', 'oh hi mark', 'llllll', 'oooooo', 'wwwwtttt',
                 ':laughing:', ':grinning:', ':smile:', ':satisfied:', ':smiley:', ':sweat_smile:',
                 ':joy_cat:', ':joy:']
