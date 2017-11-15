@@ -16,9 +16,9 @@ class IOModule(object):
 
 
 class ArmchairExpert(IOModule):
-    def __init__(self, event_loop):
+    def __init__(self, event_loop, rebuild_pos_tree: bool = False):
         IOModule.__init__(self)
-        self.ai = MarkovAI()
+        self.ai = MarkovAI(rebuild_pos_tree=rebuild_pos_tree)
         self.replyrate = CONFIG_DEFAULT_REPLYRATE
         self.reply = None
         self.shutup_flag = False

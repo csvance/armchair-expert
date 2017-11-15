@@ -1,7 +1,7 @@
-from config import *
 import json
-import numpy as np
 import re
+
+import numpy as np
 
 from markov_schema import *
 
@@ -13,7 +13,6 @@ def rebuild_pos_tree_from_db(nlp):
     session = Session()
     lines = session.query(Line).filter(Line.author != CONFIG_DISCORD_ME).order_by(Line.timestamp).all()
     for line in lines:
-        print(line)
         pos_tree_model.process_sentence(line.text)
 
     pos_tree_model.update_probabilities()
@@ -21,7 +20,7 @@ def rebuild_pos_tree_from_db(nlp):
 
 
 class PosTreeModel(object):
-    def __init__(self, nlp=None, path: str=CONFIG_POS_TREE_CONFIG_PATH, people: dict=None, rebuild: bool=False):
+    def __init__(self, nlp=None, path: str = CONFIG_POS_TREE_CONFIG_PATH, people: dict = None, rebuild: bool = False):
         self.tree = {}
         self.nlp = nlp
         self.path = path
@@ -31,7 +30,7 @@ class PosTreeModel(object):
             self.load(path)
 
     @staticmethod
-    def pos_from_word(word: str, nlp, people: list=None) -> str:
+    def pos_from_word(word: str, nlp, people: list = None) -> str:
 
         # Makeup for shortcomings of NLP detecting online nicknames
         if people is not None:
@@ -46,7 +45,7 @@ class PosTreeModel(object):
             pos = nlp_doc[0].pos_
         return pos
 
-    def generate_sentence(self,tree_start: dict=None, words: list=None) -> list:
+    def generate_sentence(self, tree_start: dict = None, words: list = None) -> list:
 
         if tree_start is None:
             tree_start = self.tree
@@ -66,17 +65,16 @@ class PosTreeModel(object):
         a_choices.append('_e')
         p_values.append(tree_start['_e_p'])
 
-        choice = np.random.choice(a_choices,p=p_values)
+        choice = np.random.choice(a_choices, p=p_values)
         if choice != '_e':
             words.append(choice)
         else:
             return words
 
-        return self.generate_sentence(tree_start[choice],words)
+        return self.generate_sentence(tree_start[choice], words)
 
-    def update_probabilities(self, tree_branch=None, deep: bool=True) -> None:
+    def update_probabilities(self, tree_branch=None, deep: bool = True, start=False) -> None:
 
-        start = False
         if tree_branch is None:
             tree_branch = self.tree
             start = True
@@ -103,12 +101,12 @@ class PosTreeModel(object):
 
         # Recurse through each child
         for pos_key in pos_keys:
-            self.update_probabilities(tree_branch[pos_key])
+            self.update_probabilities(tree_branch[pos_key], start=False)
 
-    def process_sentence(self, sentence: str, update_prob: bool=False) -> None:
+    def process_sentence(self, sentence: str, update_prob: bool = False) -> None:
         tree_branch = self.tree
 
-        for word in sentence.split(" "):
+        for word_index, word in enumerate(sentence.split(" ")):
 
             if len(word) == 0:
                 continue
@@ -127,9 +125,9 @@ class PosTreeModel(object):
                 tree_branch[nlp_pos] = {}
                 tree_branch[nlp_pos]['_c'] = 1
 
-            # TODO: Fix this, it breaks something
-            # if update_prob:
-            #     self.update_probabilities(tree_branch, deep=False)
+            if update_prob:
+                start = False if word_index == 0 else True
+                self.update_probabilities(tree_branch, deep=False, start=start)
 
             tree_branch = tree_branch[nlp_pos]
 
@@ -138,15 +136,15 @@ class PosTreeModel(object):
         else:
             tree_branch['_e_c'] = 1
 
-    def save(self,path: str=None) -> None:
+    def save(self, path: str = None) -> None:
         if path is None:
-            open(self.path,'w').write(json.dumps(self.tree,separators=(',', ':')))
+            open(self.path, 'w').write(json.dumps(self.tree, separators=(',', ':')))
         else:
-            open(path, 'w').write(json.dumps(self.tree,separators=(',', ':')))
+            open(path, 'w').write(json.dumps(self.tree, separators=(',', ':')))
 
-    def load(self,path: str) -> None:
+    def load(self, path: str) -> None:
         try:
-            data = open(path,'r').read()
+            data = open(path, 'r').read()
         except FileNotFoundError:
             return
         self.tree = json.loads(data)

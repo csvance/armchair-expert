@@ -6,6 +6,7 @@ from sqlalchemy import func
 from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
+from pos_tree_model import rebuild_pos_tree_from_db
 
 from messages import *
 from reaction_model import AOLReactionModelPredictor
@@ -47,17 +48,21 @@ class BotReplyTracker(object):
 
 
 class MarkovAI(object):
-    def __init__(self):
+    def __init__(self, rebuild_pos_tree: bool = False):
+        print("MarkovAI __init__ begin")
         self.rebuilding = False
         print("Loading NLP DB...")
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
         print("Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()
+        print("Building PoS tree...")
+        if rebuild_pos_tree:
+            rebuild_pos_tree_from_db(self.nlp)
         self.pos_tree_model = PosTreeModel(nlp=self.nlp)
 
         self.session = Session()
-
+        print("MarkovAI __init__ complete")
     def rebuild_db(self, ignore: Optional[list] = None, author: Optional[list] = None) -> None:
 
         if ignore is None:
@@ -574,7 +579,7 @@ class MarkovAI(object):
                     self.check_reaction(input_message)
 
                 self.learn(input_message)
-                self.pos_tree_model.process_sentence(input_message.message_filtered)
+                self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
 
             # Don't reply when rebuilding the database
             if not rebuild_db and reply_sentence == sentence_index and (

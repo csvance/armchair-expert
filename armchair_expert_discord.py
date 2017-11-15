@@ -3,7 +3,6 @@ from concurrent import futures
 
 from armchair_expert import *
 from messages import *
-import sys
 
 client = discord.Client()
 
@@ -102,7 +101,8 @@ def on_message(message: discord.Message) -> None:
 
 print("Starting armchair-expert")
 loop = asyncio.get_event_loop()
-armchair_expert = ArmchairExpert(event_loop=loop)
+
+armchair_expert = ArmchairExpert(event_loop=loop, rebuild_pos_tree=True)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
     CONFIG_DISCORD_BOTID))
