@@ -54,14 +54,12 @@ class PosTreeModel(object):
         a_choices = []
         p_values = []
 
-        # If the length of the tree is only 4 this is the end of the sentence
-        if len(tree_start) == 3:
-            print(tree_start.keys())
+        pos_branches = [x for x in tree_start if x.find("_") == -1]
+
+        if len(pos_branches) == 0:
             return words
 
-        for pos in tree_start:
-            if pos[0] == '_':
-                continue
+        for pos in pos_branches:
             a_choices.append(pos)
             p_values.append(tree_start[pos]['_p'])
 
@@ -71,9 +69,7 @@ class PosTreeModel(object):
         choice = np.random.choice(a_choices,p=p_values)
         if choice != '_e':
             words.append(choice)
-
-        # Cut off the chain since we rolled ending
-        if choice == '_e':
+        else:
             return words
 
         return self.generate_sentence(tree_start[choice],words)
