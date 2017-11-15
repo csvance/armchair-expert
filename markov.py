@@ -206,9 +206,6 @@ class MarkovAI(object):
         if input_message.args['mentioned']:
             potential_topics = [x for x in potential_topics if x['word_text'] != CONFIG_DISCORD_ME_SHORT.lower()]
 
-        if CONFIG_MARKOV_DEBUG:
-            print("Potential topics: %s" % (str(potential_topics)))
-
         potential_subject = None
 
         # TODO: Fix hack
