@@ -54,12 +54,12 @@ class PosTreeModel(object):
         a_choices = []
         p_values = []
 
-        pos_branches = [x for x in tree_start if x.find("_") == -1]
+        pos_keys = [x for x in tree_start if x.find("_") == -1]
 
-        if len(pos_branches) == 0:
+        if len(pos_keys) == 0:
             return words
 
-        for pos in pos_branches:
+        for pos in pos_keys:
             a_choices.append(pos)
             p_values.append(tree_start[pos]['_p'])
 
@@ -81,19 +81,17 @@ class PosTreeModel(object):
             tree_branch = self.tree
             start = True
 
+        pos_keys = [x for x in tree_branch if x.find("_") == -1]
+
         tree_sum = 0.
-        for pos in tree_branch:
-            if pos[0] == '_':
-                continue
-            tree_sum += tree_branch[pos]['_c']
+        for pos_key in pos_keys:
+            tree_sum += tree_branch[pos_key]['_c']
 
         if not start and '_e_c' in tree_branch:
             tree_sum += tree_branch['_e_c']
 
-        for pos in tree_branch:
-            if pos[0] == '_':
-                continue
-            tree_branch[pos]['_p'] = tree_branch[pos]['_c'] / tree_sum
+        for pos_key in pos_keys:
+            tree_branch[pos_key]['_p'] = tree_branch[pos_key]['_c'] / tree_sum
 
         if not start and '_e_c' in tree_branch:
             tree_branch['_e_p'] = tree_branch['_e_c'] / tree_sum
@@ -104,9 +102,8 @@ class PosTreeModel(object):
             return
 
         # Recurse through each child
-        for pos in tree_branch:
-            if pos[0] != "_":
-                self.update_probabilities(tree_branch[pos])
+        for pos_key in pos_keys:
+            self.update_probabilities(tree_branch[pos_key])
 
     def process_sentence(self, sentence: str, update_prob: bool=False) -> None:
         tree_branch = self.tree
