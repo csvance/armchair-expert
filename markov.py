@@ -49,20 +49,20 @@ class BotReplyTracker(object):
 
 class MarkovAI(object):
     def __init__(self, rebuild_pos_tree: bool = False):
-        print("MarkovAI __init__ begin")
+        print("MarkovAI __init__")
         self.rebuilding = False
-        print("Loading NLP DB...")
+        print("MarkovAI __init__: Loading NLP DB...")
         self.nlp = spacy.load('en')
         self.reply_tracker = BotReplyTracker()
-        print("Loading ML models...")
+        print("MarkovAI __init__: Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()
-        print("Building PoS tree...")
+        print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
         self.pos_tree_model = PosTreeModel(nlp=self.nlp)
-
         self.session = Session()
-        print("MarkovAI __init__ complete")
+        print("MarkovAI __init__")
+
     def rebuild_db(self, ignore: Optional[list] = None, author: Optional[list] = None) -> None:
 
         if ignore is None:
