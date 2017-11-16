@@ -325,7 +325,9 @@ class MarkovAI(object):
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None))))
+                                                     or_(WordRelation.rating > 0, WordRelation == None)))).\
+                filter(not_(and_(WordNeighbor == None, WordRelation == None)))
+
 
             if not topic_me:
                 query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -349,8 +351,8 @@ class MarkovAI(object):
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None)))
-
+                                or_(WordRelation.rating > 0, WordRelation == None))).\
+                    filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
                 if not topic_me:
                     query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -362,7 +364,7 @@ class MarkovAI(object):
                 results = query.all()
 
             # Fall back to random
-            if len(results) == 0:
+            if CONFIG_MARKOV_FALLBACK_RANDOM and len(results) == 0:
                 results = self.session.query(WordRelation.a_id.label('id'), Word.text, Word.pos_id). \
                     join(Word, WordRelation.b_id == Word.id). \
                     order_by(desc(WordRelation.rating)). \
@@ -407,7 +409,8 @@ class MarkovAI(object):
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None))))
+                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
+                filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
             if not topic_me:
                 query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -430,7 +433,9 @@ class MarkovAI(object):
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None)))
+                                or_(WordRelation.rating > 0, WordRelation == None))).\
+                    filter(not_(and_(WordNeighbor == None, WordRelation == None)))
+
 
                 if not topic_me:
                     query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -442,7 +447,7 @@ class MarkovAI(object):
                 results = query.all()
 
             # Fall back to random
-            if len(results) == 0:
+            if CONFIG_MARKOV_FALLBACK_RANDOM and len(results) == 0:
                 results = self.session.query(WordRelation.b_id.label('id'), Word.text, Word.pos_id). \
                     join(Word, WordRelation.b_id == Word.id). \
                     order_by(desc(WordRelation.rating)). \

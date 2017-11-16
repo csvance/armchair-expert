@@ -22,6 +22,9 @@ else:
 CONFIG_MESSAGE_WAKEUP = "Yawn"
 CONFIG_MESSAGE_SHUTUP = "ZzZzZzZz"
 
+# If this is true, don't care about word relationships to continue a sentence if non are available
+CONFIG_MARKOV_FALLBACK_RANDOM = False
+
 # Markov configuration settings, don't mess with this unless you know what you are doing
 CONFIG_MARKOV_DEBUG = False
 CONFIG_DATABASE_DEBUG = False
