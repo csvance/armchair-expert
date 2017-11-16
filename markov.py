@@ -484,11 +484,12 @@ class MarkovAI(object):
                     if word_index >= len(sentence) - 1:
                         continue
 
-                    word_b = word['word_a->b'].b
-                    if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
-                        word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
-                        a_b_assoc = word['word_a->b']
-                        a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
+                    if 'word_a->b' in word:
+                        word_b = word['word_a->b'].b
+                        if word_b.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
+                            word_b.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
+                            a_b_assoc = word['word_a->b']
+                            a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
 
         # Uprate neighborhood
         for sentence in server_last_replies['sentences']:
