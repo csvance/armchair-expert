@@ -75,8 +75,11 @@ class CSVFileDataFetcher(FileDataFetcher):
     def __init__(self, path):
         FileDataFetcher.__init__(self,path)
 
+    def read_file(self,path):
+        self.raw_data = open(path, 'r',newline='', encoding='utf-8').read()
+
     def process_data(self):
-        for row in csv.reader(self.raw_data, newline='', encoding='utf-8'):
+        for row in csv.reader(self.raw_data):
             self.data.append(row)
 
 
