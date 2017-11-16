@@ -243,12 +243,6 @@ class MessageOutput(MessageBase):
 
         message = emoji.emojize(raw_message)
 
-        # TODO: Make expressions NLP aware, prob need to move into reply function
-        #for index in range(0,message.count(CONFIG_DISCORD_ME_SHORT.lower())):
-        #    message = message.replace(CONFIG_DISCORD_ME_SHORT.lower(),
-        #                              token + ' ' + CONFIG_SELF_EXPRESSION[
-        #                                  random.randrange(0, len(CONFIG_SELF_EXPRESSION) - 1)], 1)
-
         return message.replace(token,CONFIG_DISCORD_ME_SHORT.lower())
 
 
