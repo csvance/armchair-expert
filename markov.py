@@ -6,9 +6,9 @@ from sqlalchemy import func
 from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
-from pos_tree_model import rebuild_pos_tree_from_db
 
 from messages import *
+from pos_tree_model import rebuild_pos_tree_from_db
 from reaction_model import AOLReactionModelPredictor
 
 
@@ -126,7 +126,7 @@ class MarkovAI(object):
                 word['word'].rating += 1
 
                 # Uprate Word Relations
-                if word_index < len(sentence) - 1:
+                if word_index < len(sentence) - 1 and 'word_a->b' in word:
                     word['word_a->b'].count += 1
                     word['word_a->b'].rating += 1
 
@@ -258,8 +258,8 @@ class MarkovAI(object):
             if CONFIG_MARKOV_DEBUG:
                 print("Subject Fallback!")
             subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,
-                                                Pos.id == Word.pos_id).filter(
-                                                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
+                                                                                                                Pos.id == Word.pos_id).filter(
+                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
         else:
             subject_word = potential_subject
 
@@ -320,7 +320,8 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_a.pos_id). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                filter(and_(Pos.text == choice, or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
+                filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
+                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
                 group_by(word_a.id). \
                 order_by(desc('rating')). \
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -336,7 +337,8 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                    filter(or_(WordNeighbor.rating > 0, WordRelation.rating > 0)). \
+                    filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
+                                or_(WordRelation.rating > 0, WordRelation == None))). \
                     group_by(word_a.id). \
                     order_by(desc('rating')). \
                     limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -386,7 +388,8 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_b.pos_id). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
-                filter(and_(Pos.text == choice, or_(WordNeighbor.rating > 0, WordRelation.rating > 0))). \
+                filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
+                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
                 group_by(word_b.id). \
                 order_by(desc('rating')). \
                 limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
@@ -402,7 +405,8 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                    filter(or_(WordNeighbor.rating > 0, WordRelation.rating > 0)). \
+                    filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
+                                or_(WordRelation.rating > 0, WordRelation == None))). \
                     group_by(word_b.id). \
                     order_by(desc('rating')). \
                     limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
