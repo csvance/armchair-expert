@@ -121,15 +121,15 @@ class MessageBase(object):
                 if filtered_sentence is not None:
                     self.sentences.append(filtered_sentence)
 
-    def nlp_pos_query(self, word: str) -> str:
-        return PosTreeModel.pos_from_word(word, self.nlp, people=self.people)
+    def nlp_pos_query(self, nlp, word: str) -> str:
+        return PosTreeModel.pos_from_word(word, nlp, people=self.people)
 
     def load_pos(self, session, nlp) -> None:
         for sentence in self.sentences:
 
             for word_index, word in enumerate(sentence):
 
-                word['pos_text'] = self.nlp_pos_query(word['word_text'])
+                word['pos_text'] = self.nlp_pos_query(nlp, word['word_text'])
 
                 pos = session.query(Pos).filter(Pos.text == word['pos_text']).first()
                 if pos is None:
