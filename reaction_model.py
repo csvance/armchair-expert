@@ -48,7 +48,8 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
         emoji_len = 0.
 
-        for emoji in CONFIG_MARKOV_REACTION_EMOJIS:
+        for emoji in [':laughing:', ':grinning:', ':smile:', ':satisfied:', ':smiley:', ':sweat_smile:',
+                      ':joy_cat:', ':joy:']:
             emoji_len += line.count(emoji) * len(emoji)
 
         return emoji_len / len(line)
@@ -81,7 +82,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
         signal_sum = 0
 
-        for check_letters in CONFIG_MARKOV_REACTION_CHARS:
+        for check_letters in ['lo', 'wtf', 'lmao', 'ha', 'rekt', 'rofl', 'omg']:
             letters_found = {}
             for c in check_letters:
                 if c in line:
