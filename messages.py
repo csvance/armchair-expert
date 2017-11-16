@@ -173,6 +173,9 @@ class MessageBase(object):
                     session.commit()
                 sentence[word_index + 1]['word'] = word_b
 
+                if word_a.id == word_b.id:
+                    continue
+
                 word_a_b = session.query(WordRelation).filter(
                     and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)).first()
                 if word_a_b is None:
@@ -203,6 +206,9 @@ class MessageBase(object):
 
                         if potential_neighbor['pos'].text \
                                 not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                            continue
+
+                        if word['word'].id == potential_neighbor['word'].id:
                             continue
 
                         neighbor = session.query(WordNeighbor). \
