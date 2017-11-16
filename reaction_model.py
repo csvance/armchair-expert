@@ -165,11 +165,12 @@ class AOLReactionModelTrainer(object):
 
         input_data = []
         if self.training_data is None:
-            with open(data_file, newline='', encoding='utf-8') as f:
-                reader = csv.reader(f)
-                for row in reader:
-                    if row[0] != '':
-                        input_data.append({'reaction': int(row[0]), 'text': row[1]})
+
+            csv_rows = CSVFileDataFetcher(data_file).get_data()
+
+            for row in csv_rows:
+                if row[0] != '':
+                    input_data.append({'reaction': int(row[0]), 'text': row[1]})
 
             analyzer = AOLReactionFeatureAnalyzer(input_data)
             input_data = analyzer.analyze()

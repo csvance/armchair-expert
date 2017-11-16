@@ -6,6 +6,7 @@ def file_to_utf8(path):
     utf8_data = b_data.decode('utf-8', 'ignore')
     return str(utf8_data)
 
+
 if __name__ == '__main__':
 
     reaction = AOLReactionModelTrainer()

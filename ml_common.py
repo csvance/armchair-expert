@@ -76,7 +76,7 @@ class CSVFileDataFetcher(FileDataFetcher):
         FileDataFetcher.__init__(self,path)
 
     def process_data(self):
-        for row in csv.reader(self.raw_data):
+        for row in csv.reader(self.raw_data, newline='', encoding='utf-8'):
             self.data.append(row)
 
 

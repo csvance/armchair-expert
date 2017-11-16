@@ -6,4 +6,4 @@ classify = ['roflcopter', 'wat', 'lol', 'haha', 'llooolololo', 'oh hi mark', 'll
 
 predictor = AOLReactionModelPredictor(saved_model_dir='models/aol-reaction-model/1510632114')
 for idx, word in enumerate(classify):
-    print("%s - %s" % (predictor.predict(word)[0] ,classify[idx]))
+    print("%s - %s" % (int(predictor.predict(word)[0][0]), classify[idx]))
