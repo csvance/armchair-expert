@@ -1,6 +1,9 @@
 import os
 import emoji
+import json
+import csv
 from markov_schema import *
+
 
 class MLFeatureAnalyzer(object):
     def __init__(self, data: list):
@@ -44,6 +47,7 @@ class FileDataFetcher(TrainingDataFetcher):
 
 class TXTFileDataFetcher(FileDataFetcher):
     EXTENSION = "txt"
+
     def __init__(self, path):
         FileDataFetcher.__init__(self, path)
         self.extension = TXTFileDataFetcher.EXTENSION
@@ -55,6 +59,27 @@ class TXTFileDataFetcher(FileDataFetcher):
                 self.data.append(emoji.demojize(line.strip()))
 
 
+class JSONFileDataFetcher(FileDataFetcher):
+    EXTENSION = "json"
+
+    def __init__(self, path):
+        FileDataFetcher.__init__(self,path)
+
+    def process_data(self):
+        self.data = json.dumps(self.raw_data)
+
+
+class CSVFileDataFetcher(FileDataFetcher):
+    EXTENSION = "csv"
+
+    def __init__(self, path):
+        FileDataFetcher.__init__(self,path)
+
+    def process_data(self):
+        for row in csv.reader(self.raw_data):
+            self.data.append(row)
+
+
 class DatabaseLinesDataFetcher(TrainingDataFetcher):
     def __init__(self):
         TrainingDataFetcher.__init__(self)
@@ -64,16 +89,12 @@ class DatabaseLinesDataFetcher(TrainingDataFetcher):
         lines = self.session.query(Line.text)
 
 
-class DirectoryFileDataFetcher(TrainingDataFetcher):
-
+class DirectoryFilePathFetcher(TrainingDataFetcher):
     def __init__(self, path):
         TrainingDataFetcher.__init__(self)
         self.path = path
-        self.files = []
         self.data = []
-
         self.enumerate_files()
-        self.process_files()
 
     def enumerate_files(self):
         root, dirs, files = os.walk(self.path).__next__()
@@ -82,10 +103,22 @@ class DirectoryFileDataFetcher(TrainingDataFetcher):
             extension = None
             if len(filename_parts) > 1:
                 extension = filename_parts[-1]
-            self.files.append({'path': "%s/%s" % (root, filename),
+            self.data.append({'path': "%s/%s" % (root, filename),
                                'extension': extension})
 
+
+class DirectoryUnstructuredDataFetcher(TrainingDataFetcher):
+
+    def __init__(self, path):
+        TrainingDataFetcher.__init__(self)
+        self.path = path
+        self.files = []
+        self.data = []
+        self.process_files()
+
     def process_files(self):
+        self.files = DirectoryFilePathFetcher(self.path).get_data()
+
         for file in self.files:
             if file['extension'] == TXTFileDataFetcher.EXTENSION:
                 self.data.extend(TXTFileDataFetcher(file['path']).get_data())

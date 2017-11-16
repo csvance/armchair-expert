@@ -10,10 +10,9 @@ if __name__ == '__main__':
 
     path = "training/markov_training_files"
     nlp = spacy.load('en')
-    process_files = []
     pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
 
-    training_data_fetcher = DirectoryFileDataFetcher(path)
+    training_data_fetcher = DirectoryUnstructuredDataFetcher(path)
 
     for line in training_data_fetcher.get_data():
         print(line)
