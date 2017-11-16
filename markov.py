@@ -268,6 +268,10 @@ class MarkovAI(object):
         if CONFIG_MARKOV_DEBUG:
             print("Subject: %s Pos: %s" % (potential_subject.text, potential_subject.pos_text))
 
+        topic_me = False
+        if subject_word.text == CONFIG_DISCORD_ME_SHORT.lower():
+            topic_me = True
+
         # TODO: Optimize this, give preference to the POS we are looking for when generating the sentence structure in PosTreeModel.generate_sentence
         loops = 0
         sentence_structure = []
@@ -310,7 +314,7 @@ class MarkovAI(object):
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
+            query = self.session.query(word_a.id, word_a.text, word_a.pos_id,
                                          (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                           + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                           + coalesce(sum(WordRelation.rating),
@@ -321,13 +325,20 @@ class MarkovAI(object):
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
-                group_by(word_a.id). \
+                                                     or_(WordRelation.rating > 0, WordRelation == None))))
+
+            if not topic_me:
+                query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
+
+            query = query.group_by(word_a.id). \
                 order_by(desc('rating')). \
-                limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
+                limit(CONFIG_MARKOV_GENERATE_LIMIT)
+
+            results = query.all()
 
             if len(results) == 0:
-                results = self.session.query(word_a.id, word_a.text, word_a.pos_id,
+
+                query = self.session.query(word_a.id, word_a.text, word_a.pos_id,
                                              (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                               + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                               + coalesce(sum(WordRelation.rating),
@@ -338,10 +349,17 @@ class MarkovAI(object):
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))). \
-                    group_by(word_a.id). \
+                                or_(WordRelation.rating > 0, WordRelation == None)))
+
+
+                if not topic_me:
+                    query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
+
+                query = query.group_by(word_a.id). \
                     order_by(desc('rating')). \
-                    limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
+                    limit(CONFIG_MARKOV_GENERATE_LIMIT)
+
+                results = query.all()
 
             # Fall back to random
             if len(results) == 0:
@@ -378,7 +396,7 @@ class MarkovAI(object):
             word_a = aliased(Word)
             word_b = aliased(Word)
 
-            results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
+            query = self.session.query(word_b.id, word_b.text, word_b.pos_id,
                                          (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                           + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                           + coalesce(sum(WordRelation.rating),
@@ -389,13 +407,19 @@ class MarkovAI(object):
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
-                group_by(word_b.id). \
+                                                     or_(WordRelation.rating > 0, WordRelation == None))))
+
+            if not topic_me:
+                query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
+
+            query = query.group_by(word_b.id). \
                 order_by(desc('rating')). \
-                limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
+                limit(CONFIG_MARKOV_GENERATE_LIMIT)
+
+            results = query.all()
 
             if len(results) == 0:
-                results = self.session.query(word_b.id, word_b.text, word_b.pos_id,
+                query = self.session.query(word_b.id, word_b.text, word_b.pos_id,
                                              (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
                                               + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
                                               + coalesce(sum(WordRelation.rating),
@@ -406,10 +430,16 @@ class MarkovAI(object):
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))). \
-                    group_by(word_b.id). \
+                                or_(WordRelation.rating > 0, WordRelation == None)))
+
+                if not topic_me:
+                    query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
+
+                query = query.group_by(word_b.id). \
                     order_by(desc('rating')). \
-                    limit(CONFIG_MARKOV_GENERATE_LIMIT).all()
+                    limit(CONFIG_MARKOV_GENERATE_LIMIT)
+
+                results = query.all()
 
             # Fall back to random
             if len(results) == 0:
