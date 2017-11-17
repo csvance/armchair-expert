@@ -142,7 +142,11 @@ class MarkovAI(object):
 
     def cmd_stats(self) -> str:
         words = self.session.query(Word.id).count()
-        lines = self.session.query(Line.id).filter(Line.author != CONFIG_DISCORD_ME).count()
+
+        if CONFIG_DISCORD_MINI_ME is not None:
+            lines = self.session.query(Line.id).filter(Line.author.in_(CONFIG_DISCORD_MINI_ME)).count()
+        else:
+            lines = self.session.query(Line.id).filter(Line.author != CONFIG_DISCORD_ME).count()
         assoc = self.session.query(WordRelation).count()
         neigh = self.session.query(WordNeighbor).count()
         return "I know %d words (%d associations, %8.2f per word, %d neighbors, %8.2f per word), %d lines." % (
