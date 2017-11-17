@@ -11,7 +11,7 @@ def rebuild_pos_tree_from_db(nlp):
 
     # Process database lines
     session = Session()
-    query = session.query(Line)
+    query = session.query(Line.text)
 
     if CONFIG_DISCORD_MINI_ME is None:
         query = query.filter(Line.author != CONFIG_DISCORD_ME)
