@@ -614,7 +614,7 @@ class MarkovAI(object):
                     self.check_reaction(input_message)
 
                 if CONFIG_DISCORD_MINI_ME is None or (
-                        CONFIG_DISCORD_MINI_ME is not None and input_message['author'] in CONFIG_DISCORD_MINI_ME):
+                        CONFIG_DISCORD_MINI_ME is not None and input_message.args['author'] in CONFIG_DISCORD_MINI_ME):
                     self.learn_url(input_message)
                     self.learn(input_message)
                     self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
