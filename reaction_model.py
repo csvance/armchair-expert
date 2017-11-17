@@ -242,7 +242,12 @@ class AOLReactionModelPredictor(object):
         self.signature_def = signature_def_utils.get_signature_def_by_key(self.meta_graph, "predict")
         self.output_tensor = self.signature_def.outputs['classes'].name
 
-        self.sess = tf.Session()
+        config = None
+        if CONFIG_USE_GPU:
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+
+        self.sess = tf.Session(config=config)
         loader.load(self.sess, ['serve'], saved_model_dir)
 
     def predict(self, sentence: str) -> list:
