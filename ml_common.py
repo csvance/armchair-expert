@@ -66,7 +66,7 @@ class JSONFileDataFetcher(FileDataFetcher):
         FileDataFetcher.__init__(self,path)
 
     def process_data(self):
-        self.data = json.dumps(self.raw_data)
+        self.data = json.loads(self.raw_data)
 
 
 class CSVFileDataFetcher(FileDataFetcher):
