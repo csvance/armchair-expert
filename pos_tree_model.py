@@ -11,7 +11,15 @@ def rebuild_pos_tree_from_db(nlp):
 
     # Process database lines
     session = Session()
-    lines = session.query(Line).filter(Line.author != CONFIG_DISCORD_ME).order_by(Line.timestamp).all()
+    query = session.query(Line)
+
+    if CONFIG_DISCORD_MINI_ME is None:
+        query = query.filter(Line.author != CONFIG_DISCORD_ME)
+    else:
+        query = query.filter(Line.author.in_(CONFIG_DISCORD_MINI_ME))
+    query = query.order_by(Line.timestamp)
+
+    lines = query.all()
     for line in lines:
         pos_tree_model.process_sentence(line.text)
 
