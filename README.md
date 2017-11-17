@@ -11,8 +11,8 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 
 ## Dependencies
 - python 3.6
-- spacy
-- tensorflow
+- spacy 1.9.0 (2.0 has very poor performance for our use case currently)
+- tensorflow 1.4
 - sqlalchemy
 - discord.py
 - numpy
