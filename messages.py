@@ -267,6 +267,9 @@ class MessageInput(MessageBase):
         # Convert everything to lowercase
         message = message.lower()
 
+        # Replace HTML symbols
+        message = message.replace('&amp;','&')
+
         # Strip out characters which pollute the database with useless information for our purposes
         message = re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", message)
 
