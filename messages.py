@@ -77,7 +77,7 @@ class MessageBase(object):
             self.args['always_reply'] = True
 
         # Don't learn from private messages or ourself
-        if message.server is not None and str(self.args['author']) != CONFIG_DISCORD_ME:
+        if CONFIG_LEARNING_ENABLE and message.server is not None and str(self.args['author']) != CONFIG_DISCORD_ME:
             self.args['learning'] = True
         else:
             self.args['learning'] = False

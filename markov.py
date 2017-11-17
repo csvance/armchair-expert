@@ -577,9 +577,6 @@ class MarkovAI(object):
                 io_module.output(output_message)
             return
 
-        # Learn URLs
-        self.learn_url(input_message)
-
         # Keep pos_tree_model up to date with names of people for PoS detection
         if input_message.people is not None:
             self.pos_tree_model.update_people(input_message.people)
@@ -618,6 +615,7 @@ class MarkovAI(object):
                 if input_message.args['server'] is not None:
                     self.check_reaction(input_message)
 
+                self.learn_url(input_message)
                 self.learn(input_message)
                 self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
 
