@@ -26,14 +26,13 @@ class Word(Base):
 
 class WordNeighbor(Base):
     __tablename__ = "wordneighbor"
-    id = Column(Integer, index=True, primary_key=True)
+    id = Column(Integer, primary_key=True)
     a_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     b_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     a = relationship("Word", foreign_keys=[a_id])
     b = relationship("Word", foreign_keys=[b_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    idx_wordneighbor_a_b = Index('idx_wordneighbor_a_b', 'a_id', 'b_id', unique=True)
 
 
 class Pos(Base):
@@ -48,14 +47,13 @@ class Pos(Base):
 
 class WordRelation(Base):
     __tablename__ = "wordrelation"
-    id = Column(Integer, index=True, primary_key=True)
+    id = Column(Integer, primary_key=True)
     a_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     b_id = Column(Integer, ForeignKey('word.id'), index=True, nullable=False)
     a = relationship("Word", foreign_keys=[a_id])
     b = relationship("Word", foreign_keys=[a_id])
     count = Column(Integer, nullable=False, default=0)
     rating = Column(Integer, nullable=False, default=0)
-    idx_wordrelation_a_b = Index('idx_wordrelation_a_b', 'a_id', 'b_id', unique=True)
 
 
 class Line(Base):
