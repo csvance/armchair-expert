@@ -315,19 +315,18 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             query = self.session.query(word_a.id, word_a.text, word_a.pos_id,
-                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                          + coalesce(sum(WordRelation.rating),
-                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                             'rating')). \
+                                       (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                        + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                        + coalesce(sum(WordRelation.rating),
+                                                   0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                           'rating')). \
                 join(word_b, word_b.id == f_id). \
                 join(Pos, Pos.id == word_a.pos_id). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None)))).\
+                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
                 filter(not_(and_(WordNeighbor == None, WordRelation == None)))
-
 
             if not topic_me:
                 query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -341,17 +340,17 @@ class MarkovAI(object):
             if len(results) == 0:
 
                 query = self.session.query(word_a.id, word_a.text, word_a.pos_id,
-                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                              + coalesce(sum(WordRelation.rating),
-                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                                 'rating')). \
+                                           (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                            + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                            + coalesce(sum(WordRelation.rating),
+                                                       0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                               'rating')). \
                     join(word_b, word_b.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))).\
+                                or_(WordRelation.rating > 0, WordRelation == None))). \
                     filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
                 if not topic_me:
@@ -399,11 +398,11 @@ class MarkovAI(object):
             word_b = aliased(Word)
 
             query = self.session.query(word_b.id, word_b.text, word_b.pos_id,
-                                         (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                          + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                          + coalesce(sum(WordRelation.rating),
-                                                     0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                             'rating')). \
+                                       (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                        + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                        + coalesce(sum(WordRelation.rating),
+                                                   0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                           'rating')). \
                 join(word_a, word_a.id == f_id). \
                 join(Pos, Pos.id == word_b.pos_id). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
@@ -423,19 +422,18 @@ class MarkovAI(object):
 
             if len(results) == 0:
                 query = self.session.query(word_b.id, word_b.text, word_b.pos_id,
-                                             (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
-                                              + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
-                                              + coalesce(sum(WordRelation.rating),
-                                                         0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
-                                                 'rating')). \
+                                           (coalesce(sum(word_b.count), 0) * CONFIG_MARKOV_WEIGHT_WORDCOUNT
+                                            + coalesce(sum(WordNeighbor.rating), 0) * CONFIG_MARKOV_WEIGHT_NEIGHBOR
+                                            + coalesce(sum(WordRelation.rating),
+                                                       0) * CONFIG_MARKOV_WEIGHT_RELATION).label(
+                                               'rating')). \
                     join(word_a, word_a.id == f_id). \
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                     filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))).\
+                                or_(WordRelation.rating > 0, WordRelation == None))). \
                     filter(not_(and_(WordNeighbor == None, WordRelation == None)))
-
 
                 if not topic_me:
                     query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -615,9 +613,11 @@ class MarkovAI(object):
                 if input_message.args['server'] is not None:
                     self.check_reaction(input_message)
 
-                self.learn_url(input_message)
-                self.learn(input_message)
-                self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
+                if CONFIG_DISCORD_MINI_ME is None or (
+                        CONFIG_DISCORD_MINI_ME is not None and input_message['author'] in CONFIG_DISCORD_MINI_ME):
+                    self.learn_url(input_message)
+                    self.learn(input_message)
+                    self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
 
             # Don't reply when rebuilding the database
             if not rebuild_db and reply_sentence == sentence_index and (

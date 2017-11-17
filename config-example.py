@@ -6,6 +6,9 @@ CONFIG_DISCORD_BOTID = 378934517299413004
 CONFIG_DISCORD_IGNORE_CHANNELS = ['nsfw']
 CONFIG_DISCORD_ALWAYS_REPLY = ['Blah#3861']
 
+# Mini Me Mode. Set this to someones nick in the format of ['User#1344'] to only learn from that user.
+CONFIG_DISCORD_MINI_ME = None
+
 CONFIG_DEFAULT_REPLYRATE = 0
 CONFIG_COMMAND_TOKEN = "!"
 CONFIG_LEARNING_ENABLE = True
