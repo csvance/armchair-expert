@@ -22,6 +22,9 @@ else:
 CONFIG_MESSAGE_WAKEUP = "Yawn"
 CONFIG_MESSAGE_SHUTUP = "ZzZzZzZz"
 
+# List of users on all servers. Used for enhanced PoS detection.
+CONFIG_DISCORD_MEMBERS = []
+
 # If this is true, don't care about word relationships to continue a sentence if non are available
 CONFIG_MARKOV_FALLBACK_RANDOM = False
 
