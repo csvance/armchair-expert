@@ -1,5 +1,4 @@
 import os
-import emoji
 import json
 import csv
 from markov_schema import *
@@ -56,7 +55,7 @@ class TXTFileDataFetcher(FileDataFetcher):
         self.data = []
         for line in self.raw_data.split("\n"):
             if line != '':
-                self.data.append(emoji.demojize(line.strip()))
+                self.data.append(line.strip())
 
 
 class JSONFileDataFetcher(FileDataFetcher):

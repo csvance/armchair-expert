@@ -22,7 +22,6 @@ def rebuild_pos_tree_from_db(nlp):
 
     lines = query.all()
     for line in lines:
-        print(line.text)
         pos_tree_model.process_line(line.text)
 
     pos_tree_model.update_probabilities()
@@ -43,7 +42,7 @@ class PosTreeModel(object):
     def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
 
         if is_emoji:
-            return "EMOJI"
+            print("EMOJI: %s" % word)
 
         # Makeup for shortcomings of NLP detecting online nicknames
         if people is not None:
