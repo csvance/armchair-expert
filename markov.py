@@ -101,7 +101,7 @@ class MarkovAI(object):
             input_message = MessageInput(line=line)
             input_message.load(session=self.session,nlp=self.nlp)
 
-            progress = line_idx / float(len(lines))
+            progress = (line_idx / float(len(lines))) * 100
             print("%f%%: %s" % (progress, input_message.message_filtered))
 
             if line.server_id == 0:
