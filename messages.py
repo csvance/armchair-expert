@@ -214,6 +214,7 @@ class MessageOutput(MessageBase):
         message = raw_message
         message = re.sub(' ([,.!?:;"“\'])', r'\1', message)
         message = re.sub('([#@“"\']) ', r'\1', message)
+        message = re.sub(' ([-_]) ', r'\1', message)
 
         return message
 
