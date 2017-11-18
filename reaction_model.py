@@ -46,6 +46,9 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
     @staticmethod
     def funny_emoji_ratio(line: str) -> float:
 
+        if len(line) == 0:
+            return 0.
+
         emoji_len = 0.
 
         for emoji in ['😂', '😁', '😊', '😁', '😃', '😄',
@@ -56,6 +59,9 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
     @staticmethod
     def repeated_letter_ratio(line: str) -> float:
+
+        if len(line) == 0:
+            return 0.
 
         repeated_count = 0
         not_repeated_count = 0
@@ -76,6 +82,10 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
     @staticmethod
     def aol_letter_ratio(line: str) -> float:
+
+        if len(line) == 0:
+            return 0.
+
         txt_lower = line.lower()
 
         max_ratio = 0.0
@@ -101,6 +111,10 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
     @staticmethod
     def upper_lower_ratio(line: str) -> float:
+
+        if len(line) == 0:
+            return 0.
+
         lower_count = len(re.findall(r'[a-z]+', line))
         upper_count = len(re.findall(r'[A-Z]+', line))
 
@@ -109,10 +123,14 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         if letter_count > 0:
             return upper_count / letter_count
         else:
-            return 0.0
+            return 0.
 
     @staticmethod
     def letter_symbol_ratio(line: str) -> float:
+
+        if len(line) == 0:
+            return 0.
+
         char_count = len(line)
         letter_count = len(re.findall(r"[a-zA-Z0-9]+", line))
 
@@ -120,6 +138,10 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
     @staticmethod
     def letter_diversity_ratio(line: str) -> float:
+
+        if len(line) == 0:
+            return 0.
+
         chars = {}
 
         for c in line:
