@@ -42,7 +42,7 @@ class PosTreeModel(object):
     def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
 
         if is_emoji:
-            print("EMOJI: %s" % word)
+            return 'EMOJI'
 
         # Makeup for shortcomings of NLP detecting online nicknames
         if people is not None:
