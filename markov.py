@@ -328,8 +328,9 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_a.pos_id). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
+                filter(Pos.text == choice).\
+                filter(or_(WordNeighbor.rating > 0, WordNeighbor == None)).\
+                filter(or_(WordRelation.rating > 0, WordRelation == None)).\
                 filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
             if not topic_me:
@@ -353,9 +354,9 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                    filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))). \
-                    filter(not_(and_(WordNeighbor == None, WordRelation == None)))
+                    filter(or_(WordNeighbor.rating > 0, WordNeighbor.rating == None)). \
+                    filter(or_(WordRelation.rating > 0, WordRelation.rating == None)). \
+                    filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
                 if not topic_me:
                     query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -411,9 +412,10 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_b.pos_id). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
-                filter(and_(Pos.text == choice, and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                                     or_(WordRelation.rating > 0, WordRelation == None)))). \
-                filter(not_(and_(WordNeighbor == None, WordRelation == None)))
+                filter(Pos.text == choice).\
+                filter(or_(WordNeighbor.rating > 0, WordNeighbor.rating == None)).\
+                filter(or_(WordRelation.rating > 0, WordRelation.rating == None)).\
+                filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
             if not topic_me:
                 query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
@@ -435,9 +437,9 @@ class MarkovAI(object):
                     outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                     outerjoin(WordNeighbor,
                               and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                    filter(and_(or_(WordNeighbor.rating > 0, WordNeighbor == None),
-                                or_(WordRelation.rating > 0, WordRelation == None))). \
-                    filter(not_(and_(WordNeighbor == None, WordRelation == None)))
+                    filter(or_(WordNeighbor.rating > 0, WordNeighbor.rating == None)). \
+                    filter(or_(WordRelation.rating > 0, WordRelation.rating == None)). \
+                    filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
                 if not topic_me:
                     query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
