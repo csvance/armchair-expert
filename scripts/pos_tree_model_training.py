@@ -1,7 +1,5 @@
-import os
-
 import spacy
-
+from spacymoji import Emoji
 from messages import *
 from ml_common import *
 
@@ -10,6 +8,8 @@ if __name__ == '__main__':
 
     path = "training/markov_training_files"
     nlp = spacy.load('en')
+    emoji = Emoji(nlp)
+    nlp.add_pipe(emoji, first=True)
     pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
 
     training_data_fetcher = DirectoryUnstructuredDataFetcher(path)

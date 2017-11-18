@@ -48,8 +48,8 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
         emoji_len = 0.
 
-        for emoji in [':laughing:', ':grinning:', ':smile:', ':satisfied:', ':smiley:', ':sweat_smile:',
-                      ':joy_cat:', ':joy:']:
+        for emoji in ['😂', '😁', '😊', '😁', '😃', '😄',
+                      '😹', '🤣']:
             emoji_len += line.count(emoji) * len(emoji)
 
         return emoji_len / len(line)

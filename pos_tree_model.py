@@ -2,6 +2,7 @@ import json
 import re
 
 import numpy as np
+from typing import Optional
 
 from markov_schema import *
 
@@ -21,7 +22,7 @@ def rebuild_pos_tree_from_db(nlp):
 
     lines = query.all()
     for line in lines:
-        pos_tree_model.process_sentence(line.text)
+        pos_tree_model.process_line(line.text)
 
     pos_tree_model.update_probabilities()
     pos_tree_model.save()
@@ -38,20 +39,17 @@ class PosTreeModel(object):
             self.load(path)
 
     @staticmethod
-    def pos_from_word(word: str, nlp, people: list = None) -> str:
+    def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
+
+        if is_emoji:
+            print("EMOJI: %s" % word)
 
         # Makeup for shortcomings of NLP detecting online nicknames
         if people is not None:
             if word in people:
                 return 'NOUN'
 
-        # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if re.match(r"<:[a-z0-9_]+:[0-9_]+>", word) or re.match(r":[a-z_]+:", word):
-            pos = 'EMOJI'
-        else:
-            nlp_doc = nlp(word)
-            pos = nlp_doc[0].pos_
-        return pos
+        return None
 
     def generate_sentence(self, tree_start: dict = None, words: list = None) -> list:
 
@@ -111,39 +109,6 @@ class PosTreeModel(object):
         for pos_key in pos_keys:
             self.update_probabilities(tree_branch[pos_key], start=False)
 
-    def process_sentence(self, sentence: str, update_prob: bool = False) -> None:
-        tree_branch = self.tree
-
-        for word_index, word in enumerate(sentence.split(" ")):
-
-            if len(word) == 0:
-                continue
-
-            nlp_pos = None
-            if self.people is not None:
-                if word in self.people:
-                    nlp_pos = "NOUN"
-
-            if nlp_pos is None:
-                nlp_pos = PosTreeModel.pos_from_word(word, self.nlp, people=self.people)
-
-            if nlp_pos in tree_branch:
-                tree_branch[nlp_pos]['_c'] += 1
-            else:
-                tree_branch[nlp_pos] = {}
-                tree_branch[nlp_pos]['_c'] = 1
-
-            if update_prob:
-                start = False if word_index == 0 else True
-                self.update_probabilities(tree_branch, deep=False, start=start)
-
-            tree_branch = tree_branch[nlp_pos]
-
-        if '_e_c' in tree_branch:
-            tree_branch['_e_c'] += 1
-        else:
-            tree_branch['_e_c'] = 1
-
     def save(self, path: str = None) -> None:
         if path is None:
             open(self.path, 'w').write(json.dumps(self.tree, separators=(',', ':')))
@@ -157,13 +122,35 @@ class PosTreeModel(object):
             return
         self.tree = json.loads(data)
 
-    def process_line(self, line: str) -> None:
-        for sentence in re.split(CONFIG_MARKOV_SENTENCE_GROUP_SPLIT, line):
-            self.process_sentence(sentence)
+    def process_line(self, line: str, update_prob=False) -> None:
+        tree_branch = self.tree
 
-    def process_text(self, text: str) -> None:
+        for token_index, token in enumerate(self.nlp(line)):
+
+            # TODO: Implement entity dection in spacy
+            custom_pos = PosTreeModel.custom_pos_from_word(token.text, people=self.people, is_emoji=token._.is_emoji)
+            pos_text = custom_pos if custom_pos is not None else token.pos_
+
+            if pos_text in tree_branch:
+                tree_branch[pos_text]['_c'] += 1
+            else:
+                tree_branch[pos_text] = {}
+                tree_branch[pos_text]['_c'] = 1
+
+            if update_prob:
+                start = False if token_index == 0 else True
+                self.update_probabilities(tree_branch, deep=False, start=start)
+
+            tree_branch = tree_branch[pos_text]
+
+        if '_e_c' in tree_branch:
+            tree_branch['_e_c'] += 1
+        else:
+            tree_branch['_e_c'] = 1
+
+    def process_text(self, text: str, update_prob=False) -> None:
         for line in text.split("\n"):
-            self.process_line(re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", line))
+            self.process_line(re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", line), update_prob=update_prob)
 
     def update_people(self, people: str) -> None:
         self.people = people

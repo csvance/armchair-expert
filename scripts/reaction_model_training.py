@@ -14,8 +14,8 @@ if __name__ == '__main__':
     data_path = 'training/aol-reaction-model/markov_line_utf8.csv'
 
     # Make sure the file is pure UTF8
-    data = file_to_utf8(data_path)
-    open(data_path, 'w').write(data)
+    #data = file_to_utf8(data_path)
+    #open(data_path, 'w').write(data)
 
     reaction.train(data_path, epochs=10)
     reaction.print_evaluation(data_path)

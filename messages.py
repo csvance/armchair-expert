@@ -3,8 +3,8 @@ import re
 from typing import Optional
 from pos_tree_model import PosTreeModel
 import discord
-import emoji
 from sqlalchemy import and_
+import time
 
 from markov_schema import *
 
@@ -17,8 +17,9 @@ class MessageBase(object):
         self.message_raw = None
         self.message_filtered = None
         self.args = {}
-        self.sentences = []
+        self.tokens = []
         self.people = people
+        self.loaded = False
 
         # Create args based on the type of message
         if text:
@@ -32,8 +33,6 @@ class MessageBase(object):
             self.args_from_message(message)
         else:
             raise ValueError('text, line, and message cannot be None')
-
-        self.process()
 
     # noinspection PyUnusedLocal
     def args_from_text(self, text: str) -> None:
@@ -82,153 +81,121 @@ class MessageBase(object):
         else:
             self.args['learning'] = False
 
-    def filter_line(self, raw_message: str) -> str:
+    def filter(self, raw_message: str) -> str:
         pass
 
-    # noinspection PyMethodMayBeStatic
-    def process_word(self, word: str) -> Optional[dict]:
+    def process(self, nlp) -> None:
 
-        if word == '':
-            return None
+        # Filter
+        self.message_filtered = self.filter(self.message_raw)
 
-        word_dict = {'word_text': word, 'pos': None}
-
-        return word_dict
-
-    def process_sentence(self, sentence) -> Optional[list]:
-
-        filtered_words = []
-        for word in sentence.split(" "):
-            filtered_word = self.process_word(word)
-            if filtered_word is not None:
-                filtered_words.append(filtered_word)
-
-        if len(filtered_words) > 0:
-            return filtered_words
-        else:
-            return None
-
-    def process(self) -> None:
-
-        # Filter at line level
-        self.message_filtered = self.filter_line(self.message_raw)
-
-        # Split by lines
-        for line in self.message_filtered.split("\n"):
-            # Split by sentence
-            for sentence in re.split(CONFIG_MARKOV_SENTENCE_GROUP_SPLIT, line):
-                filtered_sentence = self.process_sentence(sentence)
-                if filtered_sentence is not None:
-                    self.sentences.append(filtered_sentence)
-
-    def nlp_pos_query(self, nlp, word: str) -> str:
-        return PosTreeModel.pos_from_word(word, nlp, people=self.people)
+        # Tokenize
+        message_nlp = nlp(self.message_filtered)
+        for token in message_nlp:
+            self.tokens.append({'nlp': token})
 
     def load_pos(self, session, nlp) -> None:
-        for sentence in self.sentences:
+        for token in self.tokens:
 
-            for word_index, word in enumerate(sentence):
+            # TODO: Implement entity dection in spacy
+            custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, people=self.people, is_emoji=token['nlp']._.is_emoji)
+            pos_text = custom_pos if custom_pos is not None else token['nlp'].pos_
 
-                word['pos_text'] = self.nlp_pos_query(nlp, word['word_text'])
-
-                pos = session.query(Pos).filter(Pos.text == word['pos_text']).first()
-                if pos is None:
-                    pos = Pos(text=word['pos_text'])
-                    session.add(pos)
-                    session.commit()
-
-                word['pos'] = pos
-
-                if word_index >= len(sentence):
-                    break
+            pos = session.query(Pos).filter(Pos.text == pos_text).first()
+            if pos is None:
+                pos = Pos(text=pos_text)
+                session.add(pos)
+                session.commit()
+            token['pos'] = pos
 
     def load_words(self, session) -> None:
-        for sentence in self.sentences:
 
-            word_b = None
+        words = []
 
-            # Load words and relationships
-            for word_index, word in enumerate(sentence):
+        word_b = None
+        for token_index, token in enumerate(self.tokens):
 
-                if not word_b:
-                    word_a = session.query(Word).filter(Word.text == word['word_text']).first()
-                    if word_a is None:
-                        word_a = Word(text=word['word_text'], pos_id=word['pos'].id)
-                        session.add(word_a)
-                        session.commit()
-                else:
-                    word_a = word_b
-                word['word'] = word_a
-
-                # If we are on the last word, there is no word b or a->b relationship
-                if word_index >= len(sentence) - 1:
-                    word['word_a->b'] = None
-                    break
-
-                word_b = session.query(Word).filter(
-                    Word.text == sentence[word_index + 1]['word_text']).first()
-                if word_b is None:
-                    word_b = Word(text=sentence[word_index + 1]['word_text'], pos_id=sentence[word_index + 1]['pos'].id)
-                    session.add(word_b)
+            if not word_b:
+                word_a = session.query(Word).filter(Word.text == token['nlp'].text).first()
+                if word_a is None:
+                    word_a = Word(text=token['nlp'].text, pos_id=token['pos'].id)
+                    session.add(word_a)
                     session.commit()
-                sentence[word_index + 1]['word'] = word_b
+            else:
+                word_a = word_b
+            token['word'] = word_a
 
-                if word_a.id == word_b.id:
-                    continue
+            # If we are on the last word, there is no word b or a->b relationship
+            if token_index >= len(self.tokens) - 1:
+                token['word_a->b'] = None
+                break
 
-                word_a_b = session.query(WordRelation).filter(
-                    and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)).first()
-                if word_a_b is None:
-                    word_a_b = WordRelation(a_id=word_a.id, b_id=word_b.id)
-                    session.add(word_a_b)
-                    session.commit()
-                word['word_a->b'] = word_a_b
+            word_b = session.query(Word).filter(
+                Word.text == self.tokens[token_index + 1]['nlp'].text).first()
+            if word_b is None:
+                word_b = Word(text=self.tokens[token_index + 1]['nlp'].text, pos_id=self.tokens[token_index + 1]['pos'].id)
+                session.add(word_b)
+                session.commit()
+            self.tokens[token_index + 1]['word'] = word_b
+
+            if word_a.id == word_b.id:
+                continue
+
+            word_a_b = session.query(WordRelation).filter(
+                and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)).first()
+            if word_a_b is None:
+                word_a_b = WordRelation(a_id=word_a.id, b_id=word_b.id)
+                session.add(word_a_b)
+                session.commit()
+            token['word_a->b'] = word_a_b
 
     def load_neighbors(self, session) -> None:
 
-        for sentence in self.sentences:
+        for token_index, token in enumerate(self.tokens):
 
-            for word_index, word in enumerate(sentence):
+            token['word_neighbors'] = []
 
-                word['word_neighbors'] = []
+            # Filter things that are not relevant to the main information in a sentence
+            if token['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                continue
 
-                # Filter things that are not relevant to the main information in a sentence
-                if word['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
-                    continue
+            for neighbor_index, potential_neighbor in enumerate(self.tokens):
 
-                for neighbor_index, potential_neighbor in enumerate(sentence):
+                # A word cannot be a neighbor with itself either (case == 0)
+                # We don't care if a word is right next to another as WordRelation already tracks that (case == 1)
+                # We don't care if a word is outside the window (case <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE)
+                if abs(token_index - neighbor_index) > 1 and abs(
+                                token_index - neighbor_index) <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE:
 
-                    # A word cannot be a neighbor with itself either (case == 0)
-                    # We don't care if a word is right next to another as WordRelation already tracks that (case == 1)
-                    # We don't care if a word is outside the window (case <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE)
-                    if abs(word_index - neighbor_index) > 1 and abs(
-                                    word_index - neighbor_index) <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE:
+                    if potential_neighbor['pos'].text \
+                            not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                        continue
 
-                        if potential_neighbor['pos'].text \
-                                not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
-                            continue
+                    if token['word'].id == potential_neighbor['word'].id:
+                        continue
 
-                        if word['word'].id == potential_neighbor['word'].id:
-                            continue
+                    neighbor = session.query(WordNeighbor). \
+                        join(Word, WordNeighbor.b_id == Word.id). \
+                        filter(and_(WordNeighbor.a_id == token['word'].id,
+                                    Word.id == potential_neighbor['word'].id)).first()
 
-                        neighbor = session.query(WordNeighbor). \
-                            join(Word, WordNeighbor.b_id == Word.id). \
-                            filter(and_(WordNeighbor.a_id == word['word'].id,
-                                        Word.id == potential_neighbor['word'].id)).first()
+                    if neighbor is None:
+                        neighbor = WordNeighbor(a_id=token['word'].id, b_id=potential_neighbor['word'].id)
+                        session.add(neighbor)
+                        session.commit()
 
-                        if neighbor is None:
-                            neighbor = WordNeighbor(a_id=word['word'].id, b_id=potential_neighbor['word'].id)
-                            session.add(neighbor)
-                            session.commit()
-
-                        word['word_neighbors'].append(neighbor)
+                    token['word_neighbors'].append(neighbor)
 
     # Called when ORM objects are needed
     def load(self, session, nlp) -> None:
-        self.load_pos(session, nlp)
-        self.load_words(session)
-        self.load_neighbors(session)
-        session.commit()
+        if not self.loaded:
+
+            self.process(nlp)
+            self.load_pos(session, nlp)
+            self.load_words(session)
+            self.load_neighbors(session)
+            session.commit()
+            self.loaded = True
 
 
 # A message from the bot
@@ -237,13 +204,12 @@ class MessageOutput(MessageBase):
     def __init__(self, line: Line = None, text: str = None):
         MessageBase.__init__(self, line=line, text=text)
 
-    def filter_line(self, raw_message: str) -> str:
+    def filter(self, raw_message: str) -> str:
 
-        token = str(random.random())
+        message = raw_message
+        message = re.sub(' [,.!?\'"]','', message)
 
-        message = emoji.emojize(raw_message)
-
-        return message.replace(token,CONFIG_DISCORD_ME_SHORT.lower())
+        return message
 
 
 # A message received from discord, loaded from the database line table, or from raw text
@@ -253,7 +219,7 @@ class MessageInput(MessageBase):
     def __init__(self, message: discord.Message = None, line: Line = None, text: str = None, people: list = None):
         MessageBase.__init__(self, message=message, line=line, text=text, people=people)
 
-    def filter_line(self, raw_message: str) -> str:
+    def filter(self, raw_message: str) -> str:
         message = raw_message
 
         # Extract URLs
@@ -272,9 +238,6 @@ class MessageInput(MessageBase):
 
         # Strip out characters which pollute the database with useless information for our purposes
         message = re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", message)
-
-        # Demojify
-        message = emoji.demojize(message)
 
         return message
 
