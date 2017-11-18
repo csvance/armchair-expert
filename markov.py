@@ -96,12 +96,13 @@ class MarkovAI(object):
                 and_(or_(not_(Line.channel.in_(ignore)), Line.channel == None), Line.author.in_(author))).order_by(
                 Line.timestamp.asc()).all()
 
-        for line in lines:
+        for line_idx,line in enumerate(lines):
 
             input_message = MessageInput(line=line)
             input_message.load(session=self.session,nlp=self.nlp)
 
-            print(input_message.message_filtered)
+            progress = line_idx / float(len(lines))
+            print("%f%%: %s" % (progress, input_message.message_filtered))
 
             if line.server_id == 0:
                 continue
