@@ -236,7 +236,8 @@ class MessageInput(MessageBase):
                          message)
 
         # Convert everything to lowercase
-        message = message.lower()
+        if CONFIG_MARKOV_PRESERVE_CASE:
+            message = message.lower()
 
         # Replace HTML symbols
         message = message.replace('&amp;','&')
