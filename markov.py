@@ -4,7 +4,7 @@ import numpy as np
 import spacy
 from spacymoji import Emoji
 from sqlalchemy import func
-from sqlalchemy import or_, desc, not_
+from sqlalchemy import or_, desc, not_, collate
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
@@ -174,7 +174,7 @@ class MarkovAI(object):
         for p in range(0, 5):
 
             # Lead In
-            reply = self.reply(command_message, 0, no_url=True)
+            reply = self.reply(command_message, no_url=True)
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
@@ -189,13 +189,13 @@ class MarkovAI(object):
                 feedback_reply_output.load(self.session, self.nlp)
 
                 # noinspection PyTypeChecker
-                reply = self.reply(feedback_reply_output, 0, no_url=True)
+                reply = self.reply(feedback_reply_output, no_url=True)
                 if reply is None:
                     txt = "I don't know that word well enough!"
                     break
                 txt += reply + " "
 
-            reply = self.reply(command_message, 0, no_url=True)
+            reply = self.reply(command_message, no_url=True)
 
             # Lead Out
             if reply is None:
