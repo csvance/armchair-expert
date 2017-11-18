@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import numpy as np
 import spacy
+from spacymoji import Emoji
 from sqlalchemy import func
 from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
@@ -53,6 +54,8 @@ class MarkovAI(object):
         self.rebuilding = False
         print("MarkovAI __init__: Loading NLP DB...")
         self.nlp = spacy.load('en')
+        self.emoji_pipe = Emoji(self.nlp)
+        self.nlp.add_pipe(self.emoji_pipe, first=True)
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()
@@ -96,6 +99,7 @@ class MarkovAI(object):
         for line in lines:
 
             input_message = MessageInput(line=line)
+            input_message.load(session=self.session,nlp=self.nlp)
 
             print(input_message.message_filtered)
 
@@ -118,25 +122,24 @@ class MarkovAI(object):
         print("Rebuilding DB Complete!")
 
     def learn(self, input_message: MessageInput) -> None:
-        for sentence in input_message.sentences:
-            for word_index, word in enumerate(sentence):
+        for token_index, token in enumerate(input_message.tokens):
 
-                # Uprate Words
-                word['word'].count += 1
-                word['word'].rating += 1
+            # Uprate Words
+            token['word'].count += 1
+            token['word'].rating += 1
 
-                # Uprate Word Relations
-                if word_index < len(sentence) - 1 and 'word_a->b' in word:
-                    word['word_a->b'].count += 1
-                    word['word_a->b'].rating += 1
+            # Uprate Word Relations
+            if token_index < len(input_message.tokens) - 1 and 'word_a->b' in token:
+                token['word_a->b'].count += 1
+                token['word_a->b'].rating += 1
 
-                # Uprate POS
-                word['pos'].count += 1
+            # Uprate POS
+            token['pos'].count += 1
 
-                # Uprate Word Neighbors
-                for neighbor in word['word_neighbors']:
-                    neighbor.count += 1
-                    neighbor.rating += 1
+            # Uprate Word Neighbors
+            for neighbor in token['word_neighbors']:
+                neighbor.count += 1
+                neighbor.rating += 1
 
         self.session.commit()
 
@@ -166,9 +169,6 @@ class MarkovAI(object):
     def essay(self, command_message: MessageInputCommand) -> str:
         command_message.load(self.session, self.nlp)
 
-        def random_punct():
-            return [".", "!", "?"][random.randrange(0, 3)]
-
         txt = ""
 
         for p in range(0, 5):
@@ -178,7 +178,7 @@ class MarkovAI(object):
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
-            txt += "\t" + reply + random_punct() + " "
+            txt += "\t" + reply + " "
 
             # Body sentences
             for i in range(0, 3):
@@ -193,7 +193,7 @@ class MarkovAI(object):
                 if reply is None:
                     txt = "I don't know that word well enough!"
                     break
-                txt += reply + random_punct() + " "
+                txt += reply + " "
 
             reply = self.reply(command_message, 0, no_url=True)
 
@@ -201,7 +201,7 @@ class MarkovAI(object):
             if reply is None:
                 txt = "I don't know that word well enough!"
                 break
-            txt += reply + random_punct() + " "
+            txt += reply + " "
             txt += "\n"
 
         return txt
@@ -476,9 +476,6 @@ class MarkovAI(object):
         reply += [subject_word.text]
         reply += forward_words
 
-        # Replace any mention in response with a mention to the name of the message we are responding too
-        reply = [word.replace('#nick', input_message.args['author_mention']) for word in reply]
-
         # Add a random URL
         if not no_url and random.randrange(0, 100) > (100 - CONFIG_MARKOV_URL_CHANCE):
             url = self.session.query(URL).order_by(func.random()).first()
@@ -560,7 +557,7 @@ class MarkovAI(object):
 
     def process_msg(self, io_module, input_message: MessageInput, replyrate: int = 0,
                     rebuild_db: bool = False) -> None:
-        if len(input_message.sentences) == 0:
+        if len(input_message.tokens) == 0:
             return
 
         # Ignore external I/O while rebuilding
@@ -606,9 +603,9 @@ class MarkovAI(object):
         input_message.load(self.session, self.nlp)
 
         # Decide on a sentence in which to potentially reply
-        reply_sentence = random.randrange(0, len(input_message.sentences))
+        reply_sentence = random.randrange(0, len(input_message.tokens))
 
-        for sentence_index, sentence in enumerate(input_message.sentences):
+        for sentence_index, sentence in enumerate(input_message.tokens):
 
             # Don't learn from ourself
             if input_message.args['learning'] and not input_message.args['author'] == CONFIG_DISCORD_ME:
@@ -621,7 +618,9 @@ class MarkovAI(object):
                         CONFIG_DISCORD_MINI_ME is not None and input_message.args['author'] in CONFIG_DISCORD_MINI_ME):
                     self.learn_url(input_message)
                     self.learn(input_message)
-                    self.pos_tree_model.process_sentence(input_message.message_filtered, update_prob=True)
+
+                    if not rebuild_db:
+                        self.pos_tree_model.process_text(input_message.message_filtered, update_prob=True)
 
             # Don't reply when rebuilding the database
             if not rebuild_db and reply_sentence == sentence_index and (
