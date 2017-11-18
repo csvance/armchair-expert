@@ -24,9 +24,9 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 ## Database
 Currently supports both MySQL and SQLite as DB backends. I recommend using MySQL as the performance is orders of magnitude better.
 In theory you should be able to set it up with any modern RDBMS.
+To properly support emoji in MySQL: create database armchairexpert CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
 ## Configuration
-
 - You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
 - Once you register it take note of the Client ID, Username, Bot ID, and Token
 - Copy config-example.py to config.py and fill in everything above the database connection string
