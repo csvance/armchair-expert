@@ -1,8 +1,7 @@
 from datetime import timedelta
 
 import numpy as np
-import spacy
-from spacymoji import Emoji
+
 from sqlalchemy import func
 from sqlalchemy import or_, desc, not_, collate
 from sqlalchemy.orm import aliased
@@ -11,6 +10,7 @@ from sqlalchemy.sql.functions import coalesce, sum
 from messages import *
 from pos_tree_model import rebuild_pos_tree_from_db
 from reaction_model import AOLReactionModelPredictor
+from ml_common import create_nlp_instance
 
 
 class BotReplyTracker(object):
@@ -53,9 +53,7 @@ class MarkovAI(object):
         print("MarkovAI __init__")
         self.rebuilding = False
         print("MarkovAI __init__: Loading NLP DB...")
-        self.nlp = spacy.load('en')
-        self.emoji_pipe = Emoji(self.nlp)
-        self.nlp.add_pipe(self.emoji_pipe, first=True)
+        self.nlp = create_nlp_instance()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()

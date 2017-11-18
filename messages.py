@@ -100,7 +100,7 @@ class MessageBase(object):
             self.processed = True
 
     def load_pos(self, session, nlp) -> None:
-        for token in self.tokens:
+        for token_idx, token in enumerate(self.tokens):
 
             # TODO: Implement entity dection in spacy
             custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, people=self.people, is_emoji=token['nlp']._.is_emoji)
@@ -214,7 +214,7 @@ class MessageOutput(MessageBase):
         message = raw_message
         message = re.sub(' ([,.!?:;"“\'])', r'\1', message)
         message = re.sub('([#@“"\']) ', r'\1', message)
-        message = re.sub(' ([-_]) ', r'\1', message)
+        message = re.sub(' ([-–_]) ', r'\1', message)
 
         return message
 

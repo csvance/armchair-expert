@@ -1,9 +1,6 @@
-import spacy
-from spacymoji import Emoji
+from ml_common import create_nlp_instance
 
-nlp = spacy.load('en')
-emoji = Emoji(nlp)
-nlp.add_pipe(emoji, first=True)
+nlp = create_nlp_instance()
 
 doc = nlp(u"This is a test 😻 👍🏿")
 assert doc._.has_emoji == True

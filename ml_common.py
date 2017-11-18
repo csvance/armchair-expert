@@ -2,6 +2,45 @@ import os
 import json
 import csv
 from markov_schema import *
+import spacy
+from spacy.attrs import ORTH, POS
+from spacy.lang.en import English
+from spacy.tokens import Token
+
+from spacymoji import Emoji
+
+
+def hashtag_pipe(doc):
+
+    merged_hashtag = False
+
+    while True:
+
+        for token_index,token in enumerate(doc):
+            if token.orth_ == '#':
+                if token.head is not None:
+
+                    start_index = token.idx
+                    end_index = start_index + len(token.head.text) + 1
+
+                    if doc.merge(start_index, end_index) is not None:
+                        merged_hashtag = True
+                        break
+
+        if not merged_hashtag:
+            break
+
+        merged_hashtag = False
+
+    return doc
+
+
+def create_nlp_instance():
+    nlp = spacy.load('en')
+    emoji_pipe = Emoji(nlp)
+    nlp.add_pipe(emoji_pipe, first=True)
+    nlp.add_pipe(hashtag_pipe)
+    return nlp
 
 
 class MLFeatureAnalyzer(object):

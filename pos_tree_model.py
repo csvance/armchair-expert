@@ -41,6 +41,11 @@ class PosTreeModel(object):
     @staticmethod
     def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
 
+        if word[0] == '#':
+            return 'HASHTAG'
+        elif word[0] == '@':
+            return 'NOUN'
+
         if is_emoji:
             return 'EMOJI'
 
