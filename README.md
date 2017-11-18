@@ -35,7 +35,7 @@ In theory you should be able to set it up with any modern RDBMS.
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 
 ## Run It
-- python ftbot_discord.py
+- python armchair_expert_discord.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
 
 
