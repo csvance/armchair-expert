@@ -207,7 +207,7 @@ class MessageOutput(MessageBase):
     def filter(self, raw_message: str) -> str:
 
         message = raw_message
-        message = re.sub(' [,.!?\'"]','', message)
+        message = re.sub(' [,.!?\'"#@]','', message)
 
         return message
 
