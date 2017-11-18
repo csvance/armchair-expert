@@ -567,6 +567,7 @@ class MarkovAI(object):
             reply = self.command(input_message)
             if reply:
                 output_message = MessageOutput(text=reply)
+                output_message.process(self.nlp)
                 output_message.args['channel'] = input_message.args['channel']
                 output_message.args['timestamp'] = input_message.args['timestamp']
 
@@ -620,7 +621,7 @@ class MarkovAI(object):
 
             reply = self.reply(input_message)
 
-            if reply is None or reply == "":
+            if reply is None:
                 return
 
             # Add response to lines

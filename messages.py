@@ -20,6 +20,7 @@ class MessageBase(object):
         self.tokens = []
         self.people = people
         self.loaded = False
+        self.processed = False
 
         # Create args based on the type of message
         if text:
@@ -86,13 +87,17 @@ class MessageBase(object):
 
     def process(self, nlp) -> None:
 
-        # Filter
-        self.message_filtered = self.filter(self.message_raw)
+        if not self.processed:
 
-        # Tokenize
-        message_nlp = nlp(self.message_filtered)
-        for token in message_nlp:
-            self.tokens.append({'nlp': token})
+            # Filter
+            self.message_filtered = self.filter(self.message_raw)
+
+            # Tokenize
+            message_nlp = nlp(self.message_filtered)
+            for token in message_nlp:
+                self.tokens.append({'nlp': token})
+
+            self.processed = True
 
     def load_pos(self, session, nlp) -> None:
         for token in self.tokens:
