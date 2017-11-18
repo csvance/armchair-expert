@@ -40,16 +40,15 @@ class PosTreeModel(object):
             self.load(path)
 
     @staticmethod
-    def custom_pos_from_word(word: str, people: list = None) -> Optional[str]:
+    def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
+
+        if is_emoji:
+            return "EMOJI"
 
         # Makeup for shortcomings of NLP detecting online nicknames
         if people is not None:
             if word in people:
                 return 'NOUN'
-
-        # spacy detects emoji in the format of :happy: as PUNCT, give it its own POS
-        if re.match(r"<:[a-z0-9_]+:[0-9_]+>", word) or re.match(r":[a-z_]+:", word):
-            return 'EMOJI'
 
         return None
 
@@ -130,7 +129,7 @@ class PosTreeModel(object):
         for token_index, token in enumerate(self.nlp(line)):
 
             # TODO: Implement entity dection in spacy
-            custom_pos = PosTreeModel.custom_pos_from_word(token.text, self.people)
+            custom_pos = PosTreeModel.custom_pos_from_word(token.text, people=self.people, is_emoji=token._.is_emoji)
             pos_text = custom_pos if custom_pos is not None else token.pos_
 
             if pos_text in tree_branch:

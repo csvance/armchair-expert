@@ -92,14 +92,13 @@ class MessageBase(object):
         # Tokenize
         message_nlp = nlp(self.message_filtered)
         for token in message_nlp:
-            print(token)
             self.tokens.append({'nlp': token})
 
     def load_pos(self, session, nlp) -> None:
         for token in self.tokens:
 
             # TODO: Implement entity dection in spacy
-            custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, self.people)
+            custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, people=self.people, is_emoji=token['nlp']._.is_emoji)
             pos_text = custom_pos if custom_pos is not None else token['nlp'].pos_
 
             pos = session.query(Pos).filter(Pos.text == pos_text).first()
@@ -191,15 +190,10 @@ class MessageBase(object):
     def load(self, session, nlp) -> None:
         if not self.loaded:
 
-            start = time.time()
             self.process(nlp)
-            print("process: %s" % (time.time()-start))
             self.load_pos(session, nlp)
-            print("pos: %s" % (time.time()-start))
             self.load_words(session)
-            print("words: %s" % (time.time()-start))
             self.load_neighbors(session)
-            print("neighbors: %s" % (time.time()-start))
             session.commit()
             self.loaded = True
 
