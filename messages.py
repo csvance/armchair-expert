@@ -110,7 +110,7 @@ class MessageBase(object):
             if pos is None:
                 pos = Pos(text=pos_text)
                 session.add(pos)
-                session.commit()
+                session.flush()
             token['pos'] = pos
 
     def load_words(self, session) -> None:
@@ -125,7 +125,7 @@ class MessageBase(object):
                 if word_a is None:
                     word_a = Word(text=token['nlp'].text, pos_id=token['pos'].id)
                     session.add(word_a)
-                    session.commit()
+                    session.flush()
             else:
                 word_a = word_b
             token['word'] = word_a
@@ -140,7 +140,7 @@ class MessageBase(object):
             if word_b is None:
                 word_b = Word(text=self.tokens[token_index + 1]['nlp'].text, pos_id=self.tokens[token_index + 1]['pos'].id)
                 session.add(word_b)
-                session.commit()
+                session.flush()
             self.tokens[token_index + 1]['word'] = word_b
 
             if word_a.id == word_b.id:
@@ -151,7 +151,7 @@ class MessageBase(object):
             if word_a_b is None:
                 word_a_b = WordRelation(a_id=word_a.id, b_id=word_b.id)
                 session.add(word_a_b)
-                session.commit()
+                session.flush()
             token['word_a->b'] = word_a_b
 
     def load_neighbors(self, session) -> None:
@@ -187,7 +187,7 @@ class MessageBase(object):
                     if neighbor is None:
                         neighbor = WordNeighbor(a_id=token['word'].id, b_id=potential_neighbor['word'].id)
                         session.add(neighbor)
-                        session.commit()
+                        session.flush()
 
                     token['word_neighbors'].append(neighbor)
 
