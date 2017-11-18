@@ -620,7 +620,7 @@ class MarkovAI(object):
 
             reply = self.reply(input_message)
 
-            if reply is None:
+            if reply is None or reply == "":
                 return
 
             # Add response to lines
