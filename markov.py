@@ -212,7 +212,7 @@ class MarkovAI(object):
 
         # If we are mentioned, we don't want things to be about us
         if input_message.args['mentioned']:
-            potential_topics = [x for x in potential_topics if x['word'].text != CONFIG_DISCORD_ME_SHORT.lower()]
+            potential_topics = [x for x in potential_topics if x['word'].text.lower() != CONFIG_DISCORD_ME_SHORT.lower()]
 
         potential_subject = None
 
@@ -262,7 +262,7 @@ class MarkovAI(object):
                 print("Subject Fallback!")
             subject_word = self.session.query(Word.id, Word.text, Word.pos_id, Pos.text.label('pos_text')).join(Pos,
                                                                                                                 Pos.id == Word.pos_id).filter(
-                Word.text == CONFIG_DISCORD_ME_SHORT.lower()).first()
+                Word.text == CONFIG_DISCORD_ME_SHORT).first()
         else:
             subject_word = potential_subject
 
@@ -272,7 +272,7 @@ class MarkovAI(object):
             print("Subject: %s Pos: %s" % (potential_subject.text, potential_subject.pos_text))
 
         topic_me = False
-        if subject_word.text == CONFIG_DISCORD_ME_SHORT.lower():
+        if subject_word.text.lower() == CONFIG_DISCORD_ME_SHORT.lower():
             topic_me = True
 
         # TODO: Optimize this, give preference to the POS we are looking for when generating the sentence structure in PosTreeModel.generate_sentence
@@ -333,7 +333,7 @@ class MarkovAI(object):
                 filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
             if not topic_me:
-                query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
+                query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT)
 
             query = query.group_by(word_a.id). \
                 order_by(desc('rating')). \
@@ -358,7 +358,7 @@ class MarkovAI(object):
                     filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
                 if not topic_me:
-                    query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT.lower())
+                    query = query.filter(word_a.text != CONFIG_DISCORD_ME_SHORT)
 
                 query = query.group_by(word_a.id). \
                     order_by(desc('rating')). \
@@ -417,7 +417,7 @@ class MarkovAI(object):
                 filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
             if not topic_me:
-                query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
+                query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT)
 
             query = query.group_by(word_b.id). \
                 order_by(desc('rating')). \
@@ -441,7 +441,7 @@ class MarkovAI(object):
                     filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
                 if not topic_me:
-                    query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT.lower())
+                    query = query.filter(word_b.text != CONFIG_DISCORD_ME_SHORT)
 
                 query = query.group_by(word_b.id). \
                     order_by(desc('rating')). \
