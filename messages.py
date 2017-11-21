@@ -51,7 +51,7 @@ class MessageArguments(object):
         self.channel = None
         self.channel_str = line.channel
         self.server = None
-        self.server_id = line.server_id
+        self.server_id = int(line.server_id)
         self.author = line.author
         self.always_reply = False
         self.author_mention = None
@@ -62,7 +62,7 @@ class MessageArguments(object):
 
         # Check for Private Message
         try:
-            server = message.channel.server.id
+            server = message.channel.server
         except AttributeError:
             server = None
 
@@ -175,7 +175,7 @@ class MessageBase(object):
         def token_text(t):
             if len(t['nlp'].text) > MAX_WORD_LENGTH:
                 return t['nlp'].text[0:MAX_WORD_LENGTH]
-            return t.text
+            return t['nlp'].text
 
         words = []
 
@@ -272,7 +272,7 @@ class MessageOutput(MessageBase):
         MessageBase.__init__(self, line=line, text=text)
 
     def filter(self, raw_message: str) -> str:
-        message = MessageBase.filter(raw_message)
+        message = MessageBase.filter(self, raw_message)
         message = re.sub(' ([,.!?:;"“\'])', r'\1', message)
         message = re.sub('([#@“"\']) ', r'\1', message)
         message = re.sub(' ([-–_]) ', r'\1', message)
@@ -288,7 +288,7 @@ class MessageInput(MessageBase):
         MessageBase.__init__(self, message=message, line=line, text=text, people=people)
 
     def filter(self, raw_message: str) -> str:
-        message = MessageBase.filter(raw_message)
+        message = MessageBase.filter(self, raw_message)
 
         # Convert everything to lowercase
         if not CONFIG_MARKOV_PRESERVE_CASE:

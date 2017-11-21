@@ -594,7 +594,7 @@ class MarkovAI(object):
             server_id = None
             if input_message.args.server is not None:
                 # noinspection PyUnusedLocal
-                server_id = server_id = int(input_message.args.server)
+                server_id = server_id = input_message.args.server_id
 
             channel = None
             if input_message.args.channel is not None:
@@ -637,8 +637,8 @@ class MarkovAI(object):
             # Offset timestamp by one second for database ordering
             reply_time_db = input_message.args.timestamp + timedelta(seconds=1)
 
-            line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_message.args.server),
-                        channel=str(input_message.args.channel), timestamp=reply_time_db)
+            line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=input_message.args.server_id,
+                        channel=input_message.args.channel_str, timestamp=reply_time_db)
             self.session.add(line)
             self.session.commit()
 
@@ -646,6 +646,7 @@ class MarkovAI(object):
 
             # We want the discord channel object to respond to and the original timestamp
             output_message.args.channel = input_message.args.channel
+            output_message.args.channel_str = input_message.args.channel_str
             output_message.args.timestamp = input_message.args.timestamp
 
             # Load the reply database objects for reaction tracking
