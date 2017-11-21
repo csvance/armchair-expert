@@ -152,7 +152,7 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
 
 
 class AOLReactionModelTrainer(object):
-    def __init__(self, model_dir: str = CONFIG_MARKOV_REACTION_TRAINING_MODEL_PATH):
+    def __init__(self, model_dir: str):
         self.data = []
         self.training_data = None
         self.y_label = None
@@ -253,7 +253,7 @@ class AOLReactionModelTrainer(object):
 
 
 class AOLReactionModelPredictor(object):
-    def __init__(self, saved_model_dir: str = CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH):
+    def __init__(self, saved_model_dir: str):
         self.model = reader.read_saved_model(saved_model_dir=saved_model_dir)
         self.meta_graph = None
         for meta_graph_def in self.model.meta_graphs:

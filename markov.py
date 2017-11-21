@@ -1,4 +1,6 @@
+import random
 from datetime import timedelta
+from typing import Optional
 
 import numpy as np
 from sqlalchemy import func
@@ -10,12 +12,10 @@ from messages import *
 from ml_common import create_spacy_instance
 from pos_tree_model import rebuild_pos_tree_from_db
 from reaction_model import AOLReactionModelPredictor
-import random
-from typing import Optional
 
 
 class BotReply(object):
-    def __init__(self, timestamp=None, tokens: dict=[], fresh=False):
+    def __init__(self, timestamp=None, tokens: dict = [], fresh=False):
         self.timestamp = timestamp
         self.tokens = tokens
         self.fresh = fresh
@@ -61,11 +61,11 @@ class MarkovAI(object):
         self.nlp = create_spacy_instance()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading ML models...")
-        self.reaction_model = AOLReactionModelPredictor()
+        self.reaction_model = AOLReactionModelPredictor(saved_model_dir=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
         print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
-        self.pos_tree_model = PosTreeModel(nlp=self.nlp)
+        self.pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_CONFIG_PATH, nlp=self.nlp)
         self.session = Session()
         print("MarkovAI __init__")
 

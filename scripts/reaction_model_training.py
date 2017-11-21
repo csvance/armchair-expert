@@ -1,9 +1,9 @@
 from reaction_model import *
-
+from config import *
 
 if __name__ == '__main__':
 
-    reaction = AOLReactionModelTrainer()
+    reaction = AOLReactionModelTrainer(model_dir=CONFIG_MARKOV_REACTION_TRAINING_MODEL_PATH)
 
     data_path = 'training/aol-reaction-model/markov_line_utf8.csv'
 

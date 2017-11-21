@@ -8,7 +8,7 @@ from markov_schema import *
 
 
 def rebuild_pos_tree_from_db(nlp):
-    pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS, rebuild=True)
+    pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_CONFIG_PATH, nlp=nlp, people=CONFIG_DISCORD_MEMBERS, rebuild=True)
 
     # Process database lines
     session = Session()
@@ -29,7 +29,7 @@ def rebuild_pos_tree_from_db(nlp):
 
 
 class PosTreeModel(object):
-    def __init__(self, nlp=None, path: str = CONFIG_POS_TREE_CONFIG_PATH, people: dict = None, rebuild: bool = False):
+    def __init__(self, path: str, nlp=None, people: dict = None, rebuild: bool = False):
         self.tree = {}
         self.nlp = nlp
         self.path = path
