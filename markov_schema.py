@@ -10,11 +10,13 @@ from config import *
 
 Base = declarative_base()
 
+MAX_WORD_LENGTH = 256
+MAX_URL_LENGTH = 512
 
 class Word(Base):
     __tablename__ = "word"
     id = Column(Integer, index=True, primary_key=True)
-    text = Column(String(256), index=True, nullable=False, unique=True)
+    text = Column(String(MAX_WORD_LENGTH), index=True, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
     pos_id = Column(Integer, ForeignKey('pos.id'), nullable=False)
     pos = relationship("Pos")
@@ -73,7 +75,7 @@ class URL(Base):
     __tablename__ = "url"
     id = Column(Integer, index=True, primary_key=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    text = Column(String(512), index=True, nullable=False, unique=True)
+    text = Column(String(MAX_URL_LENGTH), index=True, nullable=False, unique=True)
     count = Column(Integer, nullable=False, default=1)
 
     def __repr__(self):

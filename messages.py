@@ -115,15 +115,21 @@ class MessageBase(object):
 
     def load_words(self, session) -> None:
 
+        # Sanitizes word text input
+        def token_text(t):
+            if len(t['nlp'].text) > MAX_WORD_LENGTH:
+                return t['nlp'].text[0:MAX_WORD_LENGTH]
+            return t.text
+
         words = []
 
         word_b = None
         for token_index, token in enumerate(self.tokens):
 
             if not word_b:
-                word_a = session.query(Word).filter(Word.text == token['nlp'].text).first()
+                word_a = session.query(Word).filter(Word.text == token_text(token)).first()
                 if word_a is None:
-                    word_a = Word(text=token['nlp'].text, pos_id=token['pos'].id)
+                    word_a = Word(text=token_text(token), pos_id=token['pos'].id)
                     session.add(word_a)
                     session.flush()
             else:
@@ -136,9 +142,9 @@ class MessageBase(object):
                 break
 
             word_b = session.query(Word).filter(
-                Word.text == self.tokens[token_index + 1]['nlp'].text).first()
+                Word.text == token_text(self.tokens[token_index + 1])).first()
             if word_b is None:
-                word_b = Word(text=self.tokens[token_index + 1]['nlp'].text, pos_id=self.tokens[token_index + 1]['pos'].id)
+                word_b = Word(text=token_text(self.tokens[token_index + 1]), pos_id=self.tokens[token_index + 1]['pos'].id)
                 session.add(word_b)
                 session.flush()
             self.tokens[token_index + 1]['word'] = word_b
@@ -230,8 +236,14 @@ class MessageInput(MessageBase):
         message = raw_message
 
         # Extract URLs
-        self.args['url'] = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
                                       message)
+
+        # Validate URLs
+        self.args['url'] = []
+        for url in urls:
+            if len(url) <= MAX_URL_LENGTH:
+                self.args['url'].append(url)
 
         # Remove URLs
         message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
