@@ -19,7 +19,6 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 - numpy
 - pandas
 - janus
-- emoji
 
 ## Database
 Currently supports both MySQL and SQLite as DB backends. I recommend using MySQL as the performance is orders of magnitude better.

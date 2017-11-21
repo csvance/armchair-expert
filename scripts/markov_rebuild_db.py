@@ -1,7 +1,7 @@
 import asyncio
 
-from config import *
 from armchair_expert import ArmchairExpert
+from config import *
 
 if __name__ == '__main__':
 
@@ -10,4 +10,4 @@ if __name__ == '__main__':
     if CONFIG_DISCORD_MINI_ME is None:
         ftbot.ai.rebuild_db(ignore=CONFIG_DISCORD_IGNORE_CHANNELS)
     else:
-        ftbot.ai.rebuild_db(ignore=CONFIG_DISCORD_IGNORE_CHANNELS,author=[CONFIG_DISCORD_MINI_ME])
+        ftbot.ai.rebuild_db(ignore=CONFIG_DISCORD_IGNORE_CHANNELS, author=[CONFIG_DISCORD_MINI_ME])

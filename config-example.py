@@ -61,7 +61,6 @@ CONFIG_MARKOV_TOPIC_SELECTION_FILTER = ['#nick', 'and', 'for', 'what', 'where', 
                                         'whats',
                                         'just', 'with', 'its', 'his', 'her', 'it', 'it\'s', 'that', 'thats', 'my']
 
-
 CONFIG_MARKOV_REACTION_TIMEDELTA_S = 10
 CONFIG_MARKOV_REACTION_SCORE_POS = ['NOUN', 'VERB', 'ADJ', 'ADV', 'X', 'EMOJI']
 CONFIG_MARKOV_REACTION_UPRATE_WORD = 1

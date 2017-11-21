@@ -1,11 +1,11 @@
 from messages import *
 from ml_common import *
-from ml_common import create_nlp_instance
+from ml_common import create_spacy_instance
 
 if __name__ == '__main__':
 
     path = "training/markov_training_files"
-    nlp = create_nlp_instance()
+    nlp = create_spacy_instance()
 
     pos_tree_model = PosTreeModel(nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
 

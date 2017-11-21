@@ -1,7 +1,7 @@
 from pos_tree_model import *
-from ml_common import create_nlp_instance
+from ml_common import create_spacy_instance
 
-nlp = create_nlp_instance()
+nlp = create_spacy_instance()
 
 pos_tree_model = PosTreeModel(nlp=nlp)
 

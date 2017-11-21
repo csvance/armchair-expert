@@ -1,12 +1,99 @@
-import random
 import re
-from typing import Optional
-from pos_tree_model import PosTreeModel
+
 import discord
 from sqlalchemy import and_
-import time
 
 from markov_schema import *
+from pos_tree_model import PosTreeModel
+
+
+class MessageArguments(object):
+    def __init__(self, line=None, message=None, text=None):
+
+        # Booleans
+        self.always_reply = False
+        self.is_owner = False
+        self.mentioned = False
+        self.author = None
+        self.author_mention = None
+        self.channel = None
+        self.channel_str = None
+        self.server = None
+        self.server_id = None
+        self.source = None
+        self.learning = None
+        self.timestamp = None
+
+        if line:
+            self.args_from_line(line)
+        elif message:
+            self.args_from_message(message)
+        elif text:
+            self.args_from_text(text)
+
+    # noinspection PyUnusedLocal
+    def args_from_text(self, text: str) -> None:
+        self.learning = True
+        self.mentioned = False
+        self.channel = None
+        self.channel_str = None
+        self.server = None
+        self.server_id = None
+        self.author = 'text_loader'
+        self.always_reply = False
+        self.author_mention = None
+        self.timestamp = datetime.datetime.now()
+
+    # From line db table. Only called when rebuilding the database
+    def args_from_line(self, line: Line) -> None:
+        self.learning = True
+        self.mentioned = False
+        self.channel = None
+        self.channel_str = line.channel
+        self.server = None
+        self.server_id = int(line.server_id)
+        self.author = line.author
+        self.always_reply = False
+        self.author_mention = None
+        self.timestamp = datetime.datetime.now()
+
+    # From discord client
+    def args_from_message(self, message: discord.Message) -> None:
+
+        # Check for Private Message
+        try:
+            server = message.channel.server
+        except AttributeError:
+            server = None
+
+        self.channel = message.channel
+        self.channel_str = str(message.channel)
+        self.author = str(message.author)
+        self.author_mention = "<@%s>" % message.author.id
+        self.server = server
+        self.server_id = server.id
+        self.always_reply = False
+        self.timestamp = message.timestamp
+
+        # Fill in the rest of the flags based on the raw content
+        if message.content.lower().find(CONFIG_DISCORD_ME_SHORT.lower()) != -1:
+            self.mentioned = True
+        else:
+            self.mentioned = False
+
+        if str(message.author) == CONFIG_DISCORD_OWNER:
+            self.is_owner = True
+        else:
+            self.is_owner = False
+
+        if self.author in CONFIG_DISCORD_ALWAYS_REPLY:
+            self.always_reply = True
+
+        # Don't learn from private messages or ourself
+        if CONFIG_LEARNING_ENABLE and message.server is not None and str(self.author) != CONFIG_DISCORD_ME:
+            self.learning = True
+        else:
+            self.learning = False
 
 
 class MessageBase(object):
@@ -16,74 +103,42 @@ class MessageBase(object):
         self.line = line
         self.message_raw = None
         self.message_filtered = None
-        self.args = {}
         self.tokens = []
         self.people = people
         self.loaded = False
         self.processed = False
+        self.urls = []
 
         # Create args based on the type of message
         if text:
             self.message_raw = text
-            self.args_from_text(text)
         elif line:
             self.message_raw = line.text
-            self.args_from_line(line)
         elif message:
             self.message_raw = message.content
-            self.args_from_message(message)
         else:
             raise ValueError('text, line, and message cannot be None')
 
-    # noinspection PyUnusedLocal
-    def args_from_text(self, text: str) -> None:
-        self.args = {'learning': True, 'mentioned': False, 'channel': None, 'server': None, 'author': 'text_loader',
-                     'always_reply': False, 'author_mention': None, 'timestamp': datetime.datetime.now()}
-
-    # From line db table. Only called when rebuilding the database
-    def args_from_line(self, line: Line) -> None:
-        self.args = {'timestamp': line.timestamp, 'channel': line.channel,
-                     'server': line.server_id, 'author': line.author, 'always_reply': False,
-                     'mentioned': False, 'author_mention': None, 'learning': True}
-
-    # From discord client
-    def args_from_message(self, message: discord.Message) -> None:
-
-        # Check for Private Message
-        try:
-            server = message.channel.server.id
-        except AttributeError:
-            server = None
-
-        self.args = {'channel': message.channel,
-                     'author': str(message.author),
-                     'author_mention': "<@%s>" % message.author.id,
-                     'server': server,
-                     'always_reply': False,
-                     'timestamp': message.timestamp}
-
-        # Fill in the rest of the flags based on the raw content
-        if message.content.lower().find(CONFIG_DISCORD_ME_SHORT.lower()) != -1:
-            self.args['mentioned'] = True
-        else:
-            self.args['mentioned'] = False
-
-        if str(message.author) == CONFIG_DISCORD_OWNER:
-            self.args['is_owner'] = True
-        else:
-            self.args['is_owner'] = False
-
-        if self.args['author'] in CONFIG_DISCORD_ALWAYS_REPLY:
-            self.args['always_reply'] = True
-
-        # Don't learn from private messages or ourself
-        if CONFIG_LEARNING_ENABLE and message.server is not None and str(self.args['author']) != CONFIG_DISCORD_ME:
-            self.args['learning'] = True
-        else:
-            self.args['learning'] = False
+        self.args = MessageArguments(message=message, line=line, text=text)
 
     def filter(self, raw_message: str) -> str:
-        pass
+
+        message = raw_message
+
+        # Extract URLs
+        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                          message)
+
+        # Validate URLs
+        for url in urls:
+            if len(url) <= MAX_URL_LENGTH:
+                self.urls.append(url)
+
+        # Remove URLs
+        message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
+                         message)
+
+        return message
 
     def process(self, nlp) -> None:
 
@@ -103,7 +158,8 @@ class MessageBase(object):
         for token_idx, token in enumerate(self.tokens):
 
             # TODO: Implement entity dection in spacy
-            custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, people=self.people, is_emoji=token['nlp']._.is_emoji)
+            custom_pos = PosTreeModel.custom_pos_from_word(token['nlp'].text, people=self.people,
+                                                           is_emoji=token['nlp']._.is_emoji)
             pos_text = custom_pos if custom_pos is not None else token['nlp'].pos_
 
             pos = session.query(Pos).filter(Pos.text == pos_text).first()
@@ -119,7 +175,7 @@ class MessageBase(object):
         def token_text(t):
             if len(t['nlp'].text) > MAX_WORD_LENGTH:
                 return t['nlp'].text[0:MAX_WORD_LENGTH]
-            return t.text
+            return t['nlp'].text
 
         words = []
 
@@ -144,7 +200,8 @@ class MessageBase(object):
             word_b = session.query(Word).filter(
                 Word.text == token_text(self.tokens[token_index + 1])).first()
             if word_b is None:
-                word_b = Word(text=token_text(self.tokens[token_index + 1]), pos_id=self.tokens[token_index + 1]['pos'].id)
+                word_b = Word(text=token_text(self.tokens[token_index + 1]),
+                              pos_id=self.tokens[token_index + 1]['pos'].id)
                 session.add(word_b)
                 session.flush()
             self.tokens[token_index + 1]['word'] = word_b
@@ -200,7 +257,6 @@ class MessageBase(object):
     # Called when ORM objects are needed
     def load(self, session, nlp) -> None:
         if not self.loaded:
-
             self.process(nlp)
             self.load_pos(session, nlp)
             self.load_words(session)
@@ -216,8 +272,7 @@ class MessageOutput(MessageBase):
         MessageBase.__init__(self, line=line, text=text)
 
     def filter(self, raw_message: str) -> str:
-
-        message = raw_message
+        message = MessageBase.filter(self, raw_message)
         message = re.sub(' ([,.!?:;"“\'])', r'\1', message)
         message = re.sub('([#@“"\']) ', r'\1', message)
         message = re.sub(' ([-–_]) ', r'\1', message)
@@ -233,28 +288,14 @@ class MessageInput(MessageBase):
         MessageBase.__init__(self, message=message, line=line, text=text, people=people)
 
     def filter(self, raw_message: str) -> str:
-        message = raw_message
-
-        # Extract URLs
-        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
-                                      message)
-
-        # Validate URLs
-        self.args['url'] = []
-        for url in urls:
-            if len(url) <= MAX_URL_LENGTH:
-                self.args['url'].append(url)
-
-        # Remove URLs
-        message = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '',
-                         message)
+        message = MessageBase.filter(self, raw_message)
 
         # Convert everything to lowercase
         if not CONFIG_MARKOV_PRESERVE_CASE:
             message = message.lower()
 
         # Replace HTML symbols
-        message = message.replace('&amp;','&')
+        message = message.replace('&amp;', '&')
 
         # Strip out characters which pollute the database with useless information for our purposes
         message = re.sub(CONFIG_MARKOV_SYMBOL_STRIP, "", message)

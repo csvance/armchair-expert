@@ -1,41 +1,36 @@
-import os
-import json
 import csv
-from markov_schema import *
-import spacy
+import json
+import os
 
+import spacy
 from spacymoji import Emoji
 
-
-def hashtag_pipe(doc):
-
-    merged_hashtag = False
-
-    while True:
-
-        for token_index,token in enumerate(doc):
-            if token.text == '#':
-                if token.head is not None:
-
-                    start_index = token.idx
-                    end_index = start_index + len(token.head.text) + 1
-
-                    if doc.merge(start_index, end_index) is not None:
-                        merged_hashtag = True
-                        break
-
-        if not merged_hashtag:
-            break
-
-        merged_hashtag = False
-
-    return doc
+from markov_schema import *
 
 
-def create_nlp_instance():
+def create_spacy_instance():
+
     nlp = spacy.load('en')
     emoji_pipe = Emoji(nlp)
     nlp.add_pipe(emoji_pipe, first=True)
+
+    # Merge hashtag tokens which were split by spacy
+    def hashtag_pipe(doc):
+        merged_hashtag = False
+        while True:
+            for token_index, token in enumerate(doc):
+                if token.text == '#':
+                    if token.head is not None:
+                        start_index = token.idx
+                        end_index = start_index + len(token.head.text) + 1
+                        if doc.merge(start_index, end_index) is not None:
+                            merged_hashtag = True
+                            break
+            if not merged_hashtag:
+                break
+            merged_hashtag = False
+        return doc
+
     nlp.add_pipe(hashtag_pipe)
     return nlp
 
@@ -73,7 +68,7 @@ class FileDataFetcher(TrainingDataFetcher):
         self.read_file(self.path)
         self.process_data()
 
-    def read_file(self,path):
+    def read_file(self, path):
         self.raw_data = open(path, 'r').read()
 
     def process_data(self):
@@ -98,7 +93,7 @@ class JSONFileDataFetcher(FileDataFetcher):
     EXTENSION = "json"
 
     def __init__(self, path):
-        FileDataFetcher.__init__(self,path)
+        FileDataFetcher.__init__(self, path)
 
     def process_data(self):
         self.data = json.loads(self.raw_data)
@@ -108,9 +103,9 @@ class CSVFileDataFetcher(FileDataFetcher):
     EXTENSION = "csv"
 
     def __init__(self, path):
-        FileDataFetcher.__init__(self,path)
+        FileDataFetcher.__init__(self, path)
 
-    def read_file(self,path):
+    def read_file(self, path):
         pass
 
     def process_data(self):
@@ -143,11 +138,10 @@ class DirectoryFilePathFetcher(TrainingDataFetcher):
             if len(filename_parts) > 1:
                 extension = filename_parts[-1]
             self.data.append({'path': "%s/%s" % (root, filename),
-                               'extension': extension})
+                              'extension': extension})
 
 
 class DirectoryUnstructuredDataFetcher(TrainingDataFetcher):
-
     def __init__(self, path):
         TrainingDataFetcher.__init__(self)
         self.path = path

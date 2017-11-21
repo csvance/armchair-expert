@@ -1,7 +1,7 @@
-from ml_common import create_nlp_instance
+from ml_common import create_spacy_instance
 
 
-nlp = create_nlp_instance()
+nlp = create_spacy_instance()
 
 doc = nlp("twitter #hashtag")
 assert len(doc) == 2

@@ -54,7 +54,7 @@ async def reply_queue_handler():
     while not client.is_closed:
         output_message = await armchair_expert.get_reply()
         # TODO: Figure out this warning
-        await client.send_message(output_message.args['channel'], output_message.message_filtered)
+        await client.send_message(output_message.args.channel, output_message.message_filtered)
 
 
 @client.event
@@ -102,7 +102,7 @@ def on_message(message: discord.Message) -> None:
 print("Starting armchair-expert")
 loop = asyncio.get_event_loop()
 
-armchair_expert = ArmchairExpert(event_loop=loop, rebuild_pos_tree=True)
+armchair_expert = ArmchairExpert(event_loop=loop, rebuild_pos_tree=False)
 print("Running Discord")
 print("My join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0" % (
     CONFIG_DISCORD_BOTID))

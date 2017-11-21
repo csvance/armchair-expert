@@ -1,8 +1,8 @@
 import json
 import re
+from typing import Optional
 
 import numpy as np
-from typing import Optional
 
 from markov_schema import *
 
@@ -39,7 +39,7 @@ class PosTreeModel(object):
             self.load(path)
 
     @staticmethod
-    def custom_pos_from_word(word: str, people: list = None, is_emoji: bool=False) -> Optional[str]:
+    def custom_pos_from_word(word: str, people: list = None, is_emoji: bool = False) -> Optional[str]:
 
         if word[0] == '#':
             return 'HASHTAG'
