@@ -54,7 +54,7 @@ async def reply_queue_handler():
     while not client.is_closed:
         output_message = await armchair_expert.get_reply()
         # TODO: Figure out this warning
-        await client.send_message(output_message.args['channel'], output_message.message_filtered)
+        await client.send_message(output_message.args.channel, output_message.message_filtered)
 
 
 @client.event

@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger, Index
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Text, BigInteger
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -12,6 +12,7 @@ Base = declarative_base()
 
 MAX_WORD_LENGTH = 256
 MAX_URL_LENGTH = 512
+
 
 class Word(Base):
     __tablename__ = "word"
@@ -86,7 +87,7 @@ echo = None
 if CONFIG_DATABASE_DEBUG:
     echo = 'debug'
 
-engine = create_engine(CONFIG_DATABASE_CONNECT,echo=echo)
+engine = create_engine(CONFIG_DATABASE_CONNECT, echo=echo)
 
 Base.metadata.create_all(engine)
 

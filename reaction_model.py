@@ -1,4 +1,3 @@
-import csv
 import re
 
 import pandas as pd
@@ -7,7 +6,6 @@ from tensorflow.contrib.saved_model.python.saved_model import reader
 from tensorflow.contrib.saved_model.python.saved_model import signature_def_utils
 from tensorflow.python.saved_model import loader
 
-from config import *
 from ml_common import *
 
 

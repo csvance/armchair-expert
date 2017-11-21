@@ -1,19 +1,19 @@
-import os
-import json
 import csv
-from markov_schema import *
-import spacy
+import json
+import os
 
+import spacy
 from spacymoji import Emoji
+
+from markov_schema import *
 
 
 def hashtag_pipe(doc):
-
     merged_hashtag = False
 
     while True:
 
-        for token_index,token in enumerate(doc):
+        for token_index, token in enumerate(doc):
             if token.text == '#':
                 if token.head is not None:
 
@@ -73,7 +73,7 @@ class FileDataFetcher(TrainingDataFetcher):
         self.read_file(self.path)
         self.process_data()
 
-    def read_file(self,path):
+    def read_file(self, path):
         self.raw_data = open(path, 'r').read()
 
     def process_data(self):
@@ -98,7 +98,7 @@ class JSONFileDataFetcher(FileDataFetcher):
     EXTENSION = "json"
 
     def __init__(self, path):
-        FileDataFetcher.__init__(self,path)
+        FileDataFetcher.__init__(self, path)
 
     def process_data(self):
         self.data = json.loads(self.raw_data)
@@ -108,9 +108,9 @@ class CSVFileDataFetcher(FileDataFetcher):
     EXTENSION = "csv"
 
     def __init__(self, path):
-        FileDataFetcher.__init__(self,path)
+        FileDataFetcher.__init__(self, path)
 
-    def read_file(self,path):
+    def read_file(self, path):
         pass
 
     def process_data(self):
@@ -143,11 +143,10 @@ class DirectoryFilePathFetcher(TrainingDataFetcher):
             if len(filename_parts) > 1:
                 extension = filename_parts[-1]
             self.data.append({'path': "%s/%s" % (root, filename),
-                               'extension': extension})
+                              'extension': extension})
 
 
 class DirectoryUnstructuredDataFetcher(TrainingDataFetcher):
-
     def __init__(self, path):
         TrainingDataFetcher.__init__(self)
         self.path = path

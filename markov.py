@@ -1,16 +1,24 @@
 from datetime import timedelta
 
 import numpy as np
-
 from sqlalchemy import func
-from sqlalchemy import or_, desc, not_, collate
+from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
 from messages import *
+from ml_common import create_nlp_instance
 from pos_tree_model import rebuild_pos_tree_from_db
 from reaction_model import AOLReactionModelPredictor
-from ml_common import create_nlp_instance
+import random
+from typing import Optional
+
+
+class BotReply(object):
+    def __init__(self, timestamp=None, tokens: dict=[], fresh=False):
+        self.timestamp = timestamp
+        self.tokens = tokens
+        self.fresh = fresh
 
 
 class BotReplyTracker(object):
@@ -18,34 +26,31 @@ class BotReplyTracker(object):
         self.replies = {}
 
     # Creates relevant nodes in reply tracker for server and channel
-    def branch_(self, args: dict) -> None:
+    def branch_(self, args: MessageArguments) -> None:
         try:
-            self.replies[int(args['server'])]
+            self.replies[args.server_id]
         except KeyError:
-            self.replies[int(args['server'])] = {}
+            self.replies[args.server_id] = {}
 
         try:
-            self.replies[int(args['server'])][str(args['channel'])]
+            self.replies[args.server_id][args.channel_str]
         except KeyError:
-            self.replies[int(args['server'])][str(args['channel'])] = {'timestamp': None, 'sentences': [],
-                                                                       'fresh': False}
+            self.replies[args.server_id][args.channel_str] = BotReply()
 
     # Called whenever the bot sends a message in a channel
     def bot_reply(self, output_message: MessageOutput) -> None:
         self.branch_(output_message.args)
-        self.replies[int(output_message.args['server'])][str(output_message.args['channel'])] = {
-            'tokens': output_message.tokens,
-            'timestamp': output_message.args['timestamp'], 'fresh': True}
+        self.replies[output_message.args.server_id][output_message.args.channel_str] = BotReply(
+            tokens=output_message.tokens, timestamp=output_message.args.timestamp, fresh=True)
 
     # Called whenever a human sends a message to a channel
     def human_reply(self, input_message: MessageInput) -> None:
-        self.branch_(input_message.args)
-        self.get_reply(input_message)['fresh'] = False
+        self.get_reply(input_message).fresh = False
 
     # Gets the last bot reply in a channel
-    def get_reply(self, input_message: MessageInput) -> dict:
+    def get_reply(self, input_message: MessageInput) -> BotReply:
         self.branch_(input_message.args)
-        return self.replies[int(input_message.args['server'])][str(input_message.args['channel'])]
+        return self.replies[input_message.args.server_id][input_message.args.channel_str]
 
 
 class MarkovAI(object):
@@ -94,10 +99,10 @@ class MarkovAI(object):
                 and_(or_(not_(Line.channel.in_(ignore)), Line.channel == None), Line.author.in_(author))).order_by(
                 Line.timestamp.asc()).all()
 
-        for line_idx,line in enumerate(lines):
+        for line_idx, line in enumerate(lines):
 
             input_message = MessageInput(line=line)
-            input_message.load(session=self.session,nlp=self.nlp)
+            input_message.load(session=self.session, nlp=self.nlp)
 
             progress = (line_idx / float(len(lines))) * 100
             print("%f%%: %s" % (progress, input_message.message_filtered))
@@ -183,7 +188,7 @@ class MarkovAI(object):
             for i in range(0, 3):
 
                 feedback_reply_output = MessageOutput(text=reply)
-                feedback_reply_output.args['author_mention'] = command_message.args['author_mention']
+                feedback_reply_output.args.author_mention = command_message.args.author_mention
 
                 feedback_reply_output.load(self.session, self.nlp)
 
@@ -211,8 +216,9 @@ class MarkovAI(object):
                             x['word'].text not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
 
         # If we are mentioned, we don't want things to be about us
-        if input_message.args['mentioned']:
-            potential_topics = [x for x in potential_topics if x['word'].text.lower() != CONFIG_DISCORD_ME_SHORT.lower()]
+        if input_message.args.mentioned:
+            potential_topics = [x for x in potential_topics if
+                                x['word'].text.lower() != CONFIG_DISCORD_ME_SHORT.lower()]
 
         potential_subject = None
 
@@ -275,7 +281,9 @@ class MarkovAI(object):
         if subject_word.text.lower() == CONFIG_DISCORD_ME_SHORT.lower():
             topic_me = True
 
-        # TODO: Optimize this, give preference to the POS we are looking for when generating the sentence structure in PosTreeModel.generate_sentence
+        # TODO: Optimize this
+        # Give preference to the POS we are looking for when generating the
+        # sentence structure in PosTreeModel.generate_sentence
         loops = 0
         sentence_structure = []
         while potential_subject.pos_text not in sentence_structure and loops < 100:
@@ -327,9 +335,9 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_a.pos_id). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
                 outerjoin(WordNeighbor, and_(word_a.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
-                filter(Pos.text == choice).\
-                filter(or_(WordNeighbor.rating > 0, WordNeighbor == None)).\
-                filter(or_(WordRelation.rating > 0, WordRelation == None)).\
+                filter(Pos.text == choice). \
+                filter(or_(WordNeighbor.rating > 0, WordNeighbor == None)). \
+                filter(or_(WordRelation.rating > 0, WordRelation == None)). \
                 filter(not_(and_(WordNeighbor == None, WordRelation == None)))
 
             if not topic_me:
@@ -411,9 +419,9 @@ class MarkovAI(object):
                 join(Pos, Pos.id == word_b.pos_id). \
                 outerjoin(WordNeighbor, and_(word_b.id == WordNeighbor.b_id, WordNeighbor.a_id == subject_word.id)). \
                 outerjoin(WordRelation, and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)). \
-                filter(Pos.text == choice).\
-                filter(or_(WordNeighbor.rating > 0, WordNeighbor.rating == None)).\
-                filter(or_(WordRelation.rating > 0, WordRelation.rating == None)).\
+                filter(Pos.text == choice). \
+                filter(or_(WordNeighbor.rating > 0, WordNeighbor.rating == None)). \
+                filter(or_(WordRelation.rating > 0, WordRelation.rating == None)). \
                 filter(not_(and_(WordNeighbor.rating == None, WordRelation.rating == None)))
 
             if not topic_me:
@@ -489,11 +497,11 @@ class MarkovAI(object):
         bot_reply = self.reply_tracker.get_reply(input_message)
 
         # Check if reply exists
-        if bot_reply['timestamp'] is None:
+        if bot_reply.timestamp is None:
             return
 
         # Only handle reactions from the last CONFIG_MARKOV_REACTION_TIMEDELTA_S seconds or if the message is fresh
-        elif bot_reply['fresh'] is not True and input_message.args['timestamp'] > bot_reply['timestamp'] + \
+        elif bot_reply.fresh is not True and input_message.args.timestamp > bot_reply.timestamp + \
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
@@ -508,14 +516,14 @@ class MarkovAI(object):
         server_last_replies = self.reply_tracker.get_reply(input_message)
 
         # Uprate words and relations
-        for token_index, token in enumerate(server_last_replies['tokens']):
+        for token_index, token in enumerate(server_last_replies.tokens):
 
             word_a = token['word']
 
             if word_a.pos.text in CONFIG_MARKOV_REACTION_SCORE_POS:
                 word_a.rating += CONFIG_MARKOV_REACTION_UPRATE_WORD
 
-                if token_index >= len(server_last_replies['tokens']) - 1:
+                if token_index >= len(server_last_replies.tokens) - 1:
                     continue
 
                 if 'word_a->b' in token:
@@ -526,7 +534,7 @@ class MarkovAI(object):
                         a_b_assoc.rating += CONFIG_MARKOV_REACTION_UPRATE_RELATION
 
         # Uprate neighborhood
-        for token in server_last_replies['tokens']:
+        for token in server_last_replies.tokens:
 
             # Filter things that are not relevant to the main information in a sentence
             if token['nlp'].pos_ not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
@@ -544,14 +552,14 @@ class MarkovAI(object):
         self.session.commit()
 
     def learn_url(self, input_message: MessageInput) -> None:
-        for url in input_message.args['url']:
+        for url in input_message.args.urls:
 
             the_url = self.session.query(URL).filter(URL.text == url).first()
 
             if the_url is not None:
                 the_url.count += 1
             else:
-                self.session.add(URL(text=url, timestamp=input_message.args['timestamp']))
+                self.session.add(URL(text=url, timestamp=input_message.args.timestamp))
 
             self.session.commit()
 
@@ -569,8 +577,8 @@ class MarkovAI(object):
             if reply:
                 output_message = MessageOutput(text=reply)
                 output_message.process(self.nlp)
-                output_message.args['channel'] = input_message.args['channel']
-                output_message.args['timestamp'] = input_message.args['timestamp']
+                output_message.args.channel = input_message.args.channel
+                output_message.args.timestamp = input_message.args.timestamp
 
                 io_module.output(output_message)
             return
@@ -584,32 +592,32 @@ class MarkovAI(object):
 
             # Sometimes server_id and channel can be none
             server_id = None
-            if input_message.args['server'] is not None:
+            if input_message.args.server is not None:
                 # noinspection PyUnusedLocal
-                server_id = server_id = int(input_message.args['server'])
+                server_id = server_id = int(input_message.args.server)
 
             channel = None
-            if input_message.args['channel'] is not None:
-                channel = str(input_message.args['channel'])
+            if input_message.args.channel is not None:
+                channel = str(input_message.args.channel)
 
             self.session.add(
-                Line(text=input_message.message_raw, author=input_message.args['author'],
+                Line(text=input_message.message_raw, author=input_message.args.author,
                      server_id=server_id, channel=channel,
-                     timestamp=input_message.args['timestamp']))
+                     timestamp=input_message.args.timestamp))
             self.session.commit()
 
         # Populate ORM and NLP POS data
         input_message.load(self.session, self.nlp)
 
         # Don't learn from ourself
-        if input_message.args['learning'] and not input_message.args['author'] == CONFIG_DISCORD_ME:
+        if input_message.args.learning and not input_message.args.author == CONFIG_DISCORD_ME:
 
             # Only want to check reaction when message on a server
-            if input_message.args['server'] is not None:
+            if input_message.args.server is not None:
                 self.check_reaction(input_message)
 
             if CONFIG_DISCORD_MINI_ME is None or (
-                    CONFIG_DISCORD_MINI_ME is not None and input_message.args['author'] in CONFIG_DISCORD_MINI_ME):
+                            CONFIG_DISCORD_MINI_ME is not None and input_message.args.author in CONFIG_DISCORD_MINI_ME):
                 self.learn_url(input_message)
                 self.learn(input_message)
 
@@ -618,7 +626,7 @@ class MarkovAI(object):
 
         # Don't reply when rebuilding the database
         if not rebuild_db and (
-                        replyrate > random.randrange(0, 100) or input_message.args['always_reply']):
+                        replyrate > random.randrange(0, 100) or input_message.args.always_reply):
 
             reply = self.reply(input_message)
 
@@ -627,18 +635,18 @@ class MarkovAI(object):
 
             # Add response to lines
             # Offset timestamp by one second for database ordering
-            reply_time_db = input_message.args['timestamp'] + timedelta(seconds=1)
+            reply_time_db = input_message.args.timestamp + timedelta(seconds=1)
 
-            line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_message.args['server']),
-                        channel=str(input_message.args['channel']), timestamp=reply_time_db)
+            line = Line(text=reply, author=CONFIG_DISCORD_ME, server_id=int(input_message.args.server),
+                        channel=str(input_message.args.channel), timestamp=reply_time_db)
             self.session.add(line)
             self.session.commit()
 
             output_message = MessageOutput(line=line)
 
             # We want the discord channel object to respond to and the original timestamp
-            output_message.args['channel'] = input_message.args['channel']
-            output_message.args['timestamp'] = input_message.args['timestamp']
+            output_message.args.channel = input_message.args.channel
+            output_message.args.timestamp = input_message.args.timestamp
 
             # Load the reply database objects for reaction tracking
             output_message.load(self.session, self.nlp)
@@ -648,6 +656,6 @@ class MarkovAI(object):
             io_module.output(output_message)
 
         # If the author is us while we are rebuilding the DB, update the reply tracker
-        elif rebuild_db and input_message.args['author'] == CONFIG_DISCORD_ME:
+        elif rebuild_db and input_message.args.author == CONFIG_DISCORD_ME:
             # noinspection PyTypeChecker
             self.reply_tracker.bot_reply(input_message)

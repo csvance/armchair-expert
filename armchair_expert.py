@@ -35,16 +35,16 @@ class ArmchairExpert(IOModule):
     async def get_reply(self):
         return await self.reply_queue.async_q.get()
 
-    def shutup(self, args: dict) -> None:
+    def shutup(self, args: MessageArguments) -> None:
         self.shutup_flag = True
         message_output = MessageOutput(text=CONFIG_MESSAGE_SHUTUP)
-        message_output.args['channel'] = args['channel']
+        message_output.args.channel = args.channel
         self.output(message_output)
 
-    def wakeup(self, args: dict) -> None:
+    def wakeup(self, args: MessageArguments) -> None:
         self.shutup_flag = False
         message_output = MessageOutput(text=CONFIG_MESSAGE_WAKEUP)
-        message_output.args['channel'] = args['channel']
+        message_output.args.channel = args.channel
         self.output(MessageOutput(text=CONFIG_MESSAGE_WAKEUP))
 
     def process_message(self, input_message: MessageInput) -> None:
@@ -56,7 +56,7 @@ class ArmchairExpert(IOModule):
             input_message = self.message_queue.sync_q.get()
 
             # Always reply when we are mentioned
-            if input_message.args['mentioned'] and self.shutup_flag is False:
+            if input_message.args.mentioned and self.shutup_flag is False:
                 self.ai.process_msg(self, input_message, 100)
             elif self.shutup_flag is False:
                 self.ai.process_msg(self, input_message, self.replyrate)
