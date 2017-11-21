@@ -8,34 +8,29 @@ from spacymoji import Emoji
 from markov_schema import *
 
 
-def hashtag_pipe(doc):
-    merged_hashtag = False
+def create_spacy_instance():
 
-    while True:
-
-        for token_index, token in enumerate(doc):
-            if token.text == '#':
-                if token.head is not None:
-
-                    start_index = token.idx
-                    end_index = start_index + len(token.head.text) + 1
-
-                    if doc.merge(start_index, end_index) is not None:
-                        merged_hashtag = True
-                        break
-
-        if not merged_hashtag:
-            break
-
-        merged_hashtag = False
-
-    return doc
-
-
-def create_nlp_instance():
     nlp = spacy.load('en')
     emoji_pipe = Emoji(nlp)
     nlp.add_pipe(emoji_pipe, first=True)
+
+    # Merge hashtag tokens which were split by spacy
+    def hashtag_pipe(doc):
+        merged_hashtag = False
+        while True:
+            for token_index, token in enumerate(doc):
+                if token.text == '#':
+                    if token.head is not None:
+                        start_index = token.idx
+                        end_index = start_index + len(token.head.text) + 1
+                        if doc.merge(start_index, end_index) is not None:
+                            merged_hashtag = True
+                            break
+            if not merged_hashtag:
+                break
+            merged_hashtag = False
+        return doc
+
     nlp.add_pipe(hashtag_pipe)
     return nlp
 

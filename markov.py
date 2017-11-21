@@ -7,7 +7,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
 from messages import *
-from ml_common import create_nlp_instance
+from ml_common import create_spacy_instance
 from pos_tree_model import rebuild_pos_tree_from_db
 from reaction_model import AOLReactionModelPredictor
 import random
@@ -58,7 +58,7 @@ class MarkovAI(object):
         print("MarkovAI __init__")
         self.rebuilding = False
         print("MarkovAI __init__: Loading NLP DB...")
-        self.nlp = create_nlp_instance()
+        self.nlp = create_spacy_instance()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading ML models...")
         self.reaction_model = AOLReactionModelPredictor()
