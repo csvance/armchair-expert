@@ -1,7 +1,7 @@
 import discord
 import sys
 from markov_schema import *
-from armchair_expert_discord import replace_mention_with_nick,client
+from ace_discord import replace_mention_with_nick,client
 
 
 async def fix_ids():
