@@ -3,9 +3,6 @@ import json
 import csv
 from markov_schema import *
 import spacy
-from spacy.attrs import ORTH, POS
-from spacy.lang.en import English
-from spacy.tokens import Token
 
 from spacymoji import Emoji
 
@@ -17,7 +14,7 @@ def hashtag_pipe(doc):
     while True:
 
         for token_index,token in enumerate(doc):
-            if token.orth_ == '#':
+            if token.text == '#':
                 if token.head is not None:
 
                     start_index = token.idx
