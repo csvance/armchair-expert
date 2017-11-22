@@ -65,7 +65,7 @@ class MarkovAI(object):
         print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
-        self.pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_CONFIG_PATH, nlp=self.nlp)
+        self.pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_PATH, nlp=self.nlp)
         self.session = Session()
         print("MarkovAI __init__")
 
@@ -212,12 +212,11 @@ class MarkovAI(object):
 
     def reply(self, input_message: MessageInput, no_url=False) -> Optional[str]:
         selected_topics = []
-        potential_topics = [x for x in input_message.tokens if
-                            x['word'].text not in CONFIG_MARKOV_TOPIC_SELECTION_FILTER]
+        potential_topics = input_message.tokens
 
         # If we are mentioned, we don't want things to be about us
         if input_message.args.mentioned:
-            potential_topics = [x for x in potential_topics if
+            potential_topics = [x for x in input_message.tokens if
                                 x['word'].text.lower() != CONFIG_DISCORD_ME_SHORT.lower()]
 
         potential_subject = None

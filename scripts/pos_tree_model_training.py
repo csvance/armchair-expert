@@ -7,7 +7,7 @@ if __name__ == '__main__':
     path = "training/markov_training_files"
     nlp = create_spacy_instance()
 
-    pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_CONFIG_PATH, nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
+    pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_PATH, nlp=nlp, people=CONFIG_DISCORD_MEMBERS)
 
     training_data_fetcher = DirectoryUnstructuredDataFetcher(path)
 
