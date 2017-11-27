@@ -551,7 +551,7 @@ class MarkovAI(object):
         self.session.commit()
 
     def learn_url(self, input_message: MessageInput) -> None:
-        for url in input_message.args.urls:
+        for url in input_message.urls:
 
             the_url = self.session.query(URL).filter(URL.text == url).first()
 

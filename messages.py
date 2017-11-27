@@ -51,7 +51,9 @@ class MessageArguments(object):
         self.channel = None
         self.channel_str = line.channel
         self.server = None
-        self.server_id = int(line.server_id)
+        self.server_id = None
+        if line.server_id is not None:
+            self.server_id = int(line.server_id)
         self.author = line.author
         self.always_reply = False
         self.author_mention = None
