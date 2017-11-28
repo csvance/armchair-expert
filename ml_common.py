@@ -2,13 +2,10 @@ import csv
 import json
 import os
 
-import spacy
-from spacymoji import Emoji
-
-from markov_schema import *
-
 
 def create_spacy_instance():
+    import spacy
+    from spacymoji import Emoji
 
     nlp = spacy.load('en')
     emoji_pipe = Emoji(nlp)
@@ -102,10 +99,12 @@ class CSVFileDataFetcher(FileDataFetcher):
 
 class DatabaseLinesDataFetcher(TrainingDataFetcher):
     def __init__(self):
+        from markov_schema import Session
         TrainingDataFetcher.__init__(self)
         self.session = Session()
 
     def get_lines(self):
+        from markov_schema import Line
         lines = self.session.query(Line.text)
 
 
