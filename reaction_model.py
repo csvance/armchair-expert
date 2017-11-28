@@ -5,7 +5,6 @@ import tensorflow as tf
 from tensorflow.contrib.keras.api.keras.models import Sequential, load_model
 from tensorflow.contrib.keras.api.keras.layers import Dense, Activation
 from tensorflow.contrib.keras.api.keras.backend import set_session
-from ml_common import *
 
 
 class AOLReactionFeatureAnalyzer(object):
@@ -23,6 +22,18 @@ class AOLReactionFeatureAnalyzer(object):
             AOLReactionFeatureAnalyzer.funny_emoji_ratio(text)
         ]
 
+    @staticmethod
+    def features() -> list:
+        return [
+            'length',
+            'whitespace',
+            'letter_diversity_ratio',
+            'upper_lower_ratio',
+            'letter_symbol_ratio',
+            'aol_letter_ratio',
+            'repeated_letter_ratio',
+            'funny_emoji_ratio'
+        ]
 
     @staticmethod
     def funny_emoji_ratio(line: str) -> float:
@@ -138,7 +149,7 @@ class AOLReactionModel(object):
     NUM_FEATURES = 8
     PREDICT_THRESHOLD = 0.50
 
-    def __init__(self, path: str=None):
+    def __init__(self, path: str=None, use_gpu=False):
 
         self.model = Sequential()
         self.model.add(Dense(AOLReactionModel.NUM_FEATURES, activation='relu', input_dim=AOLReactionModel.NUM_FEATURES))
@@ -147,7 +158,7 @@ class AOLReactionModel(object):
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
-        if CONFIG_USE_GPU:
+        if use_gpu:
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
             set_session(tf.Session(config=config))
@@ -156,7 +167,7 @@ class AOLReactionModel(object):
             self.load(path)
 
     def train(self, data, labels, epochs=1):
-        self.model.fit(data, labels, epochs=epochs, batch_size=32)
+         self.model.fit(data, labels, epochs=epochs, batch_size=32)
 
     def predict(self, text: str):
         features = np.array([AOLReactionFeatureAnalyzer.analyze(text)])
