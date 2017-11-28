@@ -5,7 +5,7 @@ import numpy as np
 
 if __name__ == '__main__':
 
-    reaction_model = AOLReactionModel()
+    reaction_model = AOLReactionModel(use_gpu=CONFIG_USE_GPU)
 
     csv_fetcher = CSVFileDataFetcher('training/markov_line_utf8.csv')
 
