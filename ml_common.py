@@ -35,21 +35,6 @@ def create_spacy_instance():
     return nlp
 
 
-class MLFeatureAnalyzer(object):
-    def __init__(self, data: list):
-        self.data = data
-
-    def analyze(self) -> list:
-        results = []
-        for row in self.data:
-            results.append(self.analyze_row(row))
-
-        return results
-
-    def analyze_row(self, row) -> dict:
-        pass
-
-
 class TrainingDataFetcher(object):
     def __init__(self):
         self.data = None
@@ -104,13 +89,14 @@ class CSVFileDataFetcher(FileDataFetcher):
 
     def __init__(self, path):
         FileDataFetcher.__init__(self, path)
+        self.reader = None
 
     def read_file(self, path):
-        pass
+        self.reader = csv.reader(open(self.path, 'r', newline='', encoding='utf-8'))
 
     def process_data(self):
         self.data = []
-        for row in csv.reader(open(self.path, 'r', newline='', encoding='utf-8')):
+        for row in self.reader:
             self.data.append(row)
 
 

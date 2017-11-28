@@ -73,7 +73,7 @@ class MessageArguments(object):
         self.author = str(message.author)
         self.author_mention = "<@%s>" % message.author.id
         self.server = server
-        self.server_id = server.id
+        self.server_id = int(server.id)
         self.always_reply = False
         self.timestamp = message.timestamp
 
@@ -275,9 +275,9 @@ class MessageOutput(MessageBase):
 
     def filter(self, raw_message: str) -> str:
         message = MessageBase.filter(self, raw_message)
-        message = re.sub(' ([,.!?:;"“\'])', r'\1', message)
-        message = re.sub('([#@“"\']) ', r'\1', message)
-        message = re.sub(' ([-–_]) ', r'\1', message)
+        message = re.sub(r' ([,.!?:;"“\'])', r'\1', message)
+        message = re.sub(r'([#@“"\']) ', r'\1', message)
+        message = re.sub(r' ([-–_]) ', r'\1', message)
 
         return message
 
