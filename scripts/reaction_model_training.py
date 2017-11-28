@@ -1,16 +1,38 @@
 from reaction_model import *
 from config import *
+from ml_common import *
+import numpy as np
 
 if __name__ == '__main__':
 
-    reaction = AOLReactionModelTrainer(model_dir=CONFIG_MARKOV_REACTION_TRAINING_MODEL_PATH)
+    reaction_model = AOLReactionModel()
 
-    data_path = 'training/aol-reaction-model/markov_line_utf8.csv'
+    csv_fetcher = CSVFileDataFetcher('training/markov_line_utf8.csv')
 
-    reaction.train(data_path, epochs=10)
-    reaction.print_evaluation(data_path)
-    export_dir = reaction.classifier.export_savedmodel("models/aol-reaction-model/", export_fn())
-    print("New export_dir: %s" % export_dir)
+    rows = csv_fetcher.get_data()
+
+    rows_filtered = []
+    for row in rows:
+        if row[0] != '':
+            rows_filtered.append(row)
+
+    data = np.zeros((len(rows_filtered), AOLReactionModel.NUM_FEATURES))
+    labels = np.zeros((len(rows_filtered), 1))
+
+    row_count = 0
+    for row_idx, row in enumerate(rows_filtered):
+
+        labels[row_idx] = int(row[0])
+        data[row_idx] = np.array(AOLReactionFeatureAnalyzer.analyze(row[1]))
+
+        row_count += 1
+
+    reaction_model.train(data, labels, epochs=10)
+    reaction_model.save(CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
+
+
+
+
 
 
 

@@ -1,45 +1,28 @@
 import re
+import numpy as np
 
-import pandas as pd
 import tensorflow as tf
-from tensorflow.contrib.saved_model.python.saved_model import reader
-from tensorflow.contrib.saved_model.python.saved_model import signature_def_utils
-from tensorflow.python.saved_model import loader
-
+from tensorflow.contrib.keras.api.keras.models import Sequential, load_model
+from tensorflow.contrib.keras.api.keras.layers import Dense, Activation
+from tensorflow.contrib.keras.api.keras.backend import set_session
 from ml_common import *
 
 
-def export_fn():
-    features = {
-        'length': tf.placeholder(dtype=tf.int32, shape=[None], name="length"),
-        'whitespace': tf.placeholder(dtype=tf.int32, shape=[None], name="whitespace"),
-        'letter_diversity_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="letter_diversity_ratio"),
-        'upper_lower_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="upper_lower_ratio"),
-        'aol_letter_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="aol_letter_ratio"),
-        'repeated_letter_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="repeated_letter_ratio"),
-        'funny_emoji_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="funny_emoji_ratio"),
-        'letter_symbol_ratio': tf.placeholder(dtype=tf.float32, shape=[None], name="letter_symbol_ratio")
-    }
-    return tf.estimator.export.build_raw_serving_input_receiver_fn(features)
+class AOLReactionFeatureAnalyzer(object):
 
+    @staticmethod
+    def analyze(text: str) -> np.array:
+        return [
+            len(text),
+            text.count(" "),
+            AOLReactionFeatureAnalyzer.letter_diversity_ratio(text),
+            AOLReactionFeatureAnalyzer.upper_lower_ratio(text),
+            AOLReactionFeatureAnalyzer.letter_symbol_ratio(text),
+            AOLReactionFeatureAnalyzer.aol_letter_ratio(text),
+            AOLReactionFeatureAnalyzer.repeated_letter_ratio(text),
+            AOLReactionFeatureAnalyzer.funny_emoji_ratio(text)
+        ]
 
-class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
-    def __init__(self, data: list):
-        MLFeatureAnalyzer.__init__(self, data)
-
-    def analyze_row(self, line: dict) -> dict:
-
-        line['length'] = len(line['text'])
-        line['whitespace'] = line['text'].count(" ")
-
-        line['letter_diversity_ratio'] = AOLReactionFeatureAnalyzer.letter_diversity_ratio(line['text'])
-        line['upper_lower_ratio'] = AOLReactionFeatureAnalyzer.upper_lower_ratio(line['text'])
-        line['letter_symbol_ratio'] = AOLReactionFeatureAnalyzer.letter_symbol_ratio(line['text'])
-        line['aol_letter_ratio'] = AOLReactionFeatureAnalyzer.aol_letter_ratio(line['text'])
-        line['repeated_letter_ratio'] = AOLReactionFeatureAnalyzer.repeated_letter_ratio(line['text'])
-        line['funny_emoji_ratio'] = AOLReactionFeatureAnalyzer.funny_emoji_ratio(line['text'])
-
-        return line
 
     @staticmethod
     def funny_emoji_ratio(line: str) -> float:
@@ -151,139 +134,40 @@ class AOLReactionFeatureAnalyzer(MLFeatureAnalyzer):
         return len(chars) / len(line)
 
 
-class AOLReactionModelTrainer(object):
-    def __init__(self, model_dir: str):
-        self.data = []
-        self.training_data = None
-        self.y_label = None
-        self.model_dir = model_dir
-        self.feature_spec = None
-        self.classifier = self.create_tensor()
+class AOLReactionModel(object):
+    NUM_FEATURES = 8
+    PREDICT_THRESHOLD = 0.50
 
-    def create_tensor(self):
-        fc_length = tf.feature_column.numeric_column("length", dtype=tf.int32)
-        fc_whitespace = tf.feature_column.numeric_column("whitespace", dtype=tf.int32)
-        fc_letter_diversity_ratio = tf.feature_column.numeric_column("letter_diversity_ratio")
-        fc_upper_lower_ratio = tf.feature_column.numeric_column("upper_lower_ratio")
-        fc_aol_letter_ratio = tf.feature_column.numeric_column("aol_letter_ratio")
-        fc_repeated_letter_ratio = tf.feature_column.numeric_column("repeated_letter_ratio")
-        fc_funny_emoji_ratio = tf.feature_column.numeric_column("funny_emoji_ratio")
-        fc_letter_symbol_ratio = tf.feature_column.numeric_column("letter_symbol_ratio")
+    def __init__(self, path: str=None):
 
-        base_columns = [fc_length, fc_whitespace, fc_letter_diversity_ratio, fc_upper_lower_ratio,
-                        fc_aol_letter_ratio, fc_repeated_letter_ratio, fc_funny_emoji_ratio, fc_letter_symbol_ratio]
+        self.model = Sequential()
+        self.model.add(Dense(32, activation='relu', input_shape=(AOLReactionModel.NUM_FEATURES,)))
+        self.model.add(Dense(1, activation='sigmoid'))
+        self.model.compile(optimizer='rmsprop',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
 
-        # TODO: Use this for export the model, but TF API seems broken
-        # self.feature_spec = feature_spec = tf.feature_column.make_parse_example_spec(base_columns)
-
-        return tf.estimator.LinearClassifier(model_dir=self.model_dir, feature_columns=base_columns)
-
-    def reset_training_data(self):
-        self.training_data = None
-
-    def training_file_input_fn(self, data_file: str, num_epochs: int, shuffle: bool):
-
-        input_data = []
-        if self.training_data is None:
-
-            csv_rows = CSVFileDataFetcher(data_file).get_data()
-
-            for row in csv_rows:
-                if row[0] != '':
-                    input_data.append({'reaction': int(row[0]), 'text': row[1]})
-
-            analyzer = AOLReactionFeatureAnalyzer(input_data)
-            input_data = analyzer.analyze()
-
-            pd_eval_data = pd.DataFrame.from_records(input_data)
-            pd_eval_data = pd_eval_data.dropna(how="any", axis=0)
-
-            self.training_data = pd_eval_data
-            self.y_label = pd_eval_data['reaction'].astype(int)
-
-        return tf.estimator.inputs.pandas_input_fn(
-            x=self.training_data,
-            y=self.y_label,
-            batch_size=100,
-            num_epochs=num_epochs,
-            shuffle=shuffle,
-            num_threads=4)
-
-    # noinspection PyMethodMayBeStatic
-    def eval_data_input_fn(self, data: list):
-
-        data_rows = []
-
-        for row in data:
-            data_rows.append({'text': row})
-
-        analyzer = AOLReactionFeatureAnalyzer(data_rows)
-        data_rows = analyzer.analyze()
-
-        pd_eval_data = pd.DataFrame.from_records(data_rows)
-
-        return tf.estimator.inputs.pandas_input_fn(
-            x=pd_eval_data,
-            num_epochs=1,
-            shuffle=False)
-
-    def classify_data(self, data: list) -> list:
-
-        classifications = []
-
-        predict_input_fn = self.eval_data_input_fn(data)
-        predictions = list(self.classifier.predict(input_fn=predict_input_fn))
-
-        for idx, row in enumerate(data):
-            classifications.append(bool(int(predictions[idx]['classes'][0])))
-
-        return classifications
-
-    def print_evaluation(self, file_path: str) -> None:
-        results = self.classifier.evaluate(
-            input_fn=self.training_file_input_fn(file_path, num_epochs=1, shuffle=False),
-            steps=None)
-
-        for key in sorted(results):
-            print("%s: %s" % (key, results[key]))
-
-    def train(self, file_path: str, epochs: int = 1):
-        self.classifier.train(input_fn=self.training_file_input_fn(file_path, num_epochs=epochs, shuffle=True),
-                              steps=None)
-
-
-class AOLReactionModelPredictor(object):
-    def __init__(self, saved_model_dir: str):
-        self.model = reader.read_saved_model(saved_model_dir=saved_model_dir)
-        self.meta_graph = None
-        for meta_graph_def in self.model.meta_graphs:
-            if 'serve' in meta_graph_def.meta_info_def.tags:
-                self.meta_graph = meta_graph_def
-        self.signature_def = signature_def_utils.get_signature_def_by_key(self.meta_graph, "predict")
-        self.output_tensor = self.signature_def.outputs['classes'].name
-
-        config = None
         if CONFIG_USE_GPU:
             config = tf.ConfigProto()
             config.gpu_options.allow_growth = True
+            set_session(tf.Session(config=config))
 
-        self.sess = tf.Session(config=config)
-        loader.load(self.sess, ['serve'], saved_model_dir)
+        if path is not None:
+            self.load(path)
 
-    def predict(self, sentence: str) -> list:
-        reaction_analyer = AOLReactionFeatureAnalyzer([{'text': sentence}])
+    def train(self, data, labels, epochs=1):
+        self.model.fit(data, labels, epochs=epochs, batch_size=32)
 
-        keys = reaction_analyer.analyze()[0]
-        inputs_feed_dict = {
-            self.signature_def.inputs['length'].name: [keys['length']],
-            self.signature_def.inputs['whitespace'].name: [keys['whitespace']],
-            self.signature_def.inputs['letter_diversity_ratio'].name: [keys['letter_diversity_ratio']],
-            self.signature_def.inputs['upper_lower_ratio'].name: [keys['upper_lower_ratio']],
-            self.signature_def.inputs['aol_letter_ratio'].name: [keys['aol_letter_ratio']],
-            self.signature_def.inputs['repeated_letter_ratio'].name: [keys['repeated_letter_ratio']],
-            self.signature_def.inputs['funny_emoji_ratio'].name: [keys['funny_emoji_ratio']],
-            self.signature_def.inputs['letter_symbol_ratio'].name: [keys['letter_symbol_ratio']]
-        }
+    def predict(self, text: str):
+        features = np.array([AOLReactionFeatureAnalyzer.analyze(text)])
+        prediction = self.model.predict(features)[0]
+        if prediction >= AOLReactionModel.PREDICT_THRESHOLD:
+            return True
+        else:
+            return False
 
-        outputs = self.sess.run(self.output_tensor, feed_dict=inputs_feed_dict)
-        return outputs
+    def load(self, path):
+        self.model.load_weights(path)
+
+    def save(self, path):
+        self.model.save_weights(path)

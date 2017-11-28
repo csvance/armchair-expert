@@ -11,7 +11,7 @@ from sqlalchemy.sql.functions import coalesce, sum
 from messages import *
 from ml_common import create_spacy_instance
 from pos_tree_model import rebuild_pos_tree_from_db
-from reaction_model import AOLReactionModelPredictor
+from reaction_model import AOLReactionModel
 
 
 class BotReply(object):
@@ -61,7 +61,7 @@ class MarkovAI(object):
         self.nlp = create_spacy_instance()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading ML models...")
-        self.reaction_model = AOLReactionModelPredictor(saved_model_dir=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
+        self.reaction_model = AOLReactionModel(path=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
         print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
@@ -504,7 +504,7 @@ class MarkovAI(object):
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.predict(input_message.message_filtered)[0]:
+        if self.reaction_model.predict(input_message.message_filtered):
             self.handle_reaction(input_message)
             return
 
@@ -608,12 +608,12 @@ class MarkovAI(object):
         # Populate ORM and NLP POS data
         input_message.load(self.session, self.nlp)
 
+        # Only want to check reaction when message on a server
+        if input_message.args.server is not None and not input_message.args.author == CONFIG_DISCORD_ME:
+            self.check_reaction(input_message)
+
         # Don't learn from ourself
         if input_message.args.learning and not input_message.args.author == CONFIG_DISCORD_ME:
-
-            # Only want to check reaction when message on a server
-            if input_message.args.server is not None:
-                self.check_reaction(input_message)
 
             if CONFIG_DISCORD_MINI_ME is None or (
                             CONFIG_DISCORD_MINI_ME is not None and input_message.args.author in CONFIG_DISCORD_MINI_ME):
