@@ -157,6 +157,7 @@ class AOLReactionModel(object):
         self.model = Sequential()
         self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES, activation='relu',
                              input_dim=AOLReactionFeatureAnalyzer.NUM_FEATURES))
+        self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES-2, activation='relu'))
         self.model.add(Dense(1, activation='sigmoid'))
         self.model.compile(optimizer='rmsprop',
                            loss='binary_crossentropy',

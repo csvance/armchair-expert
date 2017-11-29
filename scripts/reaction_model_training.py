@@ -16,7 +16,7 @@ if __name__ == '__main__':
         if row[0] != '':
             rows_filtered.append(row)
 
-    data = np.zeros((len(rows_filtered), AOLReactionModel.NUM_FEATURES))
+    data = np.zeros((len(rows_filtered), AOLReactionFeatureAnalyzer.NUM_FEATURES))
     labels = np.zeros((len(rows_filtered), 1))
 
     row_count = 0
@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
         row_count += 1
 
-    reaction_model.train(data, labels, epochs=10)
+    reaction_model.train(data, labels, epochs=20)
     reaction_model.save(CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
 
 
