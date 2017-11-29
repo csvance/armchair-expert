@@ -190,9 +190,10 @@ class AOLReactionModel(object):
 
 
 class AOLReactionModelWorker(Process):
-    def __init__(self, queue, path: str=None, use_gpu: bool=False):
+    def __init__(self, read_queue: Queue, write_queue: Queue, path: str=None, use_gpu: bool=False):
         Process.__init__(self, name='AOLReactionModelWorker')
-        self._queue = queue
+        self._read_queue = read_queue
+        self._write_queue = write_queue
         self._path = path
         self._use_gpu = use_gpu
         self._model = None
@@ -200,11 +201,10 @@ class AOLReactionModelWorker(Process):
     def run(self):
         self._model = AOLReactionModel(path=self._path, use_gpu=self._use_gpu)
         while True:
-            command = self._queue.get()
-            if command is None:
+            text = self._read_queue.get()
+            if text is None:
                 return
-            text = command
-            self._queue.put(self.predict(text))
+            self._write_queue.put(self.predict(text))
 
     def predict(self, text: str):
         return self._model.predict(text=text)
@@ -212,15 +212,16 @@ class AOLReactionModelWorker(Process):
 
 class AOLReactionModelScheduler(object):
     def __init__(self, path, use_gpu: bool=False):
-        self._queue = Queue()
-        self._worker = AOLReactionModelWorker(self._queue, path=path, use_gpu=use_gpu)
+        self._read_queue = Queue()
+        self._write_queue = Queue()
+        self._worker = AOLReactionModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path, use_gpu=use_gpu)
 
     def start(self):
         self._worker.start()
 
     def shutdown(self):
-        self._queue.put(None)
+        self._write_queue.put(None)
 
     def predict(self,text: str):
-        self._queue.put(text)
-        return self._queue.get()
+        self._write_queue.put(text)
+        return self._read_queue.get()

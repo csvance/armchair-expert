@@ -5,6 +5,7 @@ from ml_common import create_spacy_instance
 from pos_tree_model import PosTreeModel
 import json
 
+
 data_cache_path = 'training/data.json'
 label_cache_path = 'training/labels.json'
 
