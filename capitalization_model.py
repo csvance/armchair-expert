@@ -252,7 +252,7 @@ class CapitalizationModelWorker(Process):
         self._model = CapitalizationModel(path=self._path, use_gpu=self._use_gpu)
         while True:
             command = self._queue.get()
-            if command == None:
+            if command is None:
                 return
             (word, pos, word_index) = command
             self._queue.put(self.predict(word=word, pos=pos, word_index=word_index))

@@ -65,13 +65,13 @@ class MarkovAI(object):
         self.reaction_model.start()
         self.capitalization_model = CapitalizationModelScheduler(path=CONFIG_CAPITALIZATION_MODEL_PATH, use_gpu=CONFIG_USE_GPU)
         self.capitalization_model.start()
-        print("MarkovAI __init__: Loading NLP DB...")
-        self.nlp = create_spacy_instance()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
         self.pos_tree_model = PosTreeModel(path=CONFIG_POS_TREE_PATH, nlp=self.nlp)
+        print("MarkovAI __init__: Loading NLP DB...")
+        self.nlp = create_spacy_instance()
         self.session = Session()
         print("MarkovAI __init__")
 
