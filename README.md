@@ -8,7 +8,7 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 - Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
 - Not only learns from word embeddings, but the sentence structures they imply using a probability tree structure.
 - Learns to imitate capitalization patterns found in training data
-- Can imitate a specific user using MiniMeMode, creating an AI of them
+- Can imitate a specific user using MiniMeMode
 - Writes entire essays with the !essay command
 
 ## Dependencies
