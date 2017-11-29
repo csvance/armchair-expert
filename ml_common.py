@@ -98,14 +98,21 @@ class CSVFileDataFetcher(FileDataFetcher):
 
 
 class DatabaseLinesDataFetcher(TrainingDataFetcher):
-    def __init__(self):
-        from markov_schema import Session
+    def __init__(self, session):
         TrainingDataFetcher.__init__(self)
-        self.session = Session()
+        self.session = session
 
-    def get_lines(self):
+    def query_db(self):
         from markov_schema import Line
         lines = self.session.query(Line.text)
+        self.data = []
+
+        for line in lines:
+            self.data.append(line.text)
+
+    def get_data(self):
+        self.query_db()
+        return self.data
 
 
 class DirectoryFilePathFetcher(TrainingDataFetcher):

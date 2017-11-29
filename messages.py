@@ -150,8 +150,9 @@ class MessageBase(object):
             self.message_filtered = self.filter(self.message_raw)
 
             # Tokenize
-            message_nlp = nlp(self.message_filtered)
-            for token in message_nlp:
+            doc = nlp(self.message_filtered)
+            self.doc = doc
+            for token in doc:
                 self.tokens.append({'nlp': token})
 
             self.processed = True
@@ -179,82 +180,92 @@ class MessageBase(object):
                 return t['nlp'].text[0:MAX_WORD_LENGTH]
             return t['nlp'].text
 
-        words = []
+        for sent in self.doc.sents:
+            words = []
+            word_b = None
+            for token_sent in sent:
 
-        word_b = None
-        for token_index, token in enumerate(self.tokens):
+                token_index = token_sent.i
+                token = self.tokens[token_index]
 
-            if not word_b:
-                word_a = session.query(Word).filter(Word.text == token_text(token)).first()
-                if word_a is None:
-                    word_a = Word(text=token_text(token), pos_id=token['pos'].id)
-                    session.add(word_a)
+                if not word_b:
+                    word_a = session.query(Word).filter(Word.text == token_text(token)).first()
+                    if word_a is None:
+                        word_a = Word(text=token_text(token), pos_id=token['pos'].id)
+                        session.add(word_a)
+                        session.flush()
+                else:
+                    word_a = word_b
+                token['word'] = word_a
+
+                # If we are on the last word, there is no word b or a->b relationship
+                if token_index >= len(self.tokens) - 1:
+                    token['word_a->b'] = None
+                    break
+
+                word_b = session.query(Word).filter(
+                    Word.text == token_text(self.tokens[token_index + 1])).first()
+                if word_b is None:
+                    word_b = Word(text=token_text(self.tokens[token_index + 1]),
+                                  pos_id=self.tokens[token_index + 1]['pos'].id)
+                    session.add(word_b)
                     session.flush()
-            else:
-                word_a = word_b
-            token['word'] = word_a
+                self.tokens[token_index + 1]['word'] = word_b
 
-            # If we are on the last word, there is no word b or a->b relationship
-            if token_index >= len(self.tokens) - 1:
-                token['word_a->b'] = None
-                break
+                if word_a.id == word_b.id:
+                    continue
 
-            word_b = session.query(Word).filter(
-                Word.text == token_text(self.tokens[token_index + 1])).first()
-            if word_b is None:
-                word_b = Word(text=token_text(self.tokens[token_index + 1]),
-                              pos_id=self.tokens[token_index + 1]['pos'].id)
-                session.add(word_b)
-                session.flush()
-            self.tokens[token_index + 1]['word'] = word_b
-
-            if word_a.id == word_b.id:
-                continue
-
-            word_a_b = session.query(WordRelation).filter(
-                and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)).first()
-            if word_a_b is None:
-                word_a_b = WordRelation(a_id=word_a.id, b_id=word_b.id)
-                session.add(word_a_b)
-                session.flush()
-            token['word_a->b'] = word_a_b
+                word_a_b = session.query(WordRelation).filter(
+                    and_(WordRelation.a_id == word_a.id, WordRelation.b_id == word_b.id)).first()
+                if word_a_b is None:
+                    word_a_b = WordRelation(a_id=word_a.id, b_id=word_b.id)
+                    session.add(word_a_b)
+                    session.flush()
+                token['word_a->b'] = word_a_b
 
     def load_neighbors(self, session) -> None:
 
-        for token_index, token in enumerate(self.tokens):
+        for sent in self.doc.sents:
+            for sent_token in sent:
 
-            token['word_neighbors'] = []
+                token_index = sent_token.i
+                token = self.tokens[token_index]
 
-            # Filter things that are not relevant to the main information in a sentence
-            if token['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
-                continue
+                token['word_neighbors'] = []
 
-            for neighbor_index, potential_neighbor in enumerate(self.tokens):
+                # Filter things that are not relevant to the main information in a sentence
+                if token['pos'].text not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                    continue
 
-                # A word cannot be a neighbor with itself either (case == 0)
-                # We don't care if a word is right next to another as WordRelation already tracks that (case == 1)
-                # We don't care if a word is outside the window (case <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE)
-                if abs(token_index - neighbor_index) > 1 and abs(
-                                token_index - neighbor_index) <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE:
+                for sent_potential_neighbor in sent:
 
-                    if potential_neighbor['pos'].text \
-                            not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
-                        continue
+                    neighbor_index = sent_potential_neighbor.i
+                    potential_neighbor = self.tokens[neighbor_index]
 
-                    if token['word'].id == potential_neighbor['word'].id:
-                        continue
+                    # A word cannot be a neighbor with itself either (case == 0)
+                    # We don't care if a word is right next to another as WordRelation already tracks that (case == 1)
+                    # We don't care if a word is outside the window (case <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE)
+                    if abs(token_index - neighbor_index) > 1 and abs(
+                                    token_index - neighbor_index) <= CONFIG_MARKOV_NEIGHBORHOOD_WINDOW_SIZE:
 
-                    neighbor = session.query(WordNeighbor). \
-                        join(Word, WordNeighbor.b_id == Word.id). \
-                        filter(and_(WordNeighbor.a_id == token['word'].id,
-                                    Word.id == potential_neighbor['word'].id)).first()
+                        if potential_neighbor['pos'].text \
+                                not in CONFIG_MARKOV_NEIGHBORHOOD_POS_ACCEPT:
+                            continue
 
-                    if neighbor is None:
-                        neighbor = WordNeighbor(a_id=token['word'].id, b_id=potential_neighbor['word'].id)
-                        session.add(neighbor)
-                        session.flush()
+                        if token['word'].id == potential_neighbor['word'].id:
+                            continue
 
-                    token['word_neighbors'].append(neighbor)
+                        neighbor = session.query(WordNeighbor). \
+                            join(Word, WordNeighbor.b_id == Word.id). \
+                            filter(and_(WordNeighbor.a_id == token['word'].id,
+                                        Word.id == potential_neighbor['word'].id)).first()
+
+                        if neighbor is None:
+                            neighbor = WordNeighbor(a_id=token['word'].id, b_id=potential_neighbor['word'].id)
+                            session.add(neighbor)
+                            session.flush()
+
+                        token['word_neighbors'].append(neighbor)
 
     # Called when ORM objects are needed
     def load(self, session, nlp) -> None:

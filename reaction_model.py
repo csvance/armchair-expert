@@ -1,16 +1,15 @@
 import re
+
+from multiprocessing import Process, Queue
 import numpy as np
 
-import tensorflow as tf
-from tensorflow.contrib.keras.api.keras.models import Sequential, load_model
-from tensorflow.contrib.keras.api.keras.layers import Dense, Activation
-from tensorflow.contrib.keras.api.keras.backend import set_session
 
 
 class AOLReactionFeatureAnalyzer(object):
+    NUM_FEATURES = 8
 
     @staticmethod
-    def analyze(text: str) -> np.array:
+    def analyze(text: str) -> list:
         return [
             len(text),
             text.count(" "),
@@ -146,17 +145,22 @@ class AOLReactionFeatureAnalyzer(object):
 
 
 class AOLReactionModel(object):
-    NUM_FEATURES = 8
     PREDICT_THRESHOLD = 0.50
 
-    def __init__(self, path: str=None, use_gpu=False):
+    def __init__(self, path: str = None, use_gpu=False):
+
+        import tensorflow as tf
+        from tensorflow.contrib.keras.api.keras.backend import set_session
+        from tensorflow.contrib.keras.api.keras.layers import Dense
+        from tensorflow.contrib.keras.api.keras.models import Sequential
 
         self.model = Sequential()
-        self.model.add(Dense(AOLReactionModel.NUM_FEATURES, activation='relu', input_dim=AOLReactionModel.NUM_FEATURES))
+        self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES, activation='relu',
+                             input_dim=AOLReactionFeatureAnalyzer.NUM_FEATURES))
         self.model.add(Dense(1, activation='sigmoid'))
         self.model.compile(optimizer='rmsprop',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+                           loss='binary_crossentropy',
+                           metrics=['accuracy'])
 
         if use_gpu:
             config = tf.ConfigProto()
@@ -167,7 +171,7 @@ class AOLReactionModel(object):
             self.load(path)
 
     def train(self, data, labels, epochs=1):
-         self.model.fit(data, labels, epochs=epochs, batch_size=32)
+        self.model.fit(data, labels, epochs=epochs, batch_size=32)
 
     def predict(self, text: str):
         features = np.array([AOLReactionFeatureAnalyzer.analyze(text)])
@@ -182,3 +186,40 @@ class AOLReactionModel(object):
 
     def save(self, path):
         self.model.save_weights(path)
+
+
+class AOLReactionModelWorker(Process):
+    def __init__(self, queue, path: str=None, use_gpu: bool=False):
+        Process.__init__(self, name='AOLReactionModelWorker')
+        self._queue = queue
+        self._path = path
+        self._use_gpu = use_gpu
+        self._model = None
+
+    def run(self):
+        self._model = AOLReactionModel(path=self._path, use_gpu=self._use_gpu)
+        while True:
+            command = self._queue.get()
+            if command is None:
+                return
+            text = command
+            self._queue.put(self.predict(text))
+
+    def predict(self, text: str):
+        return self._model.predict(text=text)
+
+
+class AOLReactionModelScheduler(object):
+    def __init__(self, path, use_gpu: bool=False):
+        self._queue = Queue()
+        self._worker = AOLReactionModelWorker(self._queue, path=path, use_gpu=use_gpu)
+
+    def start(self):
+        self._worker.start()
+
+    def shutdown(self):
+        self._queue.put(None)
+
+    def predict(self,text: str):
+        self._queue.put(text)
+        return self._queue.get()
