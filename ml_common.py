@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+from multiprocessing import Process, Queue
 
 
 def create_spacy_instance():
@@ -147,3 +148,40 @@ class DirectoryUnstructuredDataFetcher(TrainingDataFetcher):
         for file in self.files:
             if file['extension'] == TXTFileDataFetcher.EXTENSION:
                 self.data.extend(TXTFileDataFetcher(file['path']).get_data())
+
+
+class MLModelWorker(Process):
+    def __init__(self, name, read_queue: Queue, write_queue: Queue, path: str, use_gpu: bool):
+        Process.__init__(self, name=name)
+        self._read_queue = read_queue
+        self._write_queue = write_queue
+        self._path = path
+        self._use_gpu = use_gpu
+        self._model = None
+
+    def run(self):
+        while True:
+            data = self._read_queue.get()
+            if data is None:
+                return
+            self._write_queue.put(self.predict(data))
+
+    def predict(self, data):
+        pass
+
+
+class MLModelScheduler(object):
+    def __init__(self):
+        self._read_queue = Queue()
+        self._write_queue = Queue()
+        self._worker = None
+
+    def start(self):
+        self._worker.start()
+
+    def shutdown(self):
+        self._write_queue.put(None)
+
+    def predict(self, data):
+        self._write_queue.put(data)
+        return self._read_queue.get()

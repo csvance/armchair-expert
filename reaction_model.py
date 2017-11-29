@@ -1,8 +1,9 @@
 import re
+from multiprocessing import Queue
 
-from multiprocessing import Process, Queue
 import numpy as np
 
+from ml_common import MLModelWorker, MLModelScheduler
 
 
 class AOLReactionFeatureAnalyzer(object):
@@ -157,7 +158,7 @@ class AOLReactionModel(object):
         self.model = Sequential()
         self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES, activation='relu',
                              input_dim=AOLReactionFeatureAnalyzer.NUM_FEATURES))
-        self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES-2, activation='relu'))
+        self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES - 2, activation='relu'))
         self.model.add(Dense(1, activation='sigmoid'))
         self.model.compile(optimizer='rmsprop',
                            loss='binary_crossentropy',
@@ -189,39 +190,24 @@ class AOLReactionModel(object):
         self.model.save_weights(path)
 
 
-class AOLReactionModelWorker(Process):
-    def __init__(self, read_queue: Queue, write_queue: Queue, path: str=None, use_gpu: bool=False):
-        Process.__init__(self, name='AOLReactionModelWorker')
-        self._read_queue = read_queue
-        self._write_queue = write_queue
-        self._path = path
-        self._use_gpu = use_gpu
-        self._model = None
+class AOLReactionModelWorker(MLModelWorker):
+    def __init__(self, read_queue: Queue, write_queue: Queue, path: str = None, use_gpu: bool = False):
+        MLModelWorker.__init__(self, name='AOLReactionModelWorker', read_queue=read_queue, write_queue=write_queue,
+                               path=path, use_gpu=use_gpu)
 
     def run(self):
         self._model = AOLReactionModel(path=self._path, use_gpu=self._use_gpu)
-        while True:
-            text = self._read_queue.get()
-            if text is None:
-                return
-            self._write_queue.put(self.predict(text))
+        MLModelWorker.run(self)
 
-    def predict(self, text: str):
-        return self._model.predict(text=text)
+    def predict(self, data):
+        return self._model.predict(text=data)
 
 
-class AOLReactionModelScheduler(object):
-    def __init__(self, path, use_gpu: bool=False):
-        self._read_queue = Queue()
-        self._write_queue = Queue()
-        self._worker = AOLReactionModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path, use_gpu=use_gpu)
+class AOLReactionModelScheduler(MLModelScheduler):
+    def __init__(self, path, use_gpu: bool = False):
+        MLModelScheduler.__init__(self)
+        self._worker = AOLReactionModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path,
+                                              use_gpu=use_gpu)
 
-    def start(self):
-        self._worker.start()
-
-    def shutdown(self):
-        self._write_queue.put(None)
-
-    def predict(self,text: str):
-        self._write_queue.put(text)
-        return self._read_queue.get()
+    def predict_reaction(self, text: str):
+        return self.predict(text)

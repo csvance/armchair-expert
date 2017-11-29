@@ -1,8 +1,9 @@
 import re
 from enum import Enum, unique
-from multiprocessing import Process, Queue
 
 import numpy as np
+
+from ml_common import MLModelWorker, MLModelScheduler
 
 
 @unique
@@ -240,40 +241,23 @@ class CapitalizationModel(object):
         self.model.save_weights(path)
 
 
-class CapitalizationModelWorker(Process):
+class CapitalizationModelWorker(MLModelWorker):
     def __init__(self, read_queue, write_queue, path: str = None, use_gpu: bool = False):
-        Process.__init__(self, name='CapitalizationModelWorker')
-        self._read_queue = read_queue
-        self._write_queue = write_queue
-        self._path = path
-        self._use_gpu = use_gpu
-        self._model = None
+        MLModelWorker.__init__(self, name='CapitalizationModelWorker', read_queue=read_queue, write_queue=write_queue, path=path, use_gpu=use_gpu)
 
     def run(self):
         self._model = CapitalizationModel(path=self._path, use_gpu=self._use_gpu)
-        while True:
-            command = self._read_queue.get()
-            if command is None:
-                return
-            (word, pos, word_index) = command
-            self._write_queue.put(self.predict(word=word, pos=pos, word_index=word_index))
+        MLModelWorker.run(self)
 
-    def predict(self, word: str, pos: str, word_index: int = 0):
-        return self._model.predict(word, pos, word_index=word_index)
+    def predict(self, data):
+        return self._model.predict(text=data[0], pos=data[1], word_index=data[2])
 
 
-class CapitalizationModelScheduler(object):
+class CapitalizationModelScheduler(MLModelScheduler):
     def __init__(self, path, use_gpu: bool = False):
-        self._read_queue = Queue()
-        self._write_queue = Queue()
-        self._worker = CapitalizationModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path, use_gpu=use_gpu)
+        MLModelScheduler.__init__(self)
+        self._worker = CapitalizationModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path,
+                                                 use_gpu=use_gpu)
 
-    def start(self):
-        self._worker.start()
-
-    def shutdown(self):
-        self._write_queue.put(None)
-
-    def predict(self, word: str, pos: str, word_index: int = 0):
-        self._write_queue.put((word, pos, word_index))
-        return self._read_queue.get()
+    def predict_capitalization(self, word: str, pos: str, word_index: int = 0):
+        return self.predict((word, pos, word_index))

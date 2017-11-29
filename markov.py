@@ -12,8 +12,6 @@ from capitalization_model import CapitalizationModelScheduler, CapitalizationMod
 from messages import *
 from ml_common import create_spacy_instance
 from pos_tree_model import rebuild_pos_tree_from_db
-
-
 from reaction_model import AOLReactionModelScheduler
 
 
@@ -61,9 +59,11 @@ class MarkovAI(object):
         print("MarkovAI __init__")
         self.rebuilding = False
         print("MarkovAI __init__: Loading ML models...")
-        self.reaction_model = AOLReactionModelScheduler(path=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH, use_gpu=CONFIG_USE_GPU)
+        self.reaction_model = AOLReactionModelScheduler(path=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH,
+                                                        use_gpu=CONFIG_USE_GPU)
         self.reaction_model.start()
-        self.capitalization_model = CapitalizationModelScheduler(path=CONFIG_CAPITALIZATION_MODEL_PATH, use_gpu=CONFIG_USE_GPU)
+        self.capitalization_model = CapitalizationModelScheduler(path=CONFIG_CAPITALIZATION_MODEL_PATH,
+                                                                 use_gpu=CONFIG_USE_GPU)
         self.capitalization_model.start()
         self.reply_tracker = BotReplyTracker()
         print("MarkovAI __init__: Loading NLP DB...")
@@ -398,8 +398,8 @@ class MarkovAI(object):
 
             # Get Pos
             chosen_word_pos = self.session.query(Pos.text).filter(Pos.id == r.pos_id).first()
-            mode = self.capitalization_model.predict(r.text, pos=chosen_word_pos.text,
-                                                     word_index=backward_count - (count + 1))
+            mode = self.capitalization_model.predict_capitalization(r.text, pos=chosen_word_pos.text,
+                                                                    word_index=backward_count - (count + 1))
 
             backwards_words.insert(0, CapitalizationMode.transform(mode, r.text,
                                                                    ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX))
@@ -488,18 +488,20 @@ class MarkovAI(object):
 
             # Get Pos
             chosen_word_pos = self.session.query(Pos.text).filter(Pos.id == r.pos_id).first()
-            mode = self.capitalization_model.predict(r.text, pos=chosen_word_pos.text)
+            mode = self.capitalization_model.predict_capitalization(r.text, pos=chosen_word_pos.text)
 
             forward_words.append(
-                CapitalizationMode.transform(mode, r.text, ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX))
+                CapitalizationMode.transform(mode, r.text,
+                                             ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX))
 
             count += 1
 
         # Capitalization of subject
         if len(backwards_words) == 0:
-            mode = self.capitalization_model.predict(subject_word.text, pos=subject_word.pos_text, word_index=0)
+            mode = self.capitalization_model.predict_capitalization(subject_word.text, pos=subject_word.pos_text,
+                                                                    word_index=0)
         else:
-            mode = self.capitalization_model.predict(subject_word.text, pos=subject_word.pos_text)
+            mode = self.capitalization_model.predict_capitalization(subject_word.text, pos=subject_word.pos_text)
 
         reply = []
         reply += backwards_words
@@ -527,7 +529,7 @@ class MarkovAI(object):
                 timedelta(seconds=CONFIG_MARKOV_REACTION_TIMEDELTA_S):
             return
 
-        if self.reaction_model.predict(input_message.message_filtered):
+        if self.reaction_model.predict_reaction(input_message.message_filtered):
             self.handle_reaction(input_message)
             return
 
