@@ -1,16 +1,17 @@
 import re
-import numpy as np
 
+import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.keras.api.keras.models import Sequential, load_model
-from tensorflow.contrib.keras.api.keras.layers import Dense, Activation
 from tensorflow.contrib.keras.api.keras.backend import set_session
+from tensorflow.contrib.keras.api.keras.layers import Dense
+from tensorflow.contrib.keras.api.keras.models import Sequential
 
 
 class AOLReactionFeatureAnalyzer(object):
+    NUM_FEATURES = 8
 
     @staticmethod
-    def analyze(text: str) -> np.array:
+    def analyze(text: str) -> list:
         return [
             len(text),
             text.count(" "),
@@ -146,17 +147,17 @@ class AOLReactionFeatureAnalyzer(object):
 
 
 class AOLReactionModel(object):
-    NUM_FEATURES = 8
     PREDICT_THRESHOLD = 0.50
 
-    def __init__(self, path: str=None, use_gpu=False):
+    def __init__(self, path: str = None, use_gpu=False):
 
         self.model = Sequential()
-        self.model.add(Dense(AOLReactionModel.NUM_FEATURES, activation='relu', input_dim=AOLReactionModel.NUM_FEATURES))
+        self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES, activation='relu',
+                             input_dim=AOLReactionFeatureAnalyzer.NUM_FEATURES))
         self.model.add(Dense(1, activation='sigmoid'))
         self.model.compile(optimizer='rmsprop',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+                           loss='binary_crossentropy',
+                           metrics=['accuracy'])
 
         if use_gpu:
             config = tf.ConfigProto()
@@ -167,7 +168,7 @@ class AOLReactionModel(object):
             self.load(path)
 
     def train(self, data, labels, epochs=1):
-         self.model.fit(data, labels, epochs=epochs, batch_size=32)
+        self.model.fit(data, labels, epochs=epochs, batch_size=32)
 
     def predict(self, text: str):
         features = np.array([AOLReactionFeatureAnalyzer.analyze(text)])
