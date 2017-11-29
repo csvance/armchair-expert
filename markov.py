@@ -8,10 +8,13 @@ from sqlalchemy import or_, desc, not_
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.functions import coalesce, sum
 
+from capitalization_model import CapitalizationModelScheduler, CapitalizationMode
 from messages import *
 from ml_common import create_spacy_instance
 from pos_tree_model import rebuild_pos_tree_from_db
-from reaction_model import AOLReactionModel
+
+
+from reaction_model import AOLReactionModelScheduler
 
 
 class BotReply(object):
@@ -57,11 +60,14 @@ class MarkovAI(object):
     def __init__(self, rebuild_pos_tree: bool = False):
         print("MarkovAI __init__")
         self.rebuilding = False
+        print("MarkovAI __init__: Loading ML models...")
+        self.reaction_model = AOLReactionModelScheduler(path=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH, use_gpu=CONFIG_USE_GPU)
+        self.reaction_model.start()
+        self.capitalization_model = CapitalizationModelScheduler(path=CONFIG_CAPITALIZATION_MODEL_PATH, use_gpu=CONFIG_USE_GPU)
+        self.capitalization_model.start()
         print("MarkovAI __init__: Loading NLP DB...")
         self.nlp = create_spacy_instance()
         self.reply_tracker = BotReplyTracker()
-        print("MarkovAI __init__: Loading ML models...")
-        self.reaction_model = AOLReactionModel(path=CONFIG_MARKOV_REACTION_PREDICT_MODEL_PATH)
         print("MarkovAI __init__: Loading PoS tree...")
         if rebuild_pos_tree:
             rebuild_pos_tree_from_db(self.nlp)
@@ -390,7 +396,13 @@ class MarkovAI(object):
 
             f_id = r.id
 
-            backwards_words.insert(0, r.text)
+            # Get Pos
+            chosen_word_pos = self.session.query(Pos.text).filter(Pos.id == r.pos_id).first()
+            mode = self.capitalization_model.predict(r.text, pos=chosen_word_pos.text,
+                                                     word_index=backward_count - (count + 1))
+
+            backwards_words.insert(0, CapitalizationMode.transform(mode, r.text,
+                                                                   ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX))
 
             count += 1
 
@@ -474,14 +486,25 @@ class MarkovAI(object):
 
             f_id = r.id
 
-            forward_words.append(r.text)
+            # Get Pos
+            chosen_word_pos = self.session.query(Pos.text).filter(Pos.id == r.pos_id).first()
+            mode = self.capitalization_model.predict(r.text, pos=chosen_word_pos.text)
+
+            forward_words.append(
+                CapitalizationMode.transform(mode, r.text, ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX))
 
             count += 1
 
-        reply = []
+        # Capitalization of subject
+        if len(backwards_words) == 0:
+            mode = self.capitalization_model.predict(subject_word.text, pos=subject_word.pos_text, word_index=0)
+        else:
+            mode = self.capitalization_model.predict(subject_word.text, pos=subject_word.pos_text)
 
+        reply = []
         reply += backwards_words
-        reply += [subject_word.text]
+        reply += [CapitalizationMode.transform(mode, subject_word.text,
+                                               ignore_prefix_regexp=CONFIG_CAPITALIZATION_TRANSFORM_IGNORE_PREFIX)]
         reply += forward_words
 
         # Add a random URL
