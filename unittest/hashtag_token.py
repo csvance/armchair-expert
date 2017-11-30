@@ -1,6 +1,7 @@
 import unittest
 from ml_common import create_spacy_instance
 
+
 class TestSpacyHashtagSplit(unittest.TestCase):
     def test_split(self):
 

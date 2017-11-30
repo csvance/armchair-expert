@@ -19,7 +19,6 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 - sqlalchemy
 - discord.py
 - numpy
-- pandas
 - janus
 
 ## Database
