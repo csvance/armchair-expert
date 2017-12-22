@@ -94,5 +94,6 @@ ENV/
 *_config.py
 *.db
 backup/*
+trainingdata/*
 
 lines.db-journal

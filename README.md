@@ -1,15 +1,15 @@
+# Warning
+This branch is a complete refactoring of armchair-expert and is in no way complete or stable!
+
 ## About
 Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 ## Features
 - Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
 - NLP assisted topic selection. When choosing a subject in a sentence to reply to, undesirable parts of speech such as pronouns and conjunctions are ignored.
-- In addition to an A->B word embedding system with a Markov Decision Process, words farther than one away are also embedded using a window function.
+- Uses an n-gram markov chain which is positionally aware of the distances between different words
 - Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
-- Not only learns from word embeddings, but the sentence structures they imply using a probability tree structure.
 - Learns to imitate capitalization patterns found in training data
-- Can imitate a specific user using MiniMeMode
-- Writes entire essays with the !essay command
 
 ## Dependencies
 - python 3.6
@@ -20,23 +20,15 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 - discord.py
 - numpy
 - janus
+- zlib
 
-## Database
-Currently supports both MySQL and SQLite as DB backends. I recommend using MySQL as the performance is orders of magnitude better.
-In theory you should be able to set it up with any modern RDBMS.
-To properly support emoji in MySQL: create database armchairexpert CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
-
-## Configuration
-- You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
-- Once you register it take note of the Client ID, Username, Bot ID, and Token
-- Copy config-example.py to config.py and fill in everything above the database connection string
-- If using MySQL you will need to manually create the database and enter your connection string.
-- Otherwise just select SQLite and use the included connection string for it.
+## General Setup
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 
-## Run It
-- python armchair_expert_discord.py
+# Backends
+## Discord
+- You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
+- Once you register it take note of the Client ID, Username, Bot ID, and Token
+- Copy discord-config.example.py to discord-config.py and configure it
+- python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
-
-
-
