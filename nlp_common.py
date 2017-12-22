@@ -3,6 +3,7 @@ from enum import Enum, unique
 from ml_common import one_hot
 import re
 
+
 def create_nlp_instance():
     import spacy
     from spacymoji import Emoji
@@ -30,6 +31,7 @@ def create_nlp_instance():
 
     nlp.add_pipe(hashtag_pipe)
     return nlp
+
 
 @unique
 class PosEnum(Enum):
@@ -86,9 +88,4 @@ def get_pos_from_token(token, people: list = None) -> Optional[PosEnum]:
         return PosEnum.URL
 
     return PosEnum[token.pos_]
-
-
-
-
-
 

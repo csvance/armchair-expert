@@ -36,6 +36,8 @@ class MLModelWorker(Process):
                 self._write_queue.put(self.train(data))
             elif command == MLModelCommands.SAVE:
                 self._write_queue.put(self.save(data))
+            elif command == MLModelCommands.LOAD:
+                self._write_queue.put(self.load(data))
 
     def predict(self, *data):
         pass

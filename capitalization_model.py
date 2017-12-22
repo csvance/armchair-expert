@@ -102,7 +102,8 @@ class CapitalizationFeatureAnalyzer(object):
     @staticmethod
     def label(word: str):
 
-        ret_list = CapitalizationModeEnum.get_mode_space(CapitalizationFeatureAnalyzer.get_capitalization_mode(word))
+        mode = CapitalizationFeatureAnalyzer.get_capitalization_mode(word)
+        ret_list = CapitalizationModeEnum.get_mode_space(mode)
         return ret_list
 
     @staticmethod

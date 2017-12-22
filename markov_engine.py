@@ -311,7 +311,7 @@ class MarkovGenerator(object):
                     sorted_subjects.append(subject)
         self.subjects = sorted_subjects
 
-    def generate(self, db: MarkovTrieDb) -> Optional[str]:
+    def generate(self, db: MarkovTrieDb) -> Optional[List[List[MarkovWord]]]:
 
         self._split_sentences()
         self._sort_subjects()
@@ -320,11 +320,7 @@ class MarkovGenerator(object):
         if not self._generate_words(db):
             return None
 
-        generation = ""
-        for sentence in self.sentence_generations:
-            for word in sentence:
-                generation = "%s%s " % (generation, word.text)
-        return generation
+        return self.sentence_generations
 
     # Split into individual sentences and populate generation arrays
     def _split_sentences(self):
@@ -437,16 +433,26 @@ class MarkovGenerator(object):
                 return True
             old_work_left = new_work_left
 
+
+class MarkovFilters(object):
+    @staticmethod
+    def filter_input(text: str):
+        filtered = text
+
+        filtered = re.sub(r'&amp;', '', filtered)
+        filtered = re.sub(r'[\'-_“",()\[\]{}%^&*\\/]', '', filtered)
+
+        return filtered
+
     @staticmethod
     def smooth_output(text: str):
         if text is None:
             return None
         smoothed = text
-        smoothed = re.sub(r' ([,’.!?:;"“\'])', r'\1', smoothed)
-        smoothed = re.sub(r'([#@“"\']) ', r'\1', smoothed)
-        smoothed = re.sub(r' ([-–_]) ', r'\1', smoothed)
+        # smoothed = re.sub(r' ([,’.!?:;"“\'])', r'\1', smoothed)
+        # smoothed = re.sub(r'([#@“"\']) ', r'\1', smoothed)
+        # smoothed = re.sub(r' ([-–_]) ', r'\1', smoothed)
         return smoothed
-
 
 class MarkovTrainer(object):
     def __init__(self, engine: MarkovTrieDb):

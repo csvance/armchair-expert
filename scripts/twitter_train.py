@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 
-from markov_engine import MarkovTrainer, MarkovTrieDb
+from markov_engine import MarkovTrainer, MarkovTrieDb, MarkovFilters
 from capitalization_model import CapitalizationModelScheduler, CapitalizationFeatureAnalyzer
 from ml_config import MARKOV_DB_PATH, POSTREE_DB_PATH, CAPITALIZATION_MODEL_PATH, USE_GPU
 from nlp_common import create_nlp_instance, get_pos_from_token
@@ -52,7 +52,9 @@ if __name__ == '__main__':
             if tweet_idx % 100 == 0:
                 print("%f%%" % (tweet_idx/len(tweets) * 100))
 
-            doc = nlp(tweet['text'])
+            filtered_tweet = MarkovFilters.filter_input(tweet['text'])
+
+            doc = nlp(filtered_tweet)
 
             if args.train_words:
                 markov_trainer.learn(doc)
@@ -64,10 +66,10 @@ if __name__ == '__main__':
                         capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(get_pos_from_token(token), word_position=token_idx))
                         capitalization_labels.append(CapitalizationFeatureAnalyzer.label(token.text))
 
-                        if tweet_idx % 1000 == 0:
-                            capitalization_model.train(capitalization_data, capitalization_labels, epochs=1)
-                            capitalization_data = []
-                            capitalization_labels = []
+                if tweet_idx % 1000 == 0 and tweet_idx != 0:
+                    capitalization_model.train(capitalization_data, capitalization_labels, epochs=1)
+                    capitalization_data = []
+                    capitalization_labels = []
 
     # Finish training capitalization data
     if args.train_capitalization:
