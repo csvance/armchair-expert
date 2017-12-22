@@ -169,11 +169,8 @@ class AOLReactionModel(object):
             config.gpu_options.allow_growth = True
             set_session(tf.Session(config=config))
 
-        if path is not None:
-            self.load(path)
-
     def train(self, data, labels, epochs=1):
-        self.model.fit(data, labels, epochs=epochs, batch_size=32)
+        self.model.fit(np.array(data), np.array(labels), epochs=epochs, batch_size=32)
 
     def predict(self, text: str):
         features = np.array([AOLReactionFeatureAnalyzer.analyze(text)])
@@ -191,23 +188,41 @@ class AOLReactionModel(object):
 
 
 class AOLReactionModelWorker(MLModelWorker):
-    def __init__(self, read_queue: Queue, write_queue: Queue, path: str = None, use_gpu: bool = False):
+    def __init__(self, read_queue: Queue, write_queue: Queue, use_gpu: bool = False):
         MLModelWorker.__init__(self, name='AOLReactionModelWorker', read_queue=read_queue, write_queue=write_queue,
-                               path=path, use_gpu=use_gpu)
+                               use_gpu=use_gpu)
 
     def run(self):
         self._model = AOLReactionModel(path=self._path, use_gpu=self._use_gpu)
         MLModelWorker.run(self)
 
-    def predict(self, data):
-        return self._model.predict(text=data)
+    def predict(self, *data):
+        return self._model.predict(text=data[0])
+
+    def train(self, *data):
+        return self._model.train(data=data[0], labels=data[1], epochs=data[2])
+
+    def save(self, *data):
+        return self._model.save(path=data[0])
+
+    def load(self, *data):
+        return self._model.load(path=data[0])
 
 
 class AOLReactionModelScheduler(MLModelScheduler):
     def __init__(self, path, use_gpu: bool = False):
         MLModelScheduler.__init__(self)
-        self._worker = AOLReactionModelWorker(read_queue=self._write_queue, write_queue=self._read_queue, path=path,
+        self._worker = AOLReactionModelWorker(read_queue=self._write_queue, write_queue=self._read_queue,
                                               use_gpu=use_gpu)
 
-    def predict_reaction(self, text: str):
-        return self.predict(text)
+    def predict(self, text: str):
+        return self._predict(text)
+
+    def train(self, data, labels, epochs=1):
+        return self._train(data, labels, epochs)
+
+    def save(self, path):
+        return self._save(path)
+
+    def load(self, path):
+        return self._load(path)

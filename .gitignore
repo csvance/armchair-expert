@@ -91,13 +91,8 @@ ENV/
 .ropeproject
 
 .idea
-config.py
-*.bak
+*_config.py
 *.db
-serve/*
-training/*
 backup/*
-models/aol-reaction-model/eval/*
-models/aol-reaction-model/events.out*
 
-markov.db-journal
+lines.db-journal
