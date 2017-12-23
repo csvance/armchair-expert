@@ -2,7 +2,7 @@
 This branch is a complete refactoring of armchair-expert and is in no way complete or stable!
 
 ## About
-Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
+Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 ## Features
 - Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
@@ -29,6 +29,6 @@ Armchair Expert is a chatbot for Discord inspired by old Markov chain IRC bots l
 ## Discord
 - You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
 - Once you register it take note of the Client ID, Username, Bot ID, and Token
-- Copy discord-config.example.py to discord-config.py and configure it
+- Copy discord_config.example.py to discord_config.py and configure it
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.

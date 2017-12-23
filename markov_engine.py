@@ -1,17 +1,15 @@
 import json
+import re
 import zlib
 from enum import unique, Enum
 from typing import Optional, List
-import re
+
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
-from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, MARKOV_GENERATE_SUBJECT_POS_PRIORITY
+from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
+    MARKOV_GENERATE_SUBJECT_POS_PRIORITY
 from nlp_common import PosEnum, get_pos_from_token, one_hot
-
-
-class MatrixIdx(object):
-    pass
 
 
 class WordKey(object):
@@ -20,9 +18,10 @@ class WordKey(object):
 
 
 class NeighborIdx(object):
-    POS = 0
-    VALUE_MATRIX = 1
-    DISTANCE_MATRIX = 2
+    TEXT = 0
+    POS = 1
+    VALUE_MATRIX = 2
+    DISTANCE_MATRIX = 3
 
 
 @unique
@@ -32,7 +31,8 @@ class NeighborValueIdx(Enum):
 
 
 class MarkovNeighbor(object):
-    def __init__(self, text: str, pos: PosEnum, values: list, dist: list):
+    def __init__(self, key: str, text: str, pos: PosEnum, values: list, dist: list):
+        self.key = key
         self.text = text
         self.pos = pos
         self.values = values
@@ -43,22 +43,24 @@ class MarkovNeighbor(object):
 
     @staticmethod
     def from_token(token: Token) -> 'MarkovNeighbor':
+        key = token.text.lower()
         text = token.text
         pos = get_pos_from_token(token)
         values = [0, 0]
         dist = [0] * (MARKOV_WINDOW_SIZE * 2 + 1)
-        return MarkovNeighbor(text, pos, values, dist)
+        return MarkovNeighbor(key, text, pos, values, dist)
 
     @staticmethod
     def from_db_format(key: str, val: list) -> 'MarkovNeighbor':
-        text = key
-        pos = val[NeighborIdx.POS]
+        key = key
+        text = val[NeighborIdx.TEXT]
+        pos = PosEnum(val[NeighborIdx.POS])
         values = val[NeighborIdx.VALUE_MATRIX]
         dist = val[NeighborIdx.DISTANCE_MATRIX]
-        return MarkovNeighbor(text, pos, values, dist)
+        return MarkovNeighbor(key, text, pos, values, dist)
 
     def to_db_format(self) -> tuple:
-        return self.text, [self.pos.value, self.values, self.dist]
+        return self.key, [self.text, self.pos.value, self.values, self.dist]
 
     @staticmethod
     def distance_one_hot(dist):
@@ -140,9 +142,6 @@ class MarkovWord(object):
     def __repr__(self):
         return self.text
 
-    def clear_cache(self):
-        self._project_cache = {}
-
     def to_db_format(self) -> tuple:
         return {WordKey.TEXT: self.text, WordKey.POS: self.pos.value}, {MarkovTrieDb.NEIGHBORS_KEY: self.neighbors}
 
@@ -157,25 +156,21 @@ class MarkovWord(object):
     def from_token(token: Token) -> 'MarkovWord':
         return MarkovWord(token.text, get_pos_from_token(token), {})
 
-    def get_neighbor(self, word) -> Optional[MarkovNeighbor]:
-        if word in self.neighbors:
-            n_row = self.neighbors[word]
-            return MarkovNeighbor(word, PosEnum(n_row[NeighborIdx.POS]), n_row[NeighborIdx.VALUE_MATRIX],
-                                  n_row[NeighborIdx.DISTANCE_MATRIX])
+    def get_neighbor(self, key: str) -> Optional[MarkovNeighbor]:
+        if key in self.neighbors:
+            n_row = self.neighbors[key]
+            return MarkovNeighbor.from_db_format(key, n_row)
         return None
 
     def set_neighbor(self, neighbor: MarkovNeighbor):
-        n_row = [None, None, None]
-        n_row[NeighborIdx.POS] = neighbor.pos.value
-        n_row[NeighborIdx.VALUE_MATRIX] = neighbor.values
-        n_row[NeighborIdx.DISTANCE_MATRIX] = neighbor.dist
-        self.neighbors[neighbor.text] = n_row
+        key, row = neighbor.to_db_format()
+        self.neighbors[key] = row
 
-    def select_neighbors(self, pos: PosEnum) -> MarkovNeighbors:
+    def select_neighbors(self, pos: Optional[PosEnum]) -> MarkovNeighbors:
         results = []
         for key in self.neighbors:
             neighbor = self.get_neighbor(key)
-            if neighbor.pos == pos:
+            if pos == neighbor.pos or pos is None:
                 results.append(neighbor)
 
         return MarkovNeighbors(results)
@@ -211,9 +206,11 @@ class MarkovWord(object):
                 distance_distributions[neighbor_idx][dist_space_index] = dist_value
 
             # Calculate strength
-            neighbor_magnitudes[neighbor_idx] = neighbor.values[NeighborValueIdx.COUNT.value] * MARKOV_GENERATION_WEIGHT_COUNT \
-                                           + \
-                                           neighbor.values[NeighborValueIdx.RATING.value] * MARKOV_GENERATION_WEIGHT_RATING
+            neighbor_magnitudes[neighbor_idx] = neighbor.values[
+                                                    NeighborValueIdx.COUNT.value] * MARKOV_GENERATION_WEIGHT_COUNT \
+                                                + \
+                                                neighbor.values[
+                                                    NeighborValueIdx.RATING.value] * MARKOV_GENERATION_WEIGHT_RATING
 
         return MarkovWordProjection(neighbor_magnitudes, distance_distributions, neighbor_keys, neighbor_pos)
 
@@ -233,7 +230,7 @@ class MarkovTrieDb(object):
 
     def save(self, path: str):
         data = zlib.compress(json.dumps(self._trie, separators=(',', ':')).encode())
-        f = open(path, 'wb').write(data)
+        open(path, 'wb').write(data)
 
     def _getnode(self, word: str) -> Optional[dict]:
         if len(word) == 0:
@@ -402,6 +399,7 @@ class MarkovGenerator(object):
                         word = db.select(select_word)
                         self.sentence_generations[sentence_idx][blank_idx] = word
 
+                # Scan left to right
                 # Work right to left
                 blank_idx = None
                 project_idx = []
@@ -413,11 +411,12 @@ class MarkovGenerator(object):
                         break
                 handle_projections()
 
+                # Scan right to left
                 # Work left to right
                 blank_idx = None
                 project_idx = []
                 for word_idx, word in enumerate(reversed(sentence)):
-                    word_idx = (len(sentence)-1) - word_idx
+                    word_idx = (len(sentence) - 1) - word_idx
                     if word is None:
                         blank_idx = word_idx
                     elif blank_idx is not None and abs(blank_idx - word_idx) <= MARKOV_WINDOW_SIZE:
@@ -454,6 +453,7 @@ class MarkovFilters(object):
         smoothed = re.sub(r' ([.,?!%])', r'\1', smoothed)
         return smoothed
 
+
 class MarkovTrainer(object):
     def __init__(self, engine: MarkovTrieDb):
         self.engine = engine
@@ -461,7 +461,7 @@ class MarkovTrainer(object):
     def learn(self, doc: Doc):
         ngrams = []
         for sentence in doc.sents:
-            ngrams += MarkovTrainer.ngramify(sentence)
+            ngrams += MarkovTrainer.span_to_bigram(sentence)
 
         row_cache = {}
         for ngram in ngrams:
@@ -475,9 +475,10 @@ class MarkovTrainer(object):
                     word = MarkovWord.from_token(ngram[0])
 
             # Handle neighbor
-            if ngram[1].text in word.neighbors:
-                neighbor = word.get_neighbor(ngram[1].text)
-            else:
+            neighbor_lookup_key = ngram[1].text.lower()
+
+            neighbor = word.get_neighbor(neighbor_lookup_key)
+            if neighbor is None:
                 neighbor = MarkovNeighbor.from_token(ngram[1])
 
             # Increase Count
@@ -501,7 +502,7 @@ class MarkovTrainer(object):
             row_cache[ngram[0].text] = word
 
     @staticmethod
-    def ngramify(span: Span) -> list:
+    def span_to_bigram(span: Span) -> list:
 
         grams = []
 
@@ -516,5 +517,3 @@ class MarkovTrainer(object):
                     grams.append([a, b, dist])
 
         return grams
-
-
