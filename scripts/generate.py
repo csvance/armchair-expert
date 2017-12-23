@@ -1,4 +1,4 @@
-from markov_engine import MarkovTrieDb, MarkovGenerator
+from markov_engine import MarkovTrieDb, MarkovGenerator, MarkovFilters
 from ml_config import MARKOV_DB_PATH, POSTREE_DB_PATH, CAPITALIZATION_MODEL_PATH, USE_GPU
 from capitalization_model import CapitalizationModelScheduler, CapitalizationModeEnum
 from pos_tree_model import PosTreeModel
@@ -16,9 +16,12 @@ capitalization_model.load(CAPITALIZATION_MODEL_PATH)
 capitalization_model.start()
 
 subjects = []
-for word in ['Flynn','Putin','Strong']:
-    subjects.append(markov_db.select(word))
-
+for word in ['Hillary','Great','#MAGA','🇺🇸']:
+    select_word = markov_db.select(word)
+    if select_word is not None:
+        subjects.append(select_word)
+    else:
+        print("Couldn't select %s" % word)
 
 for i in range(0, 1000):
     w = []
@@ -37,7 +40,7 @@ for i in range(0, 1000):
             words.append(text)
 
     message = " ".join(words)
-    message = MarkovGenerator.smooth_output(message)
+    message = MarkovFilters.smooth_output(message)
 
     print(message)
 

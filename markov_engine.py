@@ -437,10 +437,12 @@ class MarkovGenerator(object):
 class MarkovFilters(object):
     @staticmethod
     def filter_input(text: str):
+        if text is None:
+            return None
         filtered = text
 
-        filtered = re.sub(r'&amp;', '', filtered)
-        filtered = re.sub(r'[\'-_“",()\[\]{}%^&*\\/]', '', filtered)
+        filtered = re.sub(r'(&amp;)', '', filtered)
+        filtered = re.sub(r'[,:;\'`\-_“^"(){}/\\*]', '', filtered)
 
         return filtered
 
@@ -449,9 +451,7 @@ class MarkovFilters(object):
         if text is None:
             return None
         smoothed = text
-        # smoothed = re.sub(r' ([,’.!?:;"“\'])', r'\1', smoothed)
-        # smoothed = re.sub(r'([#@“"\']) ', r'\1', smoothed)
-        # smoothed = re.sub(r' ([-–_]) ', r'\1', smoothed)
+        smoothed = re.sub(r' ([.,?!%])', r'\1', smoothed)
         return smoothed
 
 class MarkovTrainer(object):
@@ -511,6 +511,7 @@ class MarkovTrainer(object):
                 dist = b_idx - a_idx
                 if dist == 0:
                     continue
+
                 elif abs(dist) <= MARKOV_WINDOW_SIZE:
                     grams.append([a, b, dist])
 
