@@ -22,6 +22,16 @@ class TwitterReplyListener(tweepy.StreamListener):
         auth.set_access_token(credentials.access_token, credentials.access_token_secret)
         self._api = tweepy.API(auth)
 
+    def on_direct_message(self, status):
+        direct_message = status.direct_message
+        if direct_message['sender']['screen_name'] == SCREEN_NAME:
+            return
+        self._worker.send(direct_message['text'])
+        reply = self._worker.recv()
+        if reply is not None:
+            print("Direct Message: %s" % reply)
+            self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
+
     # Reply to any mentions of the bot
     def on_status(self, status):
         if status.author.screen_name != SCREEN_NAME:
@@ -52,7 +62,8 @@ class TwitterWorker(FrontendWorker):
         self._api = tweepy.API(auth)
         users = self._api.lookup_users(screen_names=[ALWAYS_REPLY_USER])
         always_reply_id = users[0].id_str
-        self._reply_stream.filter(track=['@'+SCREEN_NAME], async=True)
+
+        self._reply_stream.userstream(async=True)
 
         sleep_time = 0.1
         counter = 60.
