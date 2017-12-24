@@ -37,10 +37,11 @@ class TwitterReplyListener(tweepy.StreamListener):
     def on_status(self, status):
         if status.author.screen_name != SCREEN_NAME:
             self._worker.send(status.text)
+            print("Mention(%s): %s" % (status.author.screen_name,status.text))
             reply = self._worker.recv()
             if reply is not None:
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
-                print("Replying: %s" % reply)
+                print("Mention Reply: %s" % reply)
                 self._api.update_status(reply, status.id)
 
     def on_error(self, status):
