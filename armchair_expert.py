@@ -1,7 +1,7 @@
 import signal
-import sys
 from enum import Enum, unique
 from multiprocessing import Event
+import sys
 
 from capitalization_model import CapitalizationModelScheduler
 from frontend_twitter import TwitterFrontend, TwitterReplyGenerator
@@ -55,10 +55,9 @@ class ArmchairExpert(object):
             import twitter_config
             twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model,
                                                             postree_model=self._postree_model,
-                                                            capitalization_model=self._capitalization_model,
-                                                            nlp=self._nlp)
+                                                            capitalization_model=self._capitalization_model)
             self._twitter_frontend = TwitterFrontend(reply_generator=twitter_reply_generator,
-                                                     event=self._frontends_event, credentials=TWITTER_CREDENTIALS)
+                                                     frontend_events=self._frontends_event, credentials=TWITTER_CREDENTIALS)
             self._twitter_frontend.start()
             self._frontends.append(self._twitter_frontend)
         except ModuleNotFoundError:
@@ -66,6 +65,9 @@ class ArmchairExpert(object):
 
         # Non forking initializations
         self._nlp = create_nlp_instance()
+
+        for frontend in self._frontends:
+            frontend.give_nlp(self._nlp)
 
         # Handle events
         self._main()
@@ -81,14 +83,17 @@ class ArmchairExpert(object):
                     if message is not None:
                         reply = frontend.generate(message)
                         frontend.send(reply)
+                    else:
+                        frontend.send(None)
 
             if self._status == AEStatus.SHUTTING_DOWN:
                 self.shutdown()
-                return
+                self._set_status(AEStatus.SHUTDOWN)
+                sys.exit(0)
 
     def shutdown(self):
-        self._set_status(AEStatus.SHUTTING_DOWN)
 
+        # Shutdown frontends
         for frontend in self._frontends:
             frontend.shutdown()
 
@@ -99,6 +104,7 @@ class ArmchairExpert(object):
 
         # Shutdown Models
         self._capitalization_model.shutdown()
+
 
     def handle_shutdown(self):
         # Shutdown main()

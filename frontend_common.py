@@ -6,12 +6,16 @@ from multiprocessing import Process, Queue, Event
 from threading import Thread
 from queue import Empty
 
+
 class FrontendReplyGenerator(object):
     def __init__(self, markov_model: MarkovTrieDb, postree_model: PosTreeModel,
-                 capitalization_model: CapitalizationModelScheduler, nlp):
+                 capitalization_model: CapitalizationModelScheduler):
         self._markov_model = markov_model
         self._postree_model = postree_model
         self._capitalization_model = capitalization_model
+        self._nlp = None
+
+    def give_nlp(self, nlp):
         self._nlp = nlp
 
     def generate(self, message: str) -> Optional[str]:
@@ -28,35 +32,46 @@ class FrontendReplyGenerator(object):
         structure = self._postree_model.generate_sentence()
         generator = MarkovGenerator(structure=structure, subjects=subjects)
 
-        reply_words = []
-        sentences = generator.generate(db=self._markov_model)
-        for sentence in sentences:
-            for word_idx, word in enumerate(sentence):
-                mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
-                text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
-                reply_words.append(text)
+        for i in range(0, 10):
+            reply_words = []
+            sentences = generator.generate(db=self._markov_model)
+            if sentences is None:
+                continue
+            for sentence in sentences:
+                for word_idx, word in enumerate(sentence):
+                    mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
+                    text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
+                    reply_words.append(text)
 
-        reply = " ".join(reply_words)
-        filtered_reply = MarkovFilters.smooth_output(reply)
+            reply = " ".join(reply_words)
+            filtered_reply = MarkovFilters.smooth_output(reply)
 
-        return filtered_reply
+            return filtered_reply
 
 
 class FrontendWorker(Process):
-    def __init__(self, name, read_queue: Queue, write_queue: Queue):
+    def __init__(self, name, read_queue: Queue, write_queue: Queue, shutdown_event: Event):
         Process.__init__(self, name=name)
         self._read_queue = read_queue
         self._write_queue = write_queue
+        self._shutdown_event = shutdown_event
         self._frontend = None
+
+    def send(self, message: str):
+        return self._write_queue.put(message)
+
+    def recv(self) -> Optional[str]:
+        return self._read_queue.get()
 
     def run(self):
         pass
 
 
 class FrontendScheduler(object):
-    def __init__(self):
+    def __init__(self, shutdown_event: Event):
         self._read_queue = Queue()
         self._write_queue = Queue()
+        self._shutdown_event = shutdown_event
         self._worker = None
 
     def recv(self, timeout: Optional[float]) -> Optional[str]:
@@ -72,36 +87,37 @@ class FrontendScheduler(object):
         self._worker.start()
 
     def shutdown(self):
-        self._worker.terminate()
         self._worker.join()
 
 
 class Frontend(object):
-    def __init__(self, reply_generator: FrontendReplyGenerator, event: Event):
+    def __init__(self, reply_generator: FrontendReplyGenerator, frontends_event: Event):
         self._reply_generator = reply_generator
         self._scheduler = None
         self._thread = Thread(target=self.run)
         self._write_queue = Queue()
         self._read_queue = Queue()
-        self._event = event
-        self._shutdown_flag = False
+        self._frontends_event = frontends_event
+        self._shutdown_event = Event()
+
+    def give_nlp(self, nlp):
+        self._reply_generator.give_nlp(nlp)
 
     def start(self):
         self._scheduler.start()
         self._thread.start()
 
     def run(self):
-        while not self._shutdown_flag:
+        while not self._shutdown_event.is_set():
             message = self._scheduler.recv(timeout=0.2)
             if message is not None:
                 # Receive the message and put it in a queue
                 self._read_queue.put(message)
                 # Notify main program to wakeup and check for messages
-                self._event.set()
+                self._frontends_event.set()
                 # Send the reply
                 reply = self._write_queue.get()
-                if reply is not None:
-                    self._scheduler.send(reply)
+                self._scheduler.send(reply)
 
     def send(self, message: str):
         self._write_queue.put(message)
@@ -112,8 +128,10 @@ class Frontend(object):
         return None
 
     def shutdown(self):
+        # Shutdown event signals both our thread and process to shutdown
+        self._shutdown_event.set()
         self._scheduler.shutdown()
-        self._shutdown_flag = True
+        self._thread.join()
 
     def generate(self, message: str) -> str:
         return self._reply_generator.generate(message)

@@ -11,6 +11,9 @@ from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
 from nlp_common import Pos, one_hot
 
+import numpy as np
+import time
+
 
 class WordKey(object):
     TEXT = '_T'
@@ -223,6 +226,7 @@ class MarkovTrieDb(object):
     NEIGHBORS_KEY = '_N'
 
     def __init__(self, path: str = None):
+        np.random.seed(int(time.time()))
         self._trie = {}
         if path is not None:
             self.load(path)
