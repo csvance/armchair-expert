@@ -1,4 +1,4 @@
-from nlp_common import PosEnum
+from nlp_common import Pos
 
 # --- "User" Stuff Section ---
 # ----------------------------
@@ -16,7 +16,7 @@ CAPITALIZATION_MODEL_PATH = "models/capitalization-model.h5"
 
 MARKOV_GENERATE_SUBJECT_MAX = 2
 # Greatest to least
-MARKOV_GENERATE_SUBJECT_POS_PRIORITY = [PosEnum.HASHTAG, PosEnum.PROPN, PosEnum.NOUN, PosEnum.VERB, PosEnum.EMOJI, PosEnum.URL, PosEnum.ADJ, PosEnum.ADV]
+MARKOV_GENERATE_SUBJECT_POS_PRIORITY = [Pos.HASHTAG, Pos.PROPN, Pos.NOUN, Pos.VERB, Pos.EMOJI, Pos.URL, Pos.ADJ, Pos.ADV]
 
 # Weights for generating replies
 MARKOV_GENERATION_WEIGHT_COUNT = 1

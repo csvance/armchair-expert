@@ -5,7 +5,7 @@ import sys
 from markov_engine import MarkovTrainer, MarkovTrieDb, MarkovFilters
 from capitalization_model import CapitalizationModelScheduler, CapitalizationFeatureAnalyzer
 from ml_config import MARKOV_DB_PATH, POSTREE_DB_PATH, CAPITALIZATION_MODEL_PATH, USE_GPU
-from nlp_common import create_nlp_instance, get_pos_from_token
+from nlp_common import create_nlp_instance, Pos
 from pos_tree_model import PosTreeModel
 
 if __name__ == '__main__':
@@ -63,7 +63,7 @@ if __name__ == '__main__':
             if args.train_capitalization:
                 for sent in doc.sents:
                     for token_idx, token in enumerate(sent):
-                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(get_pos_from_token(token), word_position=token_idx))
+                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(Pos.from_token(token), word_position=token_idx))
                         capitalization_labels.append(CapitalizationFeatureAnalyzer.label(token.text))
 
                 if tweet_idx % 1000 == 0 and tweet_idx != 0:

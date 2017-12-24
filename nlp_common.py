@@ -2,6 +2,7 @@ from typing import Optional
 from enum import Enum, unique
 from ml_common import one_hot
 import re
+from spacy.tokens import Token
 
 
 def create_nlp_instance():
@@ -34,7 +35,7 @@ def create_nlp_instance():
 
 
 @unique
-class PosEnum(Enum):
+class Pos(Enum):
     # Universal
     ADJ = 1
     ADP = 2
@@ -65,27 +66,25 @@ class PosEnum(Enum):
     EOS = 100
 
     @staticmethod
-    def one_hot(pos: 'PosEnum') -> list:
-        return one_hot(pos.value-1, len(PosEnum))
+    def one_hot(pos: 'Pos') -> list:
+        return one_hot(pos.value - 1, len(Pos))
 
+    @staticmethod
+    def from_token(token: Token, people: list = None) -> Optional['Pos']:
+        if token.text[0] == '#':
+            return Pos.HASHTAG
+        elif token.text[0] == '@':
+            return Pos.PROPN
 
-def get_pos_from_token(token, people: list = None) -> Optional[PosEnum]:
+        if token._.is_emoji:
+            return Pos.EMOJI
 
-    if token.text[0] == '#':
-        return PosEnum.HASHTAG
-    elif token.text[0] == '@':
-        return PosEnum.PROPN
+        # Makeup for shortcomings of NLP detecting online nicknames
+        if people is not None:
+            if token.text in people:
+                return Pos.PROPN
 
-    if token._.is_emoji:
-        return PosEnum.EMOJI
+        if re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', token.text):
+            return Pos.URL
 
-    # Makeup for shortcomings of NLP detecting online nicknames
-    if people is not None:
-        if token.text in people:
-            return PosEnum.PROPN
-
-    if re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', token.text):
-        return PosEnum.URL
-
-    return PosEnum[token.pos_]
-
+        return Pos[token.pos_]

@@ -4,7 +4,8 @@ from enum import Enum, unique
 import numpy as np
 
 from ml_common import MLModelWorker, MLModelScheduler
-from nlp_common import PosEnum
+from nlp_common import Pos
+from multiprocessing import Queue
 
 
 @unique
@@ -26,18 +27,18 @@ class WordPositionEnum(Enum):
 
 
 @unique
-class CapitalizationModeEnum(Enum):
+class CapitalizationMode(Enum):
     UPPER_FIRST = 1
     UPPER_ALL = 2
     LOWER_ALL = 3
     CHAOS = 4
 
     @staticmethod
-    def get_mode_space(mode: 'CapitalizationModeEnum'):
+    def get_mode_space(mode: 'CapitalizationMode'):
 
         ret_list = []
 
-        for i in range(1, len(CapitalizationModeEnum) + 1):
+        for i in range(1, len(CapitalizationMode) + 1):
             if i != mode.value:
                 ret_list.append(0)
             else:
@@ -46,7 +47,7 @@ class CapitalizationModeEnum(Enum):
         return ret_list
 
     @staticmethod
-    def transform(mode: 'CapitalizationModeEnum', word: str, ignore_prefix_regexp=None) -> str:
+    def transform(mode: 'CapitalizationMode', word: str, ignore_prefix_regexp=None) -> str:
 
         if ignore_prefix_regexp is not None:
             if re.match(ignore_prefix_regexp, word):
@@ -54,7 +55,7 @@ class CapitalizationModeEnum(Enum):
 
         ret_word = word
 
-        if mode == CapitalizationModeEnum.UPPER_FIRST:
+        if mode == CapitalizationMode.UPPER_FIRST:
 
             first_upper_flag = False
             ret_list = []
@@ -69,11 +70,11 @@ class CapitalizationModeEnum(Enum):
                     ret_list.append(c)
             ret_word = "".join(ret_list)
 
-        elif mode == CapitalizationModeEnum.UPPER_ALL:
+        elif mode == CapitalizationMode.UPPER_ALL:
             ret_word = ret_word.upper()
-        elif mode == CapitalizationModeEnum.LOWER_ALL:
+        elif mode == CapitalizationMode.LOWER_ALL:
             ret_word = ret_word.lower()
-        elif mode == CapitalizationModeEnum.CHAOS:
+        elif mode == CapitalizationMode.CHAOS:
 
             ret_list = []
             for idx, c in enumerate(ret_word):
@@ -88,13 +89,13 @@ class CapitalizationModeEnum(Enum):
 
 
 class CapitalizationFeatureAnalyzer(object):
-    NUM_FEATURES = len(PosEnum) + len(WordPositionEnum)
+    NUM_FEATURES = len(Pos) + len(WordPositionEnum)
 
     @staticmethod
-    def analyze(pos: PosEnum, word_position: int = 1) -> list:
+    def analyze(pos: Pos, word_position: int = 1) -> list:
 
         ret_list = []
-        ret_list += PosEnum.one_hot(pos)
+        ret_list += Pos.one_hot(pos)
         ret_list += WordPositionEnum.get_position_space(CapitalizationFeatureAnalyzer.get_word_position(word_position))
 
         return ret_list
@@ -103,12 +104,12 @@ class CapitalizationFeatureAnalyzer(object):
     def label(word: str):
 
         mode = CapitalizationFeatureAnalyzer.get_capitalization_mode(word)
-        ret_list = CapitalizationModeEnum.get_mode_space(mode)
+        ret_list = CapitalizationMode.get_mode_space(mode)
         return ret_list
 
     @staticmethod
     def features() -> list:
-        return list(PosEnum) + list(WordPositionEnum)
+        return list(Pos) + list(WordPositionEnum)
 
     @staticmethod
     def get_word_position(word_position: int) -> WordPositionEnum:
@@ -118,7 +119,7 @@ class CapitalizationFeatureAnalyzer(object):
             return WordPositionEnum.OTHER
 
     @staticmethod
-    def get_capitalization_mode(word: str) -> CapitalizationModeEnum:
+    def get_capitalization_mode(word: str) -> CapitalizationMode:
 
         first_letter = None
 
@@ -141,19 +142,19 @@ class CapitalizationFeatureAnalyzer(object):
                     second_upper = False
 
             if not first_upper and not second_upper:
-                return CapitalizationModeEnum.LOWER_ALL
+                return CapitalizationMode.LOWER_ALL
             elif first_upper and not second_upper:
-                return CapitalizationModeEnum.UPPER_FIRST
+                return CapitalizationMode.UPPER_FIRST
             elif first_upper and second_upper:
-                return CapitalizationModeEnum.UPPER_ALL
+                return CapitalizationMode.UPPER_ALL
             elif not first_upper and second_upper:
-                return CapitalizationModeEnum.CHAOS
+                return CapitalizationMode.CHAOS
         else:
-            return CapitalizationModeEnum.LOWER_ALL
+            return CapitalizationMode.LOWER_ALL
 
     @staticmethod
-    def get_pos(pos: str) -> PosEnum:
-        return PosEnum[pos]
+    def get_pos(pos: str) -> Pos:
+        return Pos[pos]
 
 
 class CapitalizationModel(object):
@@ -167,7 +168,7 @@ class CapitalizationModel(object):
         self.model = Sequential()
         self.model.add(Dense(CapitalizationFeatureAnalyzer.NUM_FEATURES, activation='relu',
                              input_dim=CapitalizationFeatureAnalyzer.NUM_FEATURES))
-        self.model.add(Dense(len(CapitalizationModeEnum), activation='softmax'))
+        self.model.add(Dense(len(CapitalizationMode), activation='softmax'))
         self.model.compile(optimizer='adam',
                            loss='categorical_crossentropy',
                            metrics=['accuracy'])
@@ -180,17 +181,17 @@ class CapitalizationModel(object):
     def train(self, data, labels, epochs=1):
         self.model.fit(np.array(data), np.array(labels), epochs=epochs, batch_size=32)
 
-    def predict(self, text: str, pos: PosEnum, word_index: int = 1) -> CapitalizationModeEnum:
+    def predict(self, text: str, pos: Pos, word_index: int = 1) -> CapitalizationMode:
         features = np.array([CapitalizationFeatureAnalyzer.analyze(pos, word_index)])
         prediction = self.model.predict(features)[0]
 
-        prediction_idx = np.random.choice([CapitalizationModeEnum.UPPER_FIRST.value,
-                                           CapitalizationModeEnum.UPPER_ALL.value,
-                                           CapitalizationModeEnum.LOWER_ALL.value,
-                                           CapitalizationModeEnum.CHAOS.value],
+        prediction_idx = np.random.choice([CapitalizationMode.UPPER_FIRST.value,
+                                           CapitalizationMode.UPPER_ALL.value,
+                                           CapitalizationMode.LOWER_ALL.value,
+                                           CapitalizationMode.CHAOS.value],
                                           p=prediction)
 
-        return CapitalizationModeEnum(prediction_idx)
+        return CapitalizationMode(prediction_idx)
 
     def load(self, path):
         self.model.load_weights(path)
@@ -200,7 +201,7 @@ class CapitalizationModel(object):
 
 
 class CapitalizationModelWorker(MLModelWorker):
-    def __init__(self, read_queue, write_queue, use_gpu: bool = False):
+    def __init__(self, read_queue: Queue, write_queue : Queue, use_gpu: bool = False):
         MLModelWorker.__init__(self, name='CapitalizationModelWorker', read_queue=read_queue, write_queue=write_queue, use_gpu=use_gpu)
 
     def run(self):

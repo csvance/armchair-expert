@@ -3,14 +3,14 @@ import numpy as np
 import zlib
 from typing import List, Optional
 from spacy.tokens import Doc
-from nlp_common import get_pos_from_token, PosEnum
+from nlp_common import Pos
 
 
 class PosTreeModel(object):
     def __init__(self):
         self.tree = {}
 
-    def generate_sentence(self, tree_start: dict = None, words: list = None) -> List[PosEnum]:
+    def _generate_sentence(self, tree_start: dict = None, words: list = None) -> List[Pos]:
 
         if tree_start is None:
             tree_start = self.tree
@@ -32,13 +32,17 @@ class PosTreeModel(object):
 
         choice = np.random.choice(a_choices, p=p_values)
         if choice != '_e':
-            words.append(PosEnum[choice])
+            words.append(Pos[choice])
         else:
             if words[:-1] != 'EOS':
-                words.append(PosEnum.EOS)
+                words.append(Pos.EOS)
             return words
 
-        return self.generate_sentence(tree_start[choice], words)
+        return self._generate_sentence(tree_start[choice], words)
+
+    def generate_sentence(self):
+        words = []
+        return self._generate_sentence(words=words)
 
     def update_probabilities(self, tree_branch=None, deep: bool = True, start=False) -> None:
 
@@ -83,7 +87,7 @@ class PosTreeModel(object):
         for sent_idx, sent in enumerate(doc.sents):
             for token_index, token in enumerate(sent):
 
-                custom_pos = get_pos_from_token(token, people=people)
+                custom_pos = Pos.from_token(token, people=people)
                 pos_key = str(custom_pos).split(".")[1]
 
                 if pos_key in tree_branch:

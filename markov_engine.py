@@ -9,7 +9,7 @@ from spacy.tokens import Doc, Span, Token
 
 from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
-from nlp_common import PosEnum, get_pos_from_token, one_hot
+from nlp_common import Pos, one_hot
 
 
 class WordKey(object):
@@ -32,7 +32,7 @@ class NeighborValueIdx(Enum):
 
 
 class MarkovNeighbor(object):
-    def __init__(self, key: str, text: str, pos: PosEnum, values: list, dist: list):
+    def __init__(self, key: str, text: str, pos: Pos, values: list, dist: list):
         self.key = key
         self.text = text
         self.pos = pos
@@ -46,7 +46,7 @@ class MarkovNeighbor(object):
     def from_token(token: Token) -> 'MarkovNeighbor':
         key = token.text.lower()
         text = token.text
-        pos = get_pos_from_token(token)
+        pos = Pos.from_token(token)
         values = [0, 0]
         dist = [0] * (MARKOV_WINDOW_SIZE * 2 + 1)
         return MarkovNeighbor(key, text, pos, values, dist)
@@ -55,7 +55,7 @@ class MarkovNeighbor(object):
     def from_db_format(key: str, val: list) -> 'MarkovNeighbor':
         key = key
         text = val[NeighborIdx.TEXT.value]
-        pos = PosEnum(val[NeighborIdx.POS.value])
+        pos = Pos(val[NeighborIdx.POS.value])
         values = val[NeighborIdx.VALUE_MATRIX.value]
         dist = val[NeighborIdx.DISTANCE_MATRIX.value]
         return MarkovNeighbor(key, text, pos, values, dist)
@@ -90,7 +90,7 @@ class ProjectionDirection(Enum):
 
 
 class MarkovWordProjection(object):
-    def __init__(self, magnitudes: np.ndarray, distances: np.ndarray, keys: List[str], pos: List[PosEnum]):
+    def __init__(self, magnitudes: np.ndarray, distances: np.ndarray, keys: List[str], pos: List[Pos]):
         self.magnitudes = magnitudes
         self.distances = distances
         self.keys = keys
@@ -135,7 +135,7 @@ class MarkovWordProjectionCollection(object):
 
 
 class MarkovWord(object):
-    def __init__(self, text: str, pos: PosEnum, neighbors: dict):
+    def __init__(self, text: str, pos: Pos, neighbors: dict):
         self.text = text
         self.pos = pos
         self.neighbors = neighbors
@@ -149,13 +149,13 @@ class MarkovWord(object):
     @staticmethod
     def from_db_format(row: dict) -> 'MarkovWord':
         word = MarkovWord(row[MarkovTrieDb.WORD_KEY][WordKey.TEXT],
-                          PosEnum(row[MarkovTrieDb.WORD_KEY][WordKey.POS]),
+                          Pos(row[MarkovTrieDb.WORD_KEY][WordKey.POS]),
                           row[MarkovTrieDb.NEIGHBORS_KEY])
         return word
 
     @staticmethod
     def from_token(token: Token) -> 'MarkovWord':
-        return MarkovWord(token.text, get_pos_from_token(token), {})
+        return MarkovWord(token.text, Pos.from_token(token), {})
 
     def get_neighbor(self, key: str) -> Optional[MarkovNeighbor]:
         if key in self.neighbors:
@@ -167,7 +167,7 @@ class MarkovWord(object):
         key, row = neighbor.to_db_format()
         self.neighbors[key] = row
 
-    def select_neighbors(self, pos: Optional[PosEnum], exclude_key: Optional[str] = None) -> MarkovNeighbors:
+    def select_neighbors(self, pos: Optional[Pos], exclude_key: Optional[str] = None) -> MarkovNeighbors:
         results = []
         for key in self.neighbors:
             neighbor = self.get_neighbor(key)
@@ -178,7 +178,7 @@ class MarkovWord(object):
 
         return MarkovNeighbors(results)
 
-    def project(self, idx_in_sentence: int, sentence_length: int, pos: PosEnum, exclude_key: Optional[str] = None) -> MarkovWordProjection:
+    def project(self, idx_in_sentence: int, sentence_length: int, pos: Pos, exclude_key: Optional[str] = None) -> MarkovWordProjection:
 
         # Get all neighbors
         neighbors = self.select_neighbors(pos, exclude_key=exclude_key)
@@ -295,7 +295,7 @@ class MarkovTrieDb(object):
 
 
 class MarkovGenerator(object):
-    def __init__(self, structure: List[PosEnum], subjects: List[MarkovWord]):
+    def __init__(self, structure: List[Pos], subjects: List[MarkovWord]):
         self.structure = structure
         self.subjects = subjects
 
@@ -326,7 +326,7 @@ class MarkovGenerator(object):
     def _split_sentences(self):
         start_index = 0
         for pos_idx, pos in enumerate(self.structure):
-            if pos == PosEnum.EOS:
+            if pos == Pos.EOS:
                 # Separate structures into sentences
                 sentence = self.structure[start_index:pos_idx]
                 self.sentence_structures.append(sentence)

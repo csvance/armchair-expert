@@ -9,7 +9,7 @@ def one_hot(idx: int, size: int):
 
 
 @unique
-class MLModelCommands(Enum):
+class MLWorkerCommands(Enum):
     SHUTDOWN = 0
     TRAIN = 1
     PREDICT = 2
@@ -28,15 +28,15 @@ class MLModelWorker(Process):
     def run(self):
         while True:
             command, data = self._read_queue.get()
-            if command == MLModelCommands.SHUTDOWN:
+            if command == MLWorkerCommands.SHUTDOWN:
                 return
-            elif command == MLModelCommands.PREDICT:
+            elif command == MLWorkerCommands.PREDICT:
                 self._write_queue.put(self.predict(data))
-            elif command == MLModelCommands.TRAIN:
+            elif command == MLWorkerCommands.TRAIN:
                 self._write_queue.put(self.train(data))
-            elif command == MLModelCommands.SAVE:
+            elif command == MLWorkerCommands.SAVE:
                 self._write_queue.put(self.save(data))
-            elif command == MLModelCommands.LOAD:
+            elif command == MLWorkerCommands.LOAD:
                 self._write_queue.put(self.load(data))
 
     def predict(self, *data):
@@ -62,19 +62,19 @@ class MLModelScheduler(object):
         self._worker.start()
 
     def shutdown(self):
-        self._write_queue.put([MLModelCommands.SHUTDOWN, None])
+        self._write_queue.put([MLWorkerCommands.SHUTDOWN, None])
 
     def _predict(self, *data):
-        self._write_queue.put([MLModelCommands.PREDICT, data])
+        self._write_queue.put([MLWorkerCommands.PREDICT, data])
         return self._read_queue.get()
 
     def _train(self, *data):
-        self._write_queue.put([MLModelCommands.TRAIN, data])
+        self._write_queue.put([MLWorkerCommands.TRAIN, data])
         return self._read_queue.get()
 
     def _save(self, *data):
-        self._write_queue.put([MLModelCommands.SAVE, data])
+        self._write_queue.put([MLWorkerCommands.SAVE, data])
 
     def _load(self, *data):
-        self._write_queue.put([MLModelCommands.LOAD, data])
+        self._write_queue.put([MLWorkerCommands.LOAD, data])
 
