@@ -8,7 +8,7 @@ import numpy as np
 from spacy.tokens import Doc, Span, Token
 
 from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
-    MARKOV_GENERATE_SUBJECT_POS_PRIORITY
+    MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
 from nlp_common import PosEnum, get_pos_from_token, one_hot
 
 
@@ -17,7 +17,8 @@ class WordKey(object):
     POS = '_P'
 
 
-class NeighborIdx(object):
+@unique
+class NeighborIdx(Enum):
     TEXT = 0
     POS = 1
     VALUE_MATRIX = 2
@@ -53,10 +54,10 @@ class MarkovNeighbor(object):
     @staticmethod
     def from_db_format(key: str, val: list) -> 'MarkovNeighbor':
         key = key
-        text = val[NeighborIdx.TEXT]
-        pos = PosEnum(val[NeighborIdx.POS])
-        values = val[NeighborIdx.VALUE_MATRIX]
-        dist = val[NeighborIdx.DISTANCE_MATRIX]
+        text = val[NeighborIdx.TEXT.value]
+        pos = PosEnum(val[NeighborIdx.POS.value])
+        values = val[NeighborIdx.VALUE_MATRIX.value]
+        dist = val[NeighborIdx.DISTANCE_MATRIX.value]
         return MarkovNeighbor(key, text, pos, values, dist)
 
     def to_db_format(self) -> tuple:
@@ -166,19 +167,21 @@ class MarkovWord(object):
         key, row = neighbor.to_db_format()
         self.neighbors[key] = row
 
-    def select_neighbors(self, pos: Optional[PosEnum]) -> MarkovNeighbors:
+    def select_neighbors(self, pos: Optional[PosEnum], exclude_key: Optional[str] = None) -> MarkovNeighbors:
         results = []
         for key in self.neighbors:
             neighbor = self.get_neighbor(key)
-            if pos == neighbor.pos or pos is None:
+            if exclude_key is not None and exclude_key == neighbor.key:
+                continue
+            elif pos == neighbor.pos or pos is None:
                 results.append(neighbor)
 
         return MarkovNeighbors(results)
 
-    def project(self, idx_in_sentence: int, sentence_length: int, pos: PosEnum) -> MarkovWordProjection:
+    def project(self, idx_in_sentence: int, sentence_length: int, pos: PosEnum, exclude_key: Optional[str] = None) -> MarkovWordProjection:
 
         # Get all neighbors
-        neighbors = self.select_neighbors(pos)
+        neighbors = self.select_neighbors(pos, exclude_key=exclude_key)
 
         neighbor_keys = []
         neighbor_pos = []
@@ -337,15 +340,30 @@ class MarkovGenerator(object):
     # Assign one subject to each sentence with descending priority
     def _assign_subjects(self) -> bool:
 
-        sentences_assigned = [None] * len(self.sentence_structures)
+        sentences_assigned = [False] * len(self.sentence_structures)
 
         for sentence_idx, sentence in enumerate(self.sentence_structures):
+            subjects_assigned = []
+            word_break = False
             for word_idx, pos in enumerate(sentence):
                 for subject in self.subjects:
+                    # Assigned a maximum number of subjects per sentence
+                    if len(subjects_assigned) > MARKOV_GENERATE_SUBJECT_MAX:
+                        word_break = True
+                        break
+
+                    # Don't assign sam subject twice pers sentence
+                    if subject.text in subjects_assigned:
+                        continue
+
                     if subject.pos == pos:
+                        subjects_assigned.append(subject.text)
                         self.sentence_generations[sentence_idx][word_idx] = subject
                         sentences_assigned[sentence_idx] = True
                         break
+
+                if word_break:
+                    break
 
         # Each sentence should be assigned one subject to begin with
         for sentence in sentences_assigned:
@@ -371,33 +389,35 @@ class MarkovGenerator(object):
 
                 sentence_length = len(sentence)
 
-                def handle_projections():
-                    if blank_idx is not None and len(project_idx) > 0:
-                        projections = []
-                        blank_pos = self.sentence_structures[sentence_idx][blank_idx]
-                        for word_idx in project_idx:
-                            projecting_word = self.sentence_generations[sentence_idx][word_idx]
-                            projection = projecting_word.project(word_idx, sentence_length, blank_pos)
-                            projections.append(projection)
+                def handle_projections(exclude_key: Optional[str] = None) -> bool:
+                    if blank_idx is None or len(project_idx) == 0:
+                        return False
 
-                        # Concatenate all projections and create p-value matrix
-                        projection_collection = MarkovWordProjectionCollection(projections)
-                        if len(projection_collection) == 0:
-                            return False
+                    projections = []
+                    blank_pos = self.sentence_structures[sentence_idx][blank_idx]
+                    for word_idx in project_idx:
+                        projecting_word = self.sentence_generations[sentence_idx][word_idx]
+                        projection = projecting_word.project(word_idx, sentence_length, blank_pos, exclude_key=exclude_key)
+                        projections.append(projection)
 
-                        all_p_values = projection_collection.probability_matrix()
+                    # Concatenate all projections and create p-value matrix
+                    projection_collection = MarkovWordProjectionCollection(projections)
+                    if len(projection_collection) == 0:
+                        return False
 
-                        # We just want the p-values for the blank word
-                        p_values = all_p_values[:, blank_idx]
+                    all_p_values = projection_collection.probability_matrix()
 
-                        # Choose an index based on the probability
-                        choices = np.arange(len(projection_collection))
-                        word_choice_idx = np.random.choice(choices, p=p_values)
+                    # We just want the p-values for the blank word
+                    p_values = all_p_values[:, blank_idx]
 
-                        # Select the word from the database and assign it to the blank space
-                        select_word = projection_collection.keys[word_choice_idx]
-                        word = db.select(select_word)
-                        self.sentence_generations[sentence_idx][blank_idx] = word
+                    # Choose an index based on the probability
+                    choices = np.arange(len(projection_collection))
+                    word_choice_idx = np.random.choice(choices, p=p_values)
+
+                    # Select the word from the database and assign it to the blank space
+                    select_word = projection_collection.keys[word_choice_idx]
+                    word = db.select(select_word)
+                    self.sentence_generations[sentence_idx][blank_idx] = word
 
                 # Scan left to right
                 # Work right to left
