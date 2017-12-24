@@ -479,12 +479,12 @@ class MarkovTrainer(object):
         self.engine = engine
 
     def learn(self, doc: Doc):
-        ngrams = []
+        bi_grams = []
         for sentence in doc.sents:
-            ngrams += MarkovTrainer.span_to_bigram(sentence)
+            bi_grams += MarkovTrainer.span_to_bigram(sentence)
 
         row_cache = {}
-        for ngram in ngrams:
+        for ngram in bi_grams:
             if ngram[0].text in row_cache:
                 word = row_cache[ngram[0].text]
             else:
