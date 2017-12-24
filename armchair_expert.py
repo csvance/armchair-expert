@@ -1,4 +1,5 @@
 import signal
+import sys
 from enum import Enum, unique
 from multiprocessing import Event
 
@@ -28,11 +29,11 @@ class ArmchairExpert(object):
         self._nlp = None
         self._status = None
         self._frontends = []
-        self._event = Event()
+        self._frontends_event = Event()
 
     def _set_status(self, status: AEStatus):
-        print("armchair-expert status: %s" % self._status)
         self._status = status
+        print("armchair-expert status: %s" % str(self._status).split(".")[1])
 
     def start(self):
         self._set_status(AEStatus.STARTING_UP)
@@ -57,7 +58,7 @@ class ArmchairExpert(object):
                                                             capitalization_model=self._capitalization_model,
                                                             nlp=self._nlp)
             self._twitter_frontend = TwitterFrontend(reply_generator=twitter_reply_generator,
-                                                     event=self._event, credentials=TWITTER_CREDENTIALS)
+                                                     event=self._frontends_event, credentials=TWITTER_CREDENTIALS)
             self._twitter_frontend.start()
             self._frontends.append(self._twitter_frontend)
         except ModuleNotFoundError:
@@ -66,20 +67,30 @@ class ArmchairExpert(object):
         # Non forking initializations
         self._nlp = create_nlp_instance()
 
-    def main(self):
+        # Handle events
+        self._main()
+
+    def _main(self):
         self._set_status(AEStatus.RUNNING)
         while True:
-            self._event.wait()
-            self._event.clear()
+            if self._frontends_event.wait(timeout=0.2):
+                self._frontends_event.clear()
 
-            for frontend in self._frontends:
-                message = frontend.recv()
-                if message is not None:
-                    reply = frontend.generate(message)
-                    frontend.send(reply)
+                for frontend in self._frontends:
+                    message = frontend.recv()
+                    if message is not None:
+                        reply = frontend.generate(message)
+                        frontend.send(reply)
+
+            if self._status == AEStatus.SHUTTING_DOWN:
+                self.shutdown()
+                return
 
     def shutdown(self):
         self._set_status(AEStatus.SHUTTING_DOWN)
+
+        for frontend in self._frontends:
+            frontend.shutdown()
 
         # Save Models
         # self._markov_model.save(MARKOV_DB_PATH)
@@ -89,12 +100,14 @@ class ArmchairExpert(object):
         # Shutdown Models
         self._capitalization_model.shutdown()
 
-        self._set_status(AEStatus.SHUTDOWN)
+    def handle_shutdown(self):
+        # Shutdown main()
+        self._set_status(AEStatus.SHUTTING_DOWN)
 
 
 def signal_handler(sig, frame):
     if sig == signal.SIGINT:
-        ae.shutdown()
+        ae.handle_shutdown()
 
 
 if __name__ == '__main__':

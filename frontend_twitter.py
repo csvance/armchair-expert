@@ -12,7 +12,7 @@ class TwitterApiCredentials(object):
 
 class TwitterReplyGenerator(FrontendReplyGenerator):
     def generate(self, message: str):
-        return TwitterReplyGenerator.generate(message)
+        return self.generate(message)
 
 
 class TwitterWorker(FrontendWorker):
@@ -32,6 +32,5 @@ class TwitterScheduler(FrontendScheduler):
 
 class TwitterFrontend(Frontend):
     def __init__(self, reply_generator: TwitterReplyGenerator, event: Event, credentials: TwitterApiCredentials):
-        Frontend.__init__(reply_generator=reply_generator, event=event)
-        self._reply_generator = TwitterReplyGenerator()
+        Frontend.__init__(self, reply_generator=reply_generator, event=event)
         self._scheduler = TwitterScheduler(credentials)

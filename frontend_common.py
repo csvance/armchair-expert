@@ -4,7 +4,7 @@ from capitalization_model import CapitalizationModelScheduler, CapitalizationMod
 from typing import Optional
 from multiprocessing import Process, Queue, Event
 from threading import Thread
-
+from queue import Empty
 
 class FrontendReplyGenerator(object):
     def __init__(self, markov_model: MarkovTrieDb, postree_model: PosTreeModel,
@@ -59,8 +59,11 @@ class FrontendScheduler(object):
         self._write_queue = Queue()
         self._worker = None
 
-    def recv(self) -> str:
-        return self._read_queue.get()
+    def recv(self, timeout: Optional[float]) -> Optional[str]:
+        try:
+            return self._read_queue.get(timeout=timeout)
+        except Empty:
+            return None
 
     def send(self, message: str):
         self._write_queue.put(message)
@@ -70,6 +73,7 @@ class FrontendScheduler(object):
 
     def shutdown(self):
         self._worker.terminate()
+        self._worker.join()
 
 
 class Frontend(object):
@@ -88,14 +92,16 @@ class Frontend(object):
 
     def run(self):
         while not self._shutdown_flag:
-            # Receive the message and put it in a queue
-            self._read_queue.put(self._scheduler.recv())
-            # Notify main program to wakeup and check for messages
-            self._event.set()
-            # Send the reply
-            reply = self._write_queue.get()
-            if reply is not None:
-                self._scheduler.send(reply)
+            message = self._scheduler.recv(timeout=0.2)
+            if message is not None:
+                # Receive the message and put it in a queue
+                self._read_queue.put(message)
+                # Notify main program to wakeup and check for messages
+                self._event.set()
+                # Send the reply
+                reply = self._write_queue.get()
+                if reply is not None:
+                    self._scheduler.send(reply)
 
     def send(self, message: str):
         self._write_queue.put(message)
