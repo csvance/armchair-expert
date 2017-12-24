@@ -26,10 +26,11 @@ class TwitterReplyListener(tweepy.StreamListener):
         direct_message = status.direct_message
         if direct_message['sender']['screen_name'] == SCREEN_NAME:
             return
+        print("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
         self._worker.send(direct_message['text'])
         reply = self._worker.recv()
         if reply is not None:
-            print("Direct Message: %s" % reply)
+            print("Direct Message Reply: %s" % reply)
             self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
 
     # Reply to any mentions of the bot
