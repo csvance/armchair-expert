@@ -5,7 +5,7 @@ from pos_tree_model import PosTreeModel
 import numpy as np
 import time
 
-np.random.seed(int(time.time()))
+#np.random.seed(int(time.time()))
 
 markov_db = MarkovTrieDb(MARKOV_DB_PATH)
 postree = PosTreeModel()
