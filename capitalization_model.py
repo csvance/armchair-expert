@@ -14,11 +14,11 @@ class WordPositionEnum(Enum):
     OTHER = 2
 
     @staticmethod
-    def get_position_space(id):
+    def get_position_space(position: 'WordPositionEnum'):
         ret_list = []
 
         for i in range(1, len(WordPositionEnum) + 1):
-            if i != id.value:
+            if i != position.value:
                 ret_list.append(0)
             else:
                 ret_list.append(1)
@@ -191,7 +191,8 @@ class CapitalizationModel(object):
                                            CapitalizationMode.CHAOS.value],
                                           p=prediction)
 
-        return CapitalizationMode(prediction_idx)
+        mode = CapitalizationMode(prediction_idx)
+        return mode
 
     def load(self, path):
         self.model.load_weights(path)
@@ -227,7 +228,7 @@ class CapitalizationModelScheduler(MLModelScheduler):
         self._worker = CapitalizationModelWorker(read_queue=self._write_queue, write_queue=self._read_queue,
                                                  use_gpu=use_gpu)
 
-    def predict(self, word: str, pos: str, word_index: int = 0):
+    def predict(self, word: str, pos: Pos, word_index: int = 0):
         return self._predict(word, pos, word_index)
 
     def train(self, data, labels, epochs=1):

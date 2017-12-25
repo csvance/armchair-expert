@@ -12,8 +12,8 @@ postree = PosTreeModel()
 postree.load(POSTREE_DB_PATH)
 
 capitalization_model = CapitalizationModelScheduler(use_gpu=USE_GPU)
-capitalization_model.load(CAPITALIZATION_MODEL_PATH)
 capitalization_model.start()
+capitalization_model.load(CAPITALIZATION_MODEL_PATH)
 
 subjects = []
 for word in ['Hillary','Great','#MAGA','🇺🇸']:

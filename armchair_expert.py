@@ -46,8 +46,8 @@ class ArmchairExpert(object):
         self._postree_model.load(POSTREE_DB_PATH)
 
         self._capitalization_model = CapitalizationModelScheduler(use_gpu=USE_GPU)
-        self._capitalization_model.load(CAPITALIZATION_MODEL_PATH)
         self._capitalization_model.start()
+        self._capitalization_model.load(CAPITALIZATION_MODEL_PATH)
 
         # Initialize frontends
         self._twitter_frontend = None

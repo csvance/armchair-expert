@@ -74,7 +74,8 @@ class MLModelScheduler(object):
 
     def _save(self, *data):
         self._write_queue.put([MLWorkerCommands.SAVE, data])
+        return self._read_queue.get()
 
     def _load(self, *data):
         self._write_queue.put([MLWorkerCommands.LOAD, data])
-
+        return self._read_queue.get()

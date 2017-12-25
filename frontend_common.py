@@ -42,8 +42,7 @@ class FrontendReplyGenerator(object):
             return None
         for sentence in sentences:
             for word_idx, word in enumerate(sentence):
-                position = 0 if word_idx == 0 else 1
-                mode = self._capitalization_model.predict(word.text, word.pos, position)
+                mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
                 text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
                 reply_words.append(text)
 

@@ -63,8 +63,7 @@ if __name__ == '__main__':
             if args.train_capitalization:
                 for sent in doc.sents:
                     for token_idx, token in enumerate(sent):
-                        position = 0 if token_idx == 0 else 1
-                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(Pos.from_token(token), word_position=position))
+                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(Pos.from_token(token), word_position=token_idx))
                         capitalization_labels.append(CapitalizationFeatureAnalyzer.label(token.text))
 
     print("Training capitalization model...")
