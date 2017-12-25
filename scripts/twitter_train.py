@@ -63,14 +63,11 @@ if __name__ == '__main__':
             if args.train_capitalization:
                 for sent in doc.sents:
                     for token_idx, token in enumerate(sent):
-                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(Pos.from_token(token), word_position=token_idx))
+                        position = 0 if token_idx == 0 else 1
+                        capitalization_data.append(CapitalizationFeatureAnalyzer.analyze(Pos.from_token(token), word_position=position))
                         capitalization_labels.append(CapitalizationFeatureAnalyzer.label(token.text))
 
-                if tweet_idx % 1000 == 0 and tweet_idx != 0:
-                    capitalization_model.train(capitalization_data, capitalization_labels, epochs=1)
-                    capitalization_data = []
-                    capitalization_labels = []
-
+    print("Training capitalization model...")
     # Finish training capitalization data
     if args.train_capitalization:
         if len(capitalization_data) > 0:
@@ -87,5 +84,8 @@ if __name__ == '__main__':
         postree_db.update_probabilities()
         postree_db.save(POSTREE_DB_PATH)
 
+    print("Shutting down workers...")
+    capitalization_model.shutdown()
     print("Done.")
+
 
