@@ -22,14 +22,26 @@ class TwitterReplyListener(tweepy.StreamListener):
         auth.set_access_token(credentials.access_token, credentials.access_token_secret)
         self._api = tweepy.API(auth)
 
+    def on_direct_message(self, status):
+        direct_message = status.direct_message
+        if direct_message['sender']['screen_name'] == SCREEN_NAME:
+            return
+        print("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
+        self._worker.send(direct_message['text'])
+        reply = self._worker.recv()
+        if reply is not None:
+            print("Direct Message Reply: %s" % reply)
+            self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
+
     # Reply to any mentions of the bot
     def on_status(self, status):
         if status.author.screen_name != SCREEN_NAME:
             self._worker.send(status.text)
+            print("Mention(%s): %s" % (status.author.screen_name,status.text))
             reply = self._worker.recv()
             if reply is not None:
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
-                print("Replying: %s" % reply)
+                print("Mention Reply: %s" % reply)
                 self._api.update_status(reply, status.id)
 
     def on_error(self, status):
@@ -52,10 +64,11 @@ class TwitterWorker(FrontendWorker):
         self._api = tweepy.API(auth)
         users = self._api.lookup_users(screen_names=[ALWAYS_REPLY_USER])
         always_reply_id = users[0].id_str
-        self._reply_stream.filter(track=['@'+SCREEN_NAME], async=True)
+
+        self._reply_stream.userstream(async=True)
 
         sleep_time = 0.1
-        counter = 60.
+        counter = 300.
 
         try:
             last_tweet_created_datetime = dateutil.parser.parse(open(ALWAYS_REPLY_DATETIME_FILE, 'r').read())
@@ -69,16 +82,18 @@ class TwitterWorker(FrontendWorker):
             if self._shutdown_event.is_set():
                 self._reply_stream.disconnect()
                 # TODO: Fix replace this with SQLite based system where multiple users can be followed and tracked
-                open(ALWAYS_REPLY_DATETIME_FILE,'w').write(last_tweet_created_datetime.isoformat())
+                open(ALWAYS_REPLY_DATETIME_FILE, 'w').write(last_tweet_created_datetime.isoformat())
                 return
 
-            if counter >= 60.:
-                statuses = self._api.user_timeline(id=always_reply_id, count=10)
+            if counter >= 300.:
+                statuses = self._api.user_timeline(id=always_reply_id, count=5)
                 for status in statuses:
                     if status.created_at <= last_tweet_created_datetime:
                         continue
                     if status.retweeted:
                         continue
+
+                    print("New Tweet: %s" % status.text)
 
                     if status.author.screen_name != SCREEN_NAME:
                         self.send(status.text)

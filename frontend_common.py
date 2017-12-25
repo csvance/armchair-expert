@@ -32,21 +32,20 @@ class FrontendReplyGenerator(object):
         structure = self._postree_model.generate_sentence()
         generator = MarkovGenerator(structure=structure, subjects=subjects)
 
-        for i in range(0, 10):
-            reply_words = []
-            sentences = generator.generate(db=self._markov_model)
-            if sentences is None:
-                continue
-            for sentence in sentences:
-                for word_idx, word in enumerate(sentence):
-                    mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
-                    text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
-                    reply_words.append(text)
+        reply_words = []
+        sentences = generator.generate(db=self._markov_model)
+        if sentences is None:
+            return None
+        for sentence in sentences:
+            for word_idx, word in enumerate(sentence):
+                mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
+                text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
+                reply_words.append(text)
 
-            reply = " ".join(reply_words)
-            filtered_reply = MarkovFilters.smooth_output(reply)
+        reply = " ".join(reply_words)
+        filtered_reply = MarkovFilters.smooth_output(reply)
 
-            return filtered_reply
+        return filtered_reply
 
 
 class FrontendWorker(Process):
