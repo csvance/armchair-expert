@@ -3,7 +3,7 @@ import re
 import zlib
 from enum import unique, Enum
 from typing import Optional, List
-
+import random
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
@@ -468,12 +468,26 @@ class MarkovGenerator(object):
 class MarkovFilters(object):
     @staticmethod
     def filter_input(text: str):
+        
         if text is None:
             return None
+
         filtered = text
 
+        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+                          text)
+
+        # Replace all URLS with a unique token
+        url_token = 'URL%s' % random.getrandbits(64)
+        for url in urls:
+            filtered = filtered.replace(url, url_token)
+
         filtered = re.sub(r'(&amp;)', '', filtered)
-        filtered = re.sub(r'[,:;\'`\-_“^"(){}/\\*]', '', filtered)
+        filtered = re.sub(r'[,:;\'`\-_“^"<>(){}/\\*]', '', filtered)
+
+        # Swamp URLs back for token
+        for url in urls:
+            filtered = filtered.replace(url_token, url)
 
         return filtered
 
