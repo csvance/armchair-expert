@@ -322,7 +322,15 @@ class MarkovGenerator(object):
         if not self._assign_subjects():
             return None
         if not self._generate_words(db):
-            return None
+            approximation = []
+            for sentence in self.sentence_generations:
+                for word in sentence:
+                    if word is not None:
+                        approximation.append(word)
+            if len(approximation) > 0:
+                return [approximation]
+            else:
+                return None
 
         return self.sentence_generations
 

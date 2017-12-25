@@ -68,7 +68,7 @@ class TwitterWorker(FrontendWorker):
         self._reply_stream.userstream(async=True)
 
         sleep_time = 0.1
-        counter = 60.
+        counter = 300.
 
         try:
             last_tweet_created_datetime = dateutil.parser.parse(open(ALWAYS_REPLY_DATETIME_FILE, 'r').read())
@@ -82,16 +82,18 @@ class TwitterWorker(FrontendWorker):
             if self._shutdown_event.is_set():
                 self._reply_stream.disconnect()
                 # TODO: Fix replace this with SQLite based system where multiple users can be followed and tracked
-                open(ALWAYS_REPLY_DATETIME_FILE,'w').write(last_tweet_created_datetime.isoformat())
+                open(ALWAYS_REPLY_DATETIME_FILE, 'w').write(last_tweet_created_datetime.isoformat())
                 return
 
-            if counter >= 60.:
-                statuses = self._api.user_timeline(id=always_reply_id, count=10)
+            if counter >= 300.:
+                statuses = self._api.user_timeline(id=always_reply_id, count=5)
                 for status in statuses:
                     if status.created_at <= last_tweet_created_datetime:
                         continue
                     if status.retweeted:
                         continue
+
+                    print("New Tweet: %s" % status.text)
 
                     if status.author.screen_name != SCREEN_NAME:
                         self.send(status.text)
