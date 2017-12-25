@@ -1,7 +1,7 @@
 from multiprocessing import Queue, Event
 
 import tweepy
-
+import re
 from frontend_common import FrontendWorker, FrontendScheduler, FrontendReplyGenerator, Frontend
 from twitter_config import ALWAYS_REPLY_USER, SCREEN_NAME, TwitterApiCredentials, ALWAYS_REPLY_DATETIME_FILE
 from time import sleep
@@ -11,7 +11,16 @@ import dateutil.parser
 
 class TwitterReplyGenerator(FrontendReplyGenerator):
     def generate(self, message: str):
-        return FrontendReplyGenerator.generate(self, message)
+        reply = FrontendReplyGenerator.generate(self, message)
+
+        # TODO: Validate URLs before sending to twitter instead of discarding them
+        # Remove URL from tweets
+        reply = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', reply)
+        reply = reply.strip()
+        if len(reply) > 0:
+            return reply
+        else:
+            return None
 
 
 class TwitterReplyListener(tweepy.StreamListener):
@@ -31,7 +40,10 @@ class TwitterReplyListener(tweepy.StreamListener):
         reply = self._worker.recv()
         if reply is not None:
             print("Direct Message Reply: %s" % reply)
-            self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
+            try:
+                self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
+            except tweepy.error.TweepError as e:
+                print("Error sending DM: %s" % e.reason)
 
     # Reply to any mentions of the bot
     def on_status(self, status):
@@ -42,7 +54,10 @@ class TwitterReplyListener(tweepy.StreamListener):
             if reply is not None:
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
                 print("Mention Reply: %s" % reply)
-                self._api.update_status(reply, status.id)
+                try:
+                    self._api.update_status(reply, status.id)
+                except tweepy.error.TweepError as e:
+                    print("Error replying to mention: %s" % e.reason)
 
     def on_error(self, status):
         print(status)
@@ -102,7 +117,10 @@ class TwitterWorker(FrontendWorker):
                             reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
                             print("Replying: %s" % reply)
                             reply_status = self._api.update_status(reply, status.id)
-                            self._api.retweet(reply_status.id)
+                            try:
+                                self._api.retweet(reply_status.id)
+                            except tweepy.error.TweepError as e:
+                                print("Error replying to tweet: %s" % e.reason)
 
                     last_tweet_created_datetime = status.created_at
                 counter = 0.

@@ -29,8 +29,12 @@ class FrontendReplyGenerator(object):
                 subjects.append(markov_word)
         if len(subjects) == 0:
             return None
-        structure = self._postree_model.generate_sentence()
-        generator = MarkovGenerator(structure=structure, subjects=subjects)
+
+        def generate_structure():
+            while True:
+                yield self._postree_model.generate_sentence()
+
+        generator = MarkovGenerator(structure_generator=generate_structure(), subjects=subjects)
 
         reply_words = []
         sentences = generator.generate(db=self._markov_model)

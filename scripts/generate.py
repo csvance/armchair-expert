@@ -24,8 +24,12 @@ for word in ['Hillary','Great','#MAGA','🇺🇸']:
         print("Couldn't select %s" % word)
 
 for i in range(0, 1000):
-    structure = postree.generate_sentence()
-    markov_generator = MarkovGenerator(structure,subjects)
+
+    def structure_generator():
+        while True:
+            yield postree.generate_sentence()
+
+    markov_generator = MarkovGenerator(structure_generator(), subjects)
 
     words = []
     sentences = markov_generator.generate(markov_db)

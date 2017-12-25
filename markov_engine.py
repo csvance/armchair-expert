@@ -299,10 +299,14 @@ class MarkovTrieDb(object):
 
 
 class MarkovGenerator(object):
-    def __init__(self, structure: List[Pos], subjects: List[MarkovWord]):
-        self.structure = structure
+    def __init__(self, structure_generator, subjects: List[MarkovWord]):
+        self.structure_generator = structure_generator
         self.subjects = subjects
 
+        self.sentence_generations = []
+        self.sentence_structures = []
+
+    def _reset_data(self):
         self.sentence_generations = []
         self.sentence_structures = []
 
@@ -317,10 +321,19 @@ class MarkovGenerator(object):
 
     def generate(self, db: MarkovTrieDb) -> Optional[List[List[MarkovWord]]]:
 
-        self._split_sentences()
-        self._sort_subjects()
-        if not self._assign_subjects():
+        # Try to much subject to a variety of sentence structures
+        subjects_assigned = False
+        for i in range(0, 10):
+            self._split_sentences()
+            self._sort_subjects()
+            if self._assign_subjects():
+                subjects_assigned = True
+                break
+            self._reset_data()
+
+        if not subjects_assigned:
             return None
+
         if not self._generate_words(db):
             approximation = []
             for sentence in self.sentence_generations:
@@ -336,11 +349,14 @@ class MarkovGenerator(object):
 
     # Split into individual sentences and populate generation arrays
     def _split_sentences(self):
+
+        structure = next(self.structure_generator)
+
         start_index = 0
-        for pos_idx, pos in enumerate(self.structure):
+        for pos_idx, pos in enumerate(structure):
             if pos == Pos.EOS:
                 # Separate structures into sentences
-                sentence = self.structure[start_index:pos_idx]
+                sentence = structure[start_index:pos_idx]
                 self.sentence_structures.append(sentence)
 
                 # Create unfilled arrays for each sentence to populate later
@@ -468,7 +484,7 @@ class MarkovGenerator(object):
 class MarkovFilters(object):
     @staticmethod
     def filter_input(text: str):
-        
+
         if text is None:
             return None
 
