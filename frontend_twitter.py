@@ -1,15 +1,11 @@
-import datetime
 import re
 from multiprocessing import Queue, Event
 from time import sleep
-
-import dateutil.parser
+from typing import List, Optional
 import tweepy
 
 from frontend_common import FrontendWorker, FrontendScheduler, FrontendReplyGenerator, Frontend
-from twitter_config import ALWAYS_REPLY_USER, SCREEN_NAME, TwitterApiCredentials, ALWAYS_REPLY_DATETIME_FILE, \
-    ALWAYS_REPLY_CHECK_INTERVAL
-
+from twitter_config import SCREEN_NAME, TwitterApiCredentials
 
 class TwitterReplyGenerator(FrontendReplyGenerator):
     def generate(self, message: str):
@@ -26,12 +22,13 @@ class TwitterReplyGenerator(FrontendReplyGenerator):
 
 
 class TwitterReplyListener(tweepy.StreamListener):
-    def __init__(self, frontend_worker: 'TwitterWorker', credentials: TwitterApiCredentials):
+    def __init__(self, frontend_worker: 'TwitterWorker', credentials: TwitterApiCredentials, retweet_replies_to_ids):
         tweepy.StreamListener.__init__(self)
         self._worker = frontend_worker
         auth = tweepy.OAuthHandler(credentials.consumer_key, credentials.consumer_secret)
         auth.set_access_token(credentials.access_token, credentials.access_token_secret)
         self._api = tweepy.API(auth)
+        self._retweet_replies_to_ids = retweet_replies_to_ids
 
     def on_direct_message(self, status):
         direct_message = status.direct_message
@@ -57,7 +54,9 @@ class TwitterReplyListener(tweepy.StreamListener):
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
                 print("Mention Reply: %s" % reply)
                 try:
-                    self._api.update_status(reply, status.id)
+                    reply_status = self._api.update_status(reply, status.id)
+                    if status.author.id in self._retweet_replies_to_ids:
+                        self._api.retweet(reply_status.id)
                 except tweepy.error.TweepError as e:
                     print("Error replying to mention: %s" % e.reason)
 
@@ -74,10 +73,10 @@ class TwitterWorker(FrontendWorker):
         self._user_stream = None
         self._api = None
 
-    def _start_user_stream(self):
+    def _start_user_stream(self, retweet_replies_to_ids: List):
         auth = self._auth()
         # Setup reply stream for handling mentions and DM
-        self._user_stream = tweepy.Stream(auth, TwitterReplyListener(self, self._credentials))
+        self._user_stream = tweepy.Stream(auth, TwitterReplyListener(self, self._credentials, retweet_replies_to_ids))
         self._user_stream.userstream(async=True)
 
     def _stop_user_stream(self):
@@ -89,85 +88,25 @@ class TwitterWorker(FrontendWorker):
 
         return auth
 
-    # TODO: Fix replace this with SQLite based system where multiple users can be followed and tracked
-    def _load_tweet_watch_timestamps(self) -> tuple:
-        # Watch users which we always reply to
-        try:
-            last_tweet_created_datetime = dateutil.parser.parse(open(ALWAYS_REPLY_DATETIME_FILE, 'r').read())
-        except FileNotFoundError:
-            last_tweet_created_datetime = datetime.datetime.now()
-
-        return last_tweet_created_datetime
-
-    # TODO: Fix replace this with SQLite based system where multiple users can be followed and tracked
-    def _save_tweet_watch_timestamps(self, timestamp):
-        open(ALWAYS_REPLY_DATETIME_FILE, 'w').write(timestamp.isoformat())
-
     def run(self):
 
         # Load API instance
         auth = self._auth()
         self._api = tweepy.API(auth)
 
+        retweet_replies_to_ids = []
+        for page in tweepy.Cursor(self._api.friends_ids, screen_name=SCREEN_NAME).pages():
+            retweet_replies_to_ids.extend(page)
+
         # Start user stream handler
-        self._start_user_stream()
+        self._start_user_stream(retweet_replies_to_ids)
 
-        # Map followed user names to ID's
-        users = self._api.lookup_users(screen_names=[ALWAYS_REPLY_USER])
-        always_reply_id = users[0].id_str
-
-        last_tweet_created_datetime = self._load_tweet_watch_timestamps()
-
-        # TODO: Use a database to delay retweets instead of a variable
-        retweet_later = []
-
-        sleep_time = 0.2
-        counter = ALWAYS_REPLY_CHECK_INTERVAL
         while True:
-            sleep(sleep_time)
-            counter += sleep_time
+            sleep(0.2)
 
             if self._shutdown_event.is_set():
                 self._stop_user_stream()
-                self._save_tweet_watch_timestamps(last_tweet_created_datetime)
                 return
-
-            if counter >= ALWAYS_REPLY_CHECK_INTERVAL:
-
-                # Retweets are delayed because they often fail otherwise
-                for status in retweet_later:
-                    try:
-                        retweet_status = self._api.retweet(status.id)
-                        if retweet_status is None:
-                            print("Failed to retweet: %s" % status.text)
-                    except tweepy.error.TweepError as e:
-                        print("Error retweeting(%s) - %s" % (e.reason, status.text))
-                retweet_later = []
-
-                statuses = self._api.user_timeline(id=always_reply_id, count=5)
-
-                for status in statuses:
-                    if status.created_at <= last_tweet_created_datetime:
-                        continue
-                    if status.retweeted:
-                        continue
-
-                    print("New Tweet(%s): %s" % (status.author.screen_name, status.text))
-
-                    if status.author.screen_name != SCREEN_NAME:
-                        self.send(status.text)
-                        reply = self.recv()
-                        if reply is not None:
-                            reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
-                            print("Replying(%s): %s" % (status.author.screen_name, reply))
-                            try:
-                                reply_status = self._api.update_status(reply, status.id)
-                                retweet_later.append(reply_status)
-                            except tweepy.error.TweepError as e:
-                                print("Error replying to tweet: %s" % e.reason)
-
-                    last_tweet_created_datetime = status.created_at
-                counter = 0.
 
 
 class TwitterScheduler(FrontendScheduler):
