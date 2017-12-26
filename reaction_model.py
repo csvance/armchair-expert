@@ -193,20 +193,20 @@ class AOLReactionModelWorker(MLModelWorker):
                                use_gpu=use_gpu)
 
     def run(self):
-        self._model = AOLReactionModel(path=self._path, use_gpu=self._use_gpu)
+        self._model = AOLReactionModel(use_gpu=self._use_gpu)
         MLModelWorker.run(self)
 
     def predict(self, *data):
-        return self._model.predict(text=data[0])
+        return self._model.predict(text=data[0][0])
 
     def train(self, *data):
-        return self._model.train(data=data[0], labels=data[1], epochs=data[2])
+        return self._model.train(data=data[0][0], labels=data[0][1], epochs=data[0][2])
 
     def save(self, *data):
-        return self._model.save(path=data[0])
+        return self._model.save(path=data[0][0])
 
     def load(self, *data):
-        return self._model.load(path=data[0])
+        return self._model.load(path=data[0][0])
 
 
 class AOLReactionModelScheduler(MLModelScheduler):
