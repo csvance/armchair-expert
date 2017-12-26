@@ -26,7 +26,7 @@ class TwitterReplyGenerator(FrontendReplyGenerator):
 
 
 class TwitterReplyListener(tweepy.StreamListener):
-    def __init__(self, frontend_worker: 'TwitterWorker', credentials: TwitterApiCredentials, retweet_replies_to_ids):
+    def __init__(self, frontend_worker: 'TwitterWorker', credentials: TwitterApiCredentials, retweet_replies_to_ids: List[int]):
         tweepy.StreamListener.__init__(self)
         self._worker = frontend_worker
         auth = tweepy.OAuthHandler(credentials.consumer_key, credentials.consumer_secret)
@@ -77,7 +77,7 @@ class TwitterWorker(FrontendWorker):
         self._user_stream = None
         self._api = None
 
-    def _start_user_stream(self, retweet_replies_to_ids: List):
+    def _start_user_stream(self, retweet_replies_to_ids: List[int]):
         auth = self._auth()
         # Setup reply stream for handling mentions and DM
         self._user_stream = tweepy.Stream(auth, TwitterReplyListener(self, self._credentials, retweet_replies_to_ids))
