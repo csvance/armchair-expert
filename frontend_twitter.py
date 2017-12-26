@@ -7,9 +7,13 @@ import tweepy
 from frontend_common import FrontendWorker, FrontendScheduler, FrontendReplyGenerator, Frontend
 from twitter_config import SCREEN_NAME, TwitterApiCredentials
 
+
 class TwitterReplyGenerator(FrontendReplyGenerator):
     def generate(self, message: str):
         reply = FrontendReplyGenerator.generate(self, message)
+
+        if reply is None:
+            return None
 
         # TODO: Validate URLs before sending to twitter instead of discarding them
         # Remove URL from tweets
