@@ -11,7 +11,7 @@ USE_GPU = True
 # Paths
 MARKOV_DB_PATH = 'models/markov.json.zlib'
 REACTION_MODEL_PATH = "models/aol-reaction-model.h5"
-STRUCTURE_MODEL_PATH = "models/structure.h5"
+STRUCTURE_MODEL_PATH = "models/structure-model.h5"
 
 MARKOV_GENERATE_SUBJECT_MAX = 2
 # Greatest to least
