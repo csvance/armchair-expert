@@ -1,6 +1,3 @@
-# Warning
-This branch is a complete refactoring of armchair-expert and is in no way complete or stable!
-
 ## About
 Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
@@ -24,9 +21,20 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 ## General Setup
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
+- You will need to train armchair-expert with your data before using it (tweets, chatlogs, etc)
+- An example of pre-processing input data and using it to train is in the scripts folder
 
 # Backends
+## Twitter
+- You will need to create an application on the twitter devleoper site on your bot's twitter account https://apps.twitter.com
+- After creating it, assign it permissions to do direct messages (this isn't default)
+- Create an access token for your account
+- Copy twitter_config.example.py to twitter_config.py
+- Fill in the tokens and secrets along with your handle
+- python armchair_expert.py
+
 ## Discord
+- **Not Implemented Yet**
 - You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
 - Once you register it take note of the Client ID, Username, Bot ID, and Token
 - Copy discord_config.example.py to discord_config.py and configure it
