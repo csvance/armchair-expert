@@ -23,6 +23,8 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 - You will need to train armchair-expert with your data before using it (tweets, chatlogs, etc)
 - An example of pre-processing input data and using it to train is in the scripts folder
+- https://github.com/csvance/armchair-expert/blob/master/scripts/preprocess_data_twitter.py
+- https://github.com/csvance/armchair-expert/blob/master/scripts/train_preprocessed_data.py
 
 # Backends
 ## Twitter
@@ -40,3 +42,4 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Copy discord_config.example.py to discord_config.py and configure it
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
+
