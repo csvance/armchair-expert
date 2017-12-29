@@ -16,7 +16,7 @@ structure_model.load(STRUCTURE_MODEL_PATH)
 
 
 subjects = []
-for word in ['Great', '🇺🇸']:
+for word in ['@realDonaldTrump', '#MAGA']:
     select_word = markov_db.select(word)
     if select_word is not None:
         subjects.append(select_word)
@@ -40,7 +40,10 @@ for i in range(0, 1000):
     for sentence_idx, sentence in enumerate(sentences):
         pos_list = [word.pos for word in sentence]
         for word_idx, word in enumerate(sentence):
-            text = CapitalizationMode.transform(word.mode, sentences[sentence_idx][word_idx].text,)
+            if not word.compound:
+                text = CapitalizationMode.transform(word.mode, sentences[sentence_idx][word_idx].text,)
+            else:
+                text = word.text
             words.append(text)
 
     message = " ".join(words)
