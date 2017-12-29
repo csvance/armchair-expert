@@ -151,9 +151,9 @@ class AOLReactionModel(object):
     def __init__(self, path: str = None, use_gpu=False):
 
         import tensorflow as tf
-        from tensorflow.contrib.keras.api.keras.backend import set_session
-        from tensorflow.contrib.keras.api.keras.layers import Dense
-        from tensorflow.contrib.keras.api.keras.models import Sequential
+        from keras.models import Sequential
+        from keras.layers import Dense
+        from keras.backend import set_session
 
         self.model = Sequential()
         self.model.add(Dense(AOLReactionFeatureAnalyzer.NUM_FEATURES, activation='relu',

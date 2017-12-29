@@ -1,6 +1,6 @@
 from markov_engine import MarkovTrieDb, MarkovFilters, MarkovGenerator
-from pos_tree_model import PosTreeModel
-from capitalization_model import CapitalizationModelScheduler, CapitalizationMode
+from structure_model import StructureModelScheduler
+from nlp_common import CapitalizationMode
 from typing import Optional
 from multiprocessing import Process, Queue, Event
 from threading import Thread
@@ -8,11 +8,10 @@ from queue import Empty
 
 
 class FrontendReplyGenerator(object):
-    def __init__(self, markov_model: MarkovTrieDb, postree_model: PosTreeModel,
-                 capitalization_model: CapitalizationModelScheduler):
+    def __init__(self, markov_model: MarkovTrieDb,
+                 structure_scheduler: StructureModelScheduler):
         self._markov_model = markov_model
-        self._postree_model = postree_model
-        self._capitalization_model = capitalization_model
+        self._structure_scheduler = structure_scheduler
         self._nlp = None
 
     def give_nlp(self, nlp):
@@ -32,7 +31,7 @@ class FrontendReplyGenerator(object):
 
         def generate_structure():
             while True:
-                yield self._postree_model.generate_sentence()
+                yield self._structure_scheduler.predict()
 
         generator = MarkovGenerator(structure_generator=generate_structure(), subjects=subjects)
 
@@ -42,8 +41,10 @@ class FrontendReplyGenerator(object):
             return None
         for sentence in sentences:
             for word_idx, word in enumerate(sentence):
-                mode = self._capitalization_model.predict(word.text, word.pos, word_idx)
-                text = CapitalizationMode.transform(mode, word.text, ignore_prefix_regexp=r'[#@]')
+                if not word.compound:
+                    text = CapitalizationMode.transform(word.mode, word.text)
+                else:
+                    text = word.text
                 reply_words.append(text)
 
         reply = " ".join(reply_words)

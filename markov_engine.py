@@ -1,31 +1,32 @@
 import json
+import random
 import re
+import time
 import zlib
 from enum import unique, Enum
 from typing import Optional, List
-import random
+
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
 from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
-from nlp_common import Pos, one_hot
-
-import numpy as np
-import time
+from nlp_common import Pos, one_hot, CapitalizationMode
 
 
 class WordKey(object):
     TEXT = '_T'
     POS = '_P'
+    COMPOUND = '_C'
 
 
 @unique
 class NeighborIdx(Enum):
     TEXT = 0
     POS = 1
-    VALUE_MATRIX = 2
-    DISTANCE_MATRIX = 3
+    COMPOUND = 2
+    VALUE_MATRIX = 3
+    DISTANCE_MATRIX = 4
 
 
 @unique
@@ -35,10 +36,11 @@ class NeighborValueIdx(Enum):
 
 
 class MarkovNeighbor(object):
-    def __init__(self, key: str, text: str, pos: Pos, values: list, dist: list):
+    def __init__(self, key: str, text: str, pos: Pos, compound: bool, values: list, dist: list):
         self.key = key
         self.text = text
         self.pos = pos
+        self.compound = compound
         self.values = values
         self.dist = dist
 
@@ -49,22 +51,27 @@ class MarkovNeighbor(object):
     def from_token(token: Token) -> 'MarkovNeighbor':
         key = token.text.lower()
         text = token.text
+        if CapitalizationMode.from_token(token) == CapitalizationMode.COMPOUND:
+            compound = True
+        else:
+            compound = False
         pos = Pos.from_token(token)
         values = [0, 0]
         dist = [0] * (MARKOV_WINDOW_SIZE * 2 + 1)
-        return MarkovNeighbor(key, text, pos, values, dist)
+        return MarkovNeighbor(key, text, pos, compound, values, dist)
 
     @staticmethod
     def from_db_format(key: str, val: list) -> 'MarkovNeighbor':
         key = key
         text = val[NeighborIdx.TEXT.value]
         pos = Pos(val[NeighborIdx.POS.value])
+        compound = val[NeighborIdx.COMPOUND.value]
         values = val[NeighborIdx.VALUE_MATRIX.value]
         dist = val[NeighborIdx.DISTANCE_MATRIX.value]
-        return MarkovNeighbor(key, text, pos, values, dist)
+        return MarkovNeighbor(key, text, pos, compound, values, dist)
 
     def to_db_format(self) -> tuple:
-        return self.key, [self.text, self.pos.value, self.values, self.dist]
+        return self.key, [self.text, self.pos.value, self.compound, self.values, self.dist]
 
     @staticmethod
     def distance_one_hot(dist):
@@ -138,27 +145,34 @@ class MarkovWordProjectionCollection(object):
 
 
 class MarkovWord(object):
-    def __init__(self, text: str, pos: Pos, neighbors: dict):
+    def __init__(self, text: str, pos: Pos, compound: bool, neighbors: dict):
         self.text = text
         self.pos = pos
+        self.compound = compound
         self.neighbors = neighbors
 
     def __repr__(self):
         return self.text
 
     def to_db_format(self) -> tuple:
-        return {WordKey.TEXT: self.text, WordKey.POS: self.pos.value}, {MarkovTrieDb.NEIGHBORS_KEY: self.neighbors}
+        return {WordKey.TEXT: self.text, WordKey.POS: self.pos.value, WordKey.COMPOUND: self.compound}, {
+            MarkovTrieDb.NEIGHBORS_KEY: self.neighbors}
 
     @staticmethod
     def from_db_format(row: dict) -> 'MarkovWord':
         word = MarkovWord(row[MarkovTrieDb.WORD_KEY][WordKey.TEXT],
                           Pos(row[MarkovTrieDb.WORD_KEY][WordKey.POS]),
+                          row[MarkovTrieDb.WORD_KEY][WordKey.COMPOUND],
                           row[MarkovTrieDb.NEIGHBORS_KEY])
         return word
 
     @staticmethod
     def from_token(token: Token) -> 'MarkovWord':
-        return MarkovWord(token.text, Pos.from_token(token), {})
+        if CapitalizationMode.from_token(token) == CapitalizationMode.COMPOUND:
+            compound = True
+        else:
+            compound = False
+        return MarkovWord(token.text, Pos.from_token(token), compound=compound, neighbors={})
 
     def get_neighbor(self, key: str) -> Optional[MarkovNeighbor]:
         if key in self.neighbors:
@@ -181,7 +195,8 @@ class MarkovWord(object):
 
         return MarkovNeighbors(results)
 
-    def project(self, idx_in_sentence: int, sentence_length: int, pos: Pos, exclude_key: Optional[str] = None) -> MarkovWordProjection:
+    def project(self, idx_in_sentence: int, sentence_length: int, pos: Pos,
+                exclude_key: Optional[str] = None) -> MarkovWordProjection:
 
         # Get all neighbors
         neighbors = self.select_neighbors(pos, exclude_key=exclude_key)
@@ -219,6 +234,16 @@ class MarkovWord(object):
                                                     NeighborValueIdx.RATING.value] * MARKOV_GENERATION_WEIGHT_RATING
 
         return MarkovWordProjection(neighbor_magnitudes, distance_distributions, neighbor_keys, neighbor_pos)
+
+
+class GeneratedWord(MarkovWord):
+    def __init__(self, text: str, pos: Pos, compound: bool, neighbors: dict, mode: CapitalizationMode):
+        MarkovWord.__init__(self, text, pos, compound, neighbors)
+        self.mode = mode
+
+    @staticmethod
+    def from_markov_word(word: MarkovWord, mode: CapitalizationMode):
+        return GeneratedWord(word.text, word.pos, word.compound, word.neighbors, mode=mode)
 
 
 class MarkovTrieDb(object):
@@ -266,7 +291,7 @@ class MarkovTrieDb(object):
         row = self._select(word)
         return MarkovWord.from_db_format(row) if row is not None else None
 
-    def _insert(self, word: str, pos: int, neighbors: dict) -> Optional[dict]:
+    def _insert(self, word: str, pos: int, compound: bool, neighbors: dict) -> Optional[dict]:
 
         node = self._trie
         for c in word:
@@ -276,25 +301,25 @@ class MarkovTrieDb(object):
                 node[c.lower()] = {}
                 node = node[c.lower()]
 
-        node[MarkovTrieDb.WORD_KEY] = {WordKey.TEXT: word, WordKey.POS: pos}
+        node[MarkovTrieDb.WORD_KEY] = {WordKey.TEXT: word, WordKey.POS: pos, WordKey.COMPOUND: compound}
         node[MarkovTrieDb.NEIGHBORS_KEY] = neighbors
         return node
 
     def insert(self, word: MarkovWord) -> MarkovWord:
-        row = self._insert(word.text, word.pos.value, word.neighbors)
+        row = self._insert(word.text, word.pos.value, word.compound, word.neighbors)
         return MarkovWord.from_db_format(row) if row is not None else None
 
-    def _update(self, word: str, pos: int, neighbors: dict) -> Optional[dict]:
+    def _update(self, word: str, pos: int, compound: bool, neighbors: dict) -> Optional[dict]:
         node = self._select(word)
         if node is None:
             return None
 
-        node[MarkovTrieDb.WORD_KEY] = {WordKey.TEXT: word, WordKey.POS: pos}
+        node[MarkovTrieDb.WORD_KEY] = {WordKey.TEXT: word, WordKey.POS: pos, WordKey.COMPOUND: compound}
         node[MarkovTrieDb.NEIGHBORS_KEY] = neighbors
         return node
 
     def update(self, word: MarkovWord) -> Optional[MarkovWord]:
-        node = self._update(word.text, word.pos.value, word.neighbors)
+        node = self._update(word.text, word.pos.value, word.compound, word.neighbors)
         return MarkovWord.from_db_format(node) if node is not None else None
 
 
@@ -319,7 +344,7 @@ class MarkovGenerator(object):
                     sorted_subjects.append(subject)
         self.subjects = sorted_subjects
 
-    def generate(self, db: MarkovTrieDb) -> Optional[List[List[MarkovWord]]]:
+    def generate(self, db: MarkovTrieDb) -> Optional[List[List[GeneratedWord]]]:
 
         # Try to much subject to a variety of sentence structures
         subjects_assigned = False
@@ -353,17 +378,17 @@ class MarkovGenerator(object):
         structure = next(self.structure_generator)
 
         start_index = 0
-        for pos_idx, pos in enumerate(structure):
-            if pos == Pos.EOS:
+        for word_idx, word in enumerate(structure):
+            if word.pos == Pos.EOS:
                 # Separate structures into sentences
-                sentence = structure[start_index:pos_idx]
+                sentence = structure[start_index:word_idx]
                 self.sentence_structures.append(sentence)
 
                 # Create unfilled arrays for each sentence to populate later
                 generates = [None] * len(sentence)
                 self.sentence_generations.append(generates)
 
-                start_index = pos_idx + 1
+                start_index = word_idx + 1
 
     # Assign one subject to each sentence with descending priority
     def _assign_subjects(self) -> bool:
@@ -373,7 +398,7 @@ class MarkovGenerator(object):
         for sentence_idx, sentence in enumerate(self.sentence_structures):
             subjects_assigned = []
             word_break = False
-            for word_idx, pos in enumerate(sentence):
+            for word_idx, word in enumerate(sentence):
                 for subject in self.subjects:
                     # Assigned a maximum number of subjects per sentence
                     if len(subjects_assigned) > MARKOV_GENERATE_SUBJECT_MAX:
@@ -384,9 +409,10 @@ class MarkovGenerator(object):
                     if subject.text in subjects_assigned:
                         continue
 
-                    if subject.pos == pos:
+                    if subject.pos == word.pos:
                         subjects_assigned.append(subject.text)
-                        self.sentence_generations[sentence_idx][word_idx] = subject
+                        self.sentence_generations[sentence_idx][word_idx] = GeneratedWord.from_markov_word(
+                            subject, self.sentence_structures[sentence_idx][word_idx].mode)
                         sentences_assigned[sentence_idx] = True
                         break
 
@@ -422,10 +448,11 @@ class MarkovGenerator(object):
                         return False
 
                     projections = []
-                    blank_pos = self.sentence_structures[sentence_idx][blank_idx]
+                    blank_pos = self.sentence_structures[sentence_idx][blank_idx].pos
                     for word_idx in project_idx:
                         projecting_word = self.sentence_generations[sentence_idx][word_idx]
-                        projection = projecting_word.project(word_idx, sentence_length, blank_pos, exclude_key=exclude_key)
+                        projection = projecting_word.project(word_idx, sentence_length, blank_pos,
+                                                             exclude_key=exclude_key)
                         projections.append(projection)
 
                     # Concatenate all projections and create p-value matrix
@@ -444,7 +471,8 @@ class MarkovGenerator(object):
 
                     # Select the word from the database and assign it to the blank space
                     select_word = projection_collection.keys[word_choice_idx]
-                    word = db.select(select_word)
+                    word = GeneratedWord.from_markov_word(db.select(select_word),
+                                                          self.sentence_structures[sentence_idx][blank_idx].mode)
                     self.sentence_generations[sentence_idx][blank_idx] = word
 
                 # Scan left to right

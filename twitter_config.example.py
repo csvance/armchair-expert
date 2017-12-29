@@ -16,7 +16,7 @@ ACCESS_TOKEN_SECRET = ""
 TWITTER_CREDENTIALS = TwitterApiCredentials(consumer_key=CONSUMER_KEY, consumer_secret=CONSUMER_SECRET,
                                             access_token=ACCESS_TOKEN, access_token_secret=ACCESS_TOKEN_SECRET)
 
-SCREEN_NAME = 'LilTrumpyAI'
+SCREEN_NAME = 'Sundial_o7'
 
 # --- Technical Stuff Section ---
 # -------------------------------

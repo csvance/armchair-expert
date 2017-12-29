@@ -1,5 +1,14 @@
 from multiprocessing import Process, Queue
 from enum import Enum, unique
+import pickle
+
+
+def pickle_save(key, data):
+    pickle.dump(data, open('cache/' + key + '.p', 'wb'))
+
+
+def pickle_load(key):
+    return pickle.load(open('cache/' + key + '.p', 'rb'))
 
 
 def one_hot(idx: int, size: int):
@@ -79,3 +88,5 @@ class MLModelScheduler(object):
     def _load(self, *data):
         self._write_queue.put([MLWorkerCommands.LOAD, data])
         return self._read_queue.get()
+
+
