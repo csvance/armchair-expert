@@ -3,12 +3,11 @@ from enum import Enum, unique
 from multiprocessing import Event
 import sys
 
-from capitalization_model import CapitalizationModelScheduler
+from structure_model import StructureModelScheduler
 from frontend_twitter import TwitterFrontend, TwitterReplyGenerator
 from markov_engine import MarkovTrieDb
 from ml_config import *
 from nlp_common import create_nlp_instance
-from pos_tree_model import PosTreeModel
 from twitter_config import TWITTER_CREDENTIALS
 
 
@@ -24,10 +23,9 @@ class ArmchairExpert(object):
     def __init__(self):
         # Placeholders
         self._markov_model = None
-        self._capitalization_model = None
-        self._postree_model = None
         self._nlp = None
         self._status = None
+        self._structure_scheduler = None
         self._frontends = []
         self._frontends_event = Event()
 
@@ -42,20 +40,15 @@ class ArmchairExpert(object):
         self._markov_model = MarkovTrieDb()
         self._markov_model.load(MARKOV_DB_PATH)
 
-        self._postree_model = PosTreeModel()
-        self._postree_model.load(POSTREE_DB_PATH)
-
-        self._capitalization_model = CapitalizationModelScheduler(use_gpu=USE_GPU)
-        self._capitalization_model.start()
-        self._capitalization_model.load(CAPITALIZATION_MODEL_PATH)
+        self._structure_scheduler = StructureModelScheduler()
+        self._structure_scheduler.start()
+        self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
 
         # Initialize frontends
         self._twitter_frontend = None
         try:
             import twitter_config
-            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model,
-                                                            postree_model=self._postree_model,
-                                                            capitalization_model=self._capitalization_model)
+            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, sequence_model=self._structure_scheduler)
             self._twitter_frontend = TwitterFrontend(reply_generator=twitter_reply_generator,
                                                      frontend_events=self._frontends_event, credentials=TWITTER_CREDENTIALS)
             self._twitter_frontend.start()
@@ -103,7 +96,7 @@ class ArmchairExpert(object):
         # self._capitalization_model.save(CAPITALIZATION_MODEL_PATH)
 
         # Shutdown Models
-        self._capitalization_model.shutdown()
+        self._structure_scheduler.shutdown()
 
 
     def handle_shutdown(self):

@@ -36,6 +36,8 @@ def create_nlp_instance():
 
 @unique
 class Pos(Enum):
+    NONE = 0
+
     # Universal
     ADJ = 1
     ADP = 2
@@ -63,11 +65,10 @@ class Pos(Enum):
     URL = 22
 
     # Special
-    EOS = 100
+    EOS = 23
 
-    @staticmethod
-    def one_hot(pos: 'Pos') -> list:
-        return one_hot(pos.value - 1, len(Pos))
+    def one_hot(self) -> list:
+        return one_hot(self.value, len(Pos))
 
     @staticmethod
     def from_token(token: Token, people: list = None) -> Optional['Pos']:
@@ -75,6 +76,8 @@ class Pos(Enum):
             return Pos.HASHTAG
         elif token.text[0] == '@':
             return Pos.PROPN
+        elif token.text[0] == ' ' or token.text[0] == "\n":
+            return Pos.SPACE
 
         if token._.is_emoji:
             return Pos.EMOJI
@@ -87,4 +90,93 @@ class Pos(Enum):
         if re.match(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', token.text):
             return Pos.URL
 
-        return Pos[token.pos_]
+        try:
+            return Pos[token.pos_]
+        except KeyError:
+            print("Unknown PoS: %s" % token.text)
+            return Pos.X
+
+
+@unique
+class CapitalizationMode(Enum):
+    NONE = 0
+    UPPER_FIRST = 1
+    UPPER_ALL = 2
+    LOWER_ALL = 3
+    COMPOUND = 4
+
+    def one_hot(self):
+
+        ret_list = []
+
+        for i in range(0, len(CapitalizationMode)):
+            if i != self.value:
+                ret_list.append(0)
+            else:
+                ret_list.append(1)
+
+        return ret_list
+
+    @staticmethod
+    def from_token(token: Token) -> 'CapitalizationMode':
+
+        # Try to make a guess for many common patterns
+        pos = Pos.from_token(token)
+        if pos in [Pos.NUM, Pos.EMOJI, Pos.SYM, Pos.SPACE, Pos.EOS, Pos.HASHTAG, Pos.PUNCT, Pos.URL]:
+            return CapitalizationMode.COMPOUND
+
+        if token.text[0] == '@' or token.text[0] == '#':
+            return CapitalizationMode.COMPOUND
+
+        lower_count = 0
+        upper_count = 0
+        upper_start = False
+        for idx, c in enumerate(token.text):
+
+            if c.isupper():
+                upper_count += 1
+                if upper_start:
+                    upper_start = False
+                if idx == 0:
+                    upper_start = True
+            elif c.islower():
+                lower_count += 1
+
+        if upper_start:
+            return CapitalizationMode.UPPER_FIRST
+        elif lower_count > 0 and upper_count == 0:
+            return CapitalizationMode.LOWER_ALL
+        elif upper_count > 0 and lower_count == 0:
+            return CapitalizationMode.UPPER_ALL
+        elif upper_count == 0 and lower_count == 0:
+            return CapitalizationMode.NONE
+        else:
+            return CapitalizationMode.COMPOUND
+
+    @staticmethod
+    def transform(mode: 'CapitalizationMode', word: str) -> str:
+
+        ret_word = word
+
+        if mode == CapitalizationMode.UPPER_FIRST:
+
+            first_alpha_flag = False
+            ret_list = []
+
+            ret_word = ret_word.lower()
+
+            # Find the first letter
+            for c_idx, c in enumerate(ret_word):
+                if c.isalpha() and not first_alpha_flag:
+                    ret_list.append(ret_word[c_idx].upper())
+                    first_alpha_flag = True
+                else:
+                    ret_list.append(c)
+            ret_word = "".join(ret_list)
+
+        elif mode == CapitalizationMode.UPPER_ALL:
+            ret_word = ret_word.upper()
+        elif mode == CapitalizationMode.LOWER_ALL:
+            ret_word = ret_word.lower()
+
+        return ret_word

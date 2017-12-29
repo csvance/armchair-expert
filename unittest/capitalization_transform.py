@@ -1,6 +1,6 @@
 import unittest
 
-from capitalization_model import CapitalizationMode
+from nlp_common import CapitalizationMode
 
 
 class TestCapitalizationTransform(unittest.TestCase):
