@@ -1,16 +1,16 @@
 import re
 from multiprocessing import Queue, Event
 from time import sleep
-from typing import List, Optional
+from typing import List
 import tweepy
 
-from frontend_common import FrontendWorker, FrontendScheduler, FrontendReplyGenerator, Frontend
-from twitter_config import SCREEN_NAME, TwitterApiCredentials
+from connectors.common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
+from config.twitter_config import SCREEN_NAME, TwitterApiCredentials
 
 
-class TwitterReplyGenerator(FrontendReplyGenerator):
+class TwitterReplyGenerator(ConnectorReplyGenerator):
     def generate(self, message: str):
-        reply = FrontendReplyGenerator.generate(self, message)
+        reply = ConnectorReplyGenerator.generate(self, message)
 
         if reply is None:
             return None
@@ -68,11 +68,11 @@ class TwitterReplyListener(tweepy.StreamListener):
         print(status)
 
 
-class TwitterWorker(FrontendWorker):
+class TwitterWorker(ConnectorWorker):
     def __init__(self, read_queue: Queue, write_queue: Queue, shutdown_event: Event,
                  credentials: TwitterApiCredentials):
-        FrontendWorker.__init__(self, name='TwitterWorker', read_queue=read_queue, write_queue=write_queue,
-                                shutdown_event=shutdown_event)
+        ConnectorWorker.__init__(self, name='TwitterWorker', read_queue=read_queue, write_queue=write_queue,
+                                 shutdown_event=shutdown_event)
         self._credentials = credentials
         self._user_stream = None
         self._api = None
@@ -113,15 +113,15 @@ class TwitterWorker(FrontendWorker):
                 return
 
 
-class TwitterScheduler(FrontendScheduler):
+class TwitterScheduler(ConnectorScheduler):
     def __init__(self, shutdown_event: Event, credentials: TwitterApiCredentials):
-        FrontendScheduler.__init__(self, shutdown_event)
+        ConnectorScheduler.__init__(self, shutdown_event)
         self._worker = TwitterWorker(read_queue=self._write_queue, write_queue=self._read_queue,
                                      shutdown_event=shutdown_event, credentials=credentials)
 
 
-class TwitterFrontend(Frontend):
-    def __init__(self, reply_generator: TwitterReplyGenerator, frontend_events: Event,
+class TwitterFrontend(Connector):
+    def __init__(self, reply_generator: TwitterReplyGenerator, connectors_event: Event,
                  credentials: TwitterApiCredentials):
-        Frontend.__init__(self, reply_generator=reply_generator, frontends_event=frontend_events)
+        Connector.__init__(self, reply_generator=reply_generator, connectors_event=connectors_event)
         self._scheduler = TwitterScheduler(self._shutdown_event, credentials)

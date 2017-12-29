@@ -1,5 +1,5 @@
 from markov_engine import MarkovTrieDb, MarkovFilters, MarkovGenerator
-from structure_model import StructureModelScheduler
+from models.structure import StructureModelScheduler
 from nlp_common import CapitalizationMode
 from typing import Optional
 from multiprocessing import Process, Queue, Event
@@ -7,7 +7,7 @@ from threading import Thread
 from queue import Empty
 
 
-class FrontendReplyGenerator(object):
+class ConnectorReplyGenerator(object):
     def __init__(self, markov_model: MarkovTrieDb,
                  structure_scheduler: StructureModelScheduler):
         self._markov_model = markov_model
@@ -53,7 +53,7 @@ class FrontendReplyGenerator(object):
         return filtered_reply
 
 
-class FrontendWorker(Process):
+class ConnectorWorker(Process):
     def __init__(self, name, read_queue: Queue, write_queue: Queue, shutdown_event: Event):
         Process.__init__(self, name=name)
         self._read_queue = read_queue
@@ -71,7 +71,7 @@ class FrontendWorker(Process):
         pass
 
 
-class FrontendScheduler(object):
+class ConnectorScheduler(object):
     def __init__(self, shutdown_event: Event):
         self._read_queue = Queue()
         self._write_queue = Queue()
@@ -94,14 +94,14 @@ class FrontendScheduler(object):
         self._worker.join()
 
 
-class Frontend(object):
-    def __init__(self, reply_generator: FrontendReplyGenerator, frontends_event: Event):
+class Connector(object):
+    def __init__(self, reply_generator: ConnectorReplyGenerator, connectors_event: Event):
         self._reply_generator = reply_generator
         self._scheduler = None
         self._thread = Thread(target=self.run)
         self._write_queue = Queue()
         self._read_queue = Queue()
-        self._frontends_event = frontends_event
+        self._frontends_event = connectors_event
         self._shutdown_event = Event()
 
     def give_nlp(self, nlp):

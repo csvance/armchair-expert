@@ -26,7 +26,7 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - https://github.com/csvance/armchair-expert/blob/master/scripts/preprocess_data_twitter.py
 - https://github.com/csvance/armchair-expert/blob/master/scripts/train_preprocessed_data.py
 
-# Backends
+# Connectors
 ## Twitter
 - You will need to create an application on the twitter devleoper site on your bot's twitter account https://apps.twitter.com
 - After creating it, assign it permissions to do direct messages (this isn't default)

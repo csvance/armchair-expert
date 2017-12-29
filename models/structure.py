@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 from spacy.tokens import Token
 
-from ml_common import MLModelWorker, MLModelScheduler
+from models.common import MLModelScheduler, MLModelWorker
 from nlp_common import Pos, CapitalizationMode
 
 

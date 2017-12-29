@@ -9,9 +9,10 @@ from typing import Optional, List
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
-from ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
+from config.ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
-from nlp_common import Pos, one_hot, CapitalizationMode
+from nlp_common import Pos, CapitalizationMode
+from ml_common import one_hot
 
 
 class WordKey(object):

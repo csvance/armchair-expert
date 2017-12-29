@@ -9,8 +9,8 @@ from keras.utils import np_utils
 from markov_engine import MarkovTrainer, MarkovTrieDb, MarkovFilters
 from ml_common import pickle_save
 from nlp_common import create_nlp_instance, Pos, CapitalizationMode
-from structure_model import StructureFeatureAnalyzer
-from structure_model import StructureModel, PoSCapitalizationMode
+from models.structure import StructureFeatureAnalyzer
+from models.structure import StructureModel, PoSCapitalizationMode
 
 if __name__ == '__main__':
 

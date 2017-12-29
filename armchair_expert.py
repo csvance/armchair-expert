@@ -3,12 +3,12 @@ from enum import Enum, unique
 from multiprocessing import Event
 import sys
 
-from structure_model import StructureModelScheduler
-from frontend_twitter import TwitterFrontend, TwitterReplyGenerator
+from models.structure import StructureModelScheduler
+from connectors.twitter import TwitterFrontend, TwitterReplyGenerator
 from markov_engine import MarkovTrieDb
-from ml_config import *
+from config.ml_config import *
 from nlp_common import create_nlp_instance
-from twitter_config import TWITTER_CREDENTIALS
+from config.twitter_config import TWITTER_CREDENTIALS
 
 
 @unique
@@ -26,8 +26,8 @@ class ArmchairExpert(object):
         self._nlp = None
         self._status = None
         self._structure_scheduler = None
-        self._frontends = []
-        self._frontends_event = Event()
+        self._connectors = []
+        self._connectors_event = Event()
 
     def _set_status(self, status: AEStatus):
         self._status = status
@@ -44,22 +44,22 @@ class ArmchairExpert(object):
         self._structure_scheduler.start()
         self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
 
-        # Initialize frontends
-        self._twitter_frontend = None
+        # Initialize connectors
+        self._twitter_connector = None
         try:
-            import twitter_config
+            from config import twitter_config
             twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, structure_scheduler=self._structure_scheduler)
-            self._twitter_frontend = TwitterFrontend(reply_generator=twitter_reply_generator,
-                                                     frontend_events=self._frontends_event, credentials=TWITTER_CREDENTIALS)
-            self._twitter_frontend.start()
-            self._frontends.append(self._twitter_frontend)
+            self._twitter_connector = TwitterFrontend(reply_generator=twitter_reply_generator,
+                                                      connectors_event=self._connectors_event, credentials=TWITTER_CREDENTIALS)
+            self._twitter_connector.start()
+            self._connectors.append(self._twitter_connector)
         except ModuleNotFoundError:
             pass
 
         # Non forking initializations
         self._nlp = create_nlp_instance()
 
-        for frontend in self._frontends:
+        for frontend in self._connectors:
             frontend.give_nlp(self._nlp)
 
         # Handle events
@@ -68,10 +68,10 @@ class ArmchairExpert(object):
     def _main(self):
         self._set_status(AEStatus.RUNNING)
         while True:
-            if self._frontends_event.wait(timeout=0.2):
-                self._frontends_event.clear()
+            if self._connectors_event.wait(timeout=0.2):
+                self._connectors_event.clear()
 
-                for frontend in self._frontends:
+                for frontend in self._connectors:
                     message = frontend.recv()
                     if message is not None:
                         reply = frontend.generate(message)
@@ -87,8 +87,8 @@ class ArmchairExpert(object):
     def shutdown(self):
 
         # Shutdown frontends
-        for frontend in self._frontends:
-            frontend.shutdown()
+        for connector in self._connectors:
+            connector.shutdown()
 
         # Save Models
         # self._markov_model.save(MARKOV_DB_PATH)
