@@ -37,7 +37,7 @@ class StructureFeatureAnalyzer(object):
 
 
 class StructureModel(object):
-    SEQUENCE_LENGTH = 8
+    SEQUENCE_LENGTH = 16
 
     def __init__(self, use_gpu: bool = False):
         import tensorflow as tf
@@ -46,14 +46,16 @@ class StructureModel(object):
         from keras.layers import LSTM
         from keras.backend import set_session
 
-        latent_dim = StructureModel.SEQUENCE_LENGTH * 16
+        latent_dim = StructureModel.SEQUENCE_LENGTH * 8
 
         model = Sequential()
         model.add(
             Embedding(StructureFeatureAnalyzer.NUM_FEATURES, StructureFeatureAnalyzer.NUM_FEATURES,
                       input_length=StructureModel.SEQUENCE_LENGTH))
+        model.add(LSTM(latent_dim, dropout=0.2, return_sequences=True))
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=False))
         model.add(Dense(StructureFeatureAnalyzer.NUM_FEATURES, activation='softmax'))
+        model.summary()
         model.compile(loss='categorical_crossentropy', optimizer='adam')
         self.model = model
 
@@ -63,7 +65,7 @@ class StructureModel(object):
             set_session(tf.Session(config=config))
 
     def train(self, data, labels, epochs=1):
-        self.model.fit(data, labels, epochs=epochs, batch_size=128)
+        self.model.fit(data, labels, epochs=epochs, batch_size=64)
 
     def predict(self) -> List[PoSCapitalizationMode]:
         from keras.preprocessing.sequence import pad_sequences
