@@ -2,11 +2,10 @@
 Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 ## Features
-- Learns from Discord chat and replies randomly or when mentioned, relating what it has learned to your message.
-- NLP assisted topic selection. When choosing a subject in a sentence to reply to, undesirable parts of speech such as pronouns and conjunctions are ignored.
-- Uses an n-gram markov chain which is positionally aware of the distances between different words
+- NLP assisted multiple topic selection. When choosing subjects in a sentence to use as generation seeds, undesirable parts of speech such as pronouns and conjunctions are ignored.
+- Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence.
 - Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
-- Learns to imitate capitalization patterns found in training data
+- Learns to imitate sentence structures and capitalization patterns found in training data
 
 ## Dependencies
 - python 3.6
