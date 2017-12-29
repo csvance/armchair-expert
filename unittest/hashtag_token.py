@@ -1,11 +1,11 @@
 import unittest
-from ml_common import create_spacy_instance
+from nlp_common import create_nlp_instance
 
 
 class TestSpacyHashtagSplit(unittest.TestCase):
     def test_split(self):
 
-        nlp = create_spacy_instance()
+        nlp = create_nlp_instance()
 
         doc = nlp("twitter #hashtag")
         self.assertEqual(len(doc), 2)
