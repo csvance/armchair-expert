@@ -48,7 +48,7 @@ class ArmchairExpert(object):
         self._twitter_frontend = None
         try:
             import twitter_config
-            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, sequence_model=self._structure_scheduler)
+            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, structure_scheduler=self._structure_scheduler)
             self._twitter_frontend = TwitterFrontend(reply_generator=twitter_reply_generator,
                                                      frontend_events=self._frontends_event, credentials=TWITTER_CREDENTIALS)
             self._twitter_frontend.start()

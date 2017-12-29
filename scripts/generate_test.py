@@ -16,7 +16,7 @@ structure_model.load(STRUCTURE_MODEL_PATH)
 
 
 subjects = []
-for word in ['@realDonaldTrump', '#MAGA']:
+for word in ['@realDonaldTrump','great', '#MAGA']:
     select_word = markov_db.select(word)
     if select_word is not None:
         subjects.append(select_word)
