@@ -10,14 +10,15 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 ## Dependencies
 - python 3.6
-- spacy 2.0.0+
-- spacymoji
-- tensorflow 1.4
-- sqlalchemy
-- discord.py
+- keras with Tensorflow backend
+- spaCy 2.0.0+
 - numpy
+- spaymoji
+- tweepy
+- discord
 - janus
 - zlib
+- sqlalchemy
 
 ## General Setup
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
