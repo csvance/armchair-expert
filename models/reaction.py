@@ -3,7 +3,7 @@ from multiprocessing import Queue
 
 import numpy as np
 
-from models.common import MLModelScheduler, MLModelWorker
+from models.model_common import MLModelScheduler, MLModelWorker
 
 
 class AOLReactionFeatureAnalyzer(object):

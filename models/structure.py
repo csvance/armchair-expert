@@ -4,8 +4,8 @@ from typing import List
 import numpy as np
 from spacy.tokens import Token
 
-from models.common import MLModelScheduler, MLModelWorker
-from nlp_common import Pos, CapitalizationMode
+from models.model_common import MLModelScheduler, MLModelWorker
+from common.nlp import Pos, CapitalizationMode
 
 
 class PoSCapitalizationMode(object):
@@ -55,7 +55,6 @@ class StructureModel(object):
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=True))
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=False))
         model.add(Dense(StructureFeatureAnalyzer.NUM_FEATURES, activation='softmax'))
-        model.summary()
         model.compile(loss='categorical_crossentropy', optimizer='adam')
         self.model = model
 

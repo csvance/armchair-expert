@@ -1,4 +1,4 @@
-from nlp_common import Pos
+from common.nlp import Pos
 
 # --- "User" Stuff Section ---
 # ----------------------------
@@ -24,3 +24,11 @@ MARKOV_GENERATION_WEIGHT_RATING = 10
 
 # bi-gram window function size
 MARKOV_WINDOW_SIZE = 4
+
+# Chance whether to use a weighted random or argmax when selecting a word
+# These should add up to 1.0
+MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE = 0.75
+MARKOV_WORD_CHOICE_ARGMAX_P_VALUE = 0.25
+
+# These should always be marked as a "compound" word which will always use its original capitalization
+CAPITALIZATION_COMPOUND_RULES = ['RT']

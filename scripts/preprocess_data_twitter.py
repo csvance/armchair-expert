@@ -6,9 +6,10 @@ import numpy as np
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import np_utils
 
+from common.ml import pickle_save
+from common.nlp import create_nlp_instance, Pos, CapitalizationMode
+from config.ml import CAPITALIZATION_COMPOUND_RULES
 from markov_engine import MarkovTrainer, MarkovTrieDb, MarkovFilters
-from ml_common import pickle_save
-from nlp_common import create_nlp_instance, Pos, CapitalizationMode
 from models.structure import StructureFeatureAnalyzer
 from models.structure import StructureModel, PoSCapitalizationMode
 
@@ -80,7 +81,8 @@ if __name__ == '__main__':
 
                 for sentence_idx, sentence in enumerate(doc.sents):
                     for token_idx, token in enumerate(sentence):
-                        item = StructureFeatureAnalyzer.analyze(token, CapitalizationMode.from_token(token))
+                        item = StructureFeatureAnalyzer.analyze(token, CapitalizationMode.from_token(token,
+                                                                                                     CAPITALIZATION_COMPOUND_RULES))
                         label = item
 
                         if len(sequence) == 0:

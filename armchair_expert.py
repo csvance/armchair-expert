@@ -1,14 +1,12 @@
 import signal
+import sys
 from enum import Enum, unique
 from multiprocessing import Event
-import sys
 
-from models.structure import StructureModelScheduler
-from connectors.twitter import TwitterFrontend, TwitterReplyGenerator
+from common.nlp import create_nlp_instance
+from config.ml import *
 from markov_engine import MarkovTrieDb
-from config.ml_config import *
-from nlp_common import create_nlp_instance
-from config.twitter_config import TWITTER_CREDENTIALS
+from models.structure import StructureModelScheduler
 
 
 @unique
@@ -28,6 +26,8 @@ class ArmchairExpert(object):
         self._structure_scheduler = None
         self._connectors = []
         self._connectors_event = Event()
+        self._twitter_connector = None
+        self._discord_connector = None
 
     def _set_status(self, status: AEStatus):
         self._status = status
@@ -40,20 +40,35 @@ class ArmchairExpert(object):
         self._markov_model = MarkovTrieDb()
         self._markov_model.load(MARKOV_DB_PATH)
 
-        self._structure_scheduler = StructureModelScheduler()
+        self._structure_scheduler = StructureModelScheduler(USE_GPU)
         self._structure_scheduler.start()
         self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
 
         # Initialize connectors
-        self._twitter_connector = None
         try:
-            from config import twitter_config
-            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, structure_scheduler=self._structure_scheduler)
+            from config.twitter import TWITTER_CREDENTIALS
+            from connectors.twitter import TwitterFrontend, TwitterReplyGenerator
+            twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model,
+                                                            structure_scheduler=self._structure_scheduler)
             self._twitter_connector = TwitterFrontend(reply_generator=twitter_reply_generator,
-                                                      connectors_event=self._connectors_event, credentials=TWITTER_CREDENTIALS)
+                                                      connectors_event=self._connectors_event,
+                                                      credentials=TWITTER_CREDENTIALS)
             self._twitter_connector.start()
             self._connectors.append(self._twitter_connector)
-        except ModuleNotFoundError:
+        except ImportError:
+            pass
+
+        try:
+            from config.discord import DISCORD_CREDENTIALS
+            from connectors.discord import DiscordFrontend, DiscordReplyGenerator
+            discord_reply_generator = DiscordReplyGenerator(markov_model=self._markov_model,
+                                                            structure_scheduler=self._structure_scheduler)
+            self._discord_connector = DiscordFrontend(reply_generator=discord_reply_generator,
+                                                      connectors_event=self._connectors_event,
+                                                      credentials=DISCORD_CREDENTIALS)
+            self._discord_connector.start()
+            self._connectors.append(self._discord_connector)
+        except ImportError:
             pass
 
         # Non forking initializations
@@ -97,7 +112,6 @@ class ArmchairExpert(object):
 
         # Shutdown Models
         self._structure_scheduler.shutdown()
-
 
     def handle_shutdown(self):
         # Shutdown main()

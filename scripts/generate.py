@@ -2,9 +2,9 @@ import time
 
 import numpy as np
 from markov_engine import MarkovTrieDb, MarkovGenerator, MarkovFilters
-from config.ml_config import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
+from config.ml import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
 from models.structure import StructureModelScheduler
-from nlp_common import CapitalizationMode
+from common.nlp import CapitalizationMode
 
 np.random.seed(int(time.time()))
 
@@ -16,7 +16,7 @@ structure_model.load(STRUCTURE_MODEL_PATH)
 
 
 subjects = []
-for word in ['Some', 'Words', 'Here']:
+for word in ['Black', 'Lives', 'Matter']:
     select_word = markov_db.select(word)
     if select_word is not None:
         subjects.append(select_word)

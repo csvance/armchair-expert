@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 from enum import Enum, unique
-from ml_common import one_hot
+from common.ml import one_hot
 import re
 from spacy.tokens import Token
 
@@ -118,7 +118,7 @@ class CapitalizationMode(Enum):
         return ret_list
 
     @staticmethod
-    def from_token(token: Token) -> 'CapitalizationMode':
+    def from_token(token: Token, compound_rules: Optional[List[str]] = None) -> 'CapitalizationMode':
 
         # Try to make a guess for many common patterns
         pos = Pos.from_token(token)
@@ -126,6 +126,9 @@ class CapitalizationMode(Enum):
             return CapitalizationMode.COMPOUND
 
         if token.text[0] == '@' or token.text[0] == '#':
+            return CapitalizationMode.COMPOUND
+
+        if token.text in compound_rules:
             return CapitalizationMode.COMPOUND
 
         lower_count = 0

@@ -1,6 +1,6 @@
 from markov_engine import MarkovTrieDb, MarkovFilters, MarkovGenerator
 from models.structure import StructureModelScheduler
-from nlp_common import CapitalizationMode
+from common.nlp import CapitalizationMode
 from typing import Optional
 from multiprocessing import Process, Queue, Event
 from threading import Thread
@@ -29,11 +29,11 @@ class ConnectorReplyGenerator(object):
         if len(subjects) == 0:
             return None
 
-        def generate_structure():
+        def structure_generator():
             while True:
                 yield self._structure_scheduler.predict()
 
-        generator = MarkovGenerator(structure_generator=generate_structure(), subjects=subjects)
+        generator = MarkovGenerator(structure_generator=structure_generator(), subjects=subjects)
 
         reply_words = []
         sentences = generator.generate(db=self._markov_model)
