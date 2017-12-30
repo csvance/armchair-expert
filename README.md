@@ -7,15 +7,14 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
 - Learns to imitate sentence structures and capitalization patterns found in training data
 
-## Dependencies
-- python 3.6
-- keras with Tensorflow backend
+## Requirements
+- python 3.6+
+- keras (Tensorflow backend)
 - spaCy 2.0.0+
-- numpy
 - spaymoji
+- numpy
 - tweepy
 - discord
-- janus
 - zlib
 - sqlalchemy
 
