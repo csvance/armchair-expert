@@ -1,11 +1,10 @@
-## About
+# About
 Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 ## Features
-- NLP assisted multiple topic selection. When choosing subjects in a sentence to use as generation seeds, undesirable parts of speech such as pronouns and conjunctions are ignored.
-- Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence.
-- Analyzes reactions to fuel reinforcement learning, making word combinations that are funny appear more often. Supports both text based "AOL speak" and emoji reactions.
-- Learns to imitate sentence structures and capitalization patterns found in training data
+- Uses NLP to select the most optimal subjects for which to generate a response
+- Learns new words in realtime like a typical [Markov chain][markov-chain], but uses an [RNN][rnn] to structure and capitalize the output
+- Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence
 
 ## Requirements
 - python 3.6+
@@ -18,7 +17,7 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - zlib
 - sqlalchemy
 
-## General Setup
+## Setup & Training
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 - You will need to train armchair-expert with your data before using it (tweets, chatlogs, etc)
 - An example of pre-processing input data and using it to train is in the scripts folder
