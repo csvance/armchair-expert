@@ -3,7 +3,7 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 ## Features
 - Uses NLP to select the most optimal subjects for which to generate a response
-- Learns new words in realtime like a typical [Markov chain][markov-chain], but uses an [RNN][rnn] to structure and capitalize the output
+- Learns new words in realtime like a typical Markov chain, but uses an RNN to structure and capitalize the output
 - Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence
 
 ## Requirements
