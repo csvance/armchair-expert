@@ -91,7 +91,8 @@ ENV/
 .ropeproject
 
 .idea
-*_config.py
+config
+!config/*example.py
 *.db
 lines.db-journal
 /private/

@@ -6,9 +6,9 @@ import sys
 from models.structure import StructureModelScheduler
 from connectors.twitter import TwitterFrontend, TwitterReplyGenerator
 from markov_engine import MarkovTrieDb
-from config.ml_config import *
+from config.ml import *
 from nlp_common import create_nlp_instance
-from config.twitter_config import TWITTER_CREDENTIALS
+from config.twitter import TWITTER_CREDENTIALS
 
 
 @unique
@@ -47,7 +47,7 @@ class ArmchairExpert(object):
         # Initialize connectors
         self._twitter_connector = None
         try:
-            from config import twitter_config
+            from config import twitter
             twitter_reply_generator = TwitterReplyGenerator(markov_model=self._markov_model, structure_scheduler=self._structure_scheduler)
             self._twitter_connector = TwitterFrontend(reply_generator=twitter_reply_generator,
                                                       connectors_event=self._connectors_event, credentials=TWITTER_CREDENTIALS)

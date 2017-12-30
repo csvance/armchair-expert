@@ -5,7 +5,7 @@ from typing import List
 import tweepy
 
 from connectors.common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
-from config.twitter_config import SCREEN_NAME, TwitterApiCredentials
+from config.twitter import SCREEN_NAME, TwitterApiCredentials
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):

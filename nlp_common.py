@@ -1,6 +1,7 @@
 from typing import Optional
 from enum import Enum, unique
 from ml_common import one_hot
+from config.ml import CAPITALIZATION_COMPOUND_RULES
 import re
 from spacy.tokens import Token
 
@@ -126,6 +127,9 @@ class CapitalizationMode(Enum):
             return CapitalizationMode.COMPOUND
 
         if token.text[0] == '@' or token.text[0] == '#':
+            return CapitalizationMode.COMPOUND
+
+        if token.text in CAPITALIZATION_COMPOUND_RULES:
             return CapitalizationMode.COMPOUND
 
         lower_count = 0

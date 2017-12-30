@@ -9,10 +9,11 @@ from typing import Optional, List
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
-from config.ml_config import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
-    MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX
-from nlp_common import Pos, CapitalizationMode
+from config.ml import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
+    MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX, MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE, \
+    MARKOV_WORD_CHOICE_ARGMAX_P_VALUE
 from ml_common import one_hot
+from nlp_common import Pos, CapitalizationMode
 
 
 class WordKey(object):
@@ -468,7 +469,12 @@ class MarkovGenerator(object):
 
                     # Choose an index based on the probability
                     choices = np.arange(len(projection_collection))
-                    word_choice_idx = np.random.choice(choices, p=p_values)
+                    weighted_random_word_choice_idx = np.random.choice(choices, p=p_values)
+                    argmax_word_choice_idx = np.argmax(p_values)
+
+                    word_choice_idx = np.random.choice([weighted_random_word_choice_idx, argmax_word_choice_idx],
+                                                       p=[MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE,
+                                                          MARKOV_WORD_CHOICE_ARGMAX_P_VALUE])
 
                     # Select the word from the database and assign it to the blank space
                     select_word = projection_collection.keys[word_choice_idx]

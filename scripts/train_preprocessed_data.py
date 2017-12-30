@@ -6,7 +6,7 @@ from spacy.tokens import Doc
 
 from markov_engine import MarkovTrainer, MarkovTrieDb
 from ml_common import pickle_load
-from config.ml_config import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
+from config.ml import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
 from nlp_common import create_nlp_instance
 from models.structure import StructureModelScheduler
 
