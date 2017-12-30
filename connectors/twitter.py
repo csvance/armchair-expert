@@ -4,8 +4,8 @@ from time import sleep
 from typing import List
 import tweepy
 
-from connectors.common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
-from config.twitter import SCREEN_NAME, TwitterApiCredentials
+from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
+from config.twitter import *
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
@@ -16,9 +16,11 @@ class TwitterReplyGenerator(ConnectorReplyGenerator):
             return None
 
         # TODO: Validate URLs before sending to twitter instead of discarding them
-        # Remove URL from tweets
-        reply = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', reply)
-        reply = reply.strip()
+        if TWITTER_REMOVE_URL:
+            # Remove URLs
+            reply = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*(),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', reply)
+            reply = reply.strip()
+
         if len(reply) > 0:
             return reply
         else:

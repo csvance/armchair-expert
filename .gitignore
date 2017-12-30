@@ -93,6 +93,7 @@ ENV/
 .idea
 config
 !config/*example.py
+!config/__init__.py
 *.db
 lines.db-journal
 /private/

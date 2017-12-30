@@ -11,9 +11,9 @@ from spacy.tokens import Doc, Span, Token
 
 from config.ml import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX, MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE, \
-    MARKOV_WORD_CHOICE_ARGMAX_P_VALUE
-from ml_common import one_hot
-from nlp_common import Pos, CapitalizationMode
+    MARKOV_WORD_CHOICE_ARGMAX_P_VALUE, CAPITALIZATION_COMPOUND_RULES
+from common.ml import one_hot
+from common.nlp import Pos, CapitalizationMode
 
 
 class WordKey(object):
@@ -53,7 +53,7 @@ class MarkovNeighbor(object):
     def from_token(token: Token) -> 'MarkovNeighbor':
         key = token.text.lower()
         text = token.text
-        if CapitalizationMode.from_token(token) == CapitalizationMode.COMPOUND:
+        if CapitalizationMode.from_token(token, CAPITALIZATION_COMPOUND_RULES) == CapitalizationMode.COMPOUND:
             compound = True
         else:
             compound = False
@@ -170,7 +170,7 @@ class MarkovWord(object):
 
     @staticmethod
     def from_token(token: Token) -> 'MarkovWord':
-        if CapitalizationMode.from_token(token) == CapitalizationMode.COMPOUND:
+        if CapitalizationMode.from_token(token, CAPITALIZATION_COMPOUND_RULES) == CapitalizationMode.COMPOUND:
             compound = True
         else:
             compound = False

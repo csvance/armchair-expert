@@ -1,4 +1,4 @@
-from nlp_common import Pos
+from common.nlp import Pos
 
 # --- "User" Stuff Section ---
 # ----------------------------

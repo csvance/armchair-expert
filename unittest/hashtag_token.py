@@ -1,5 +1,5 @@
 import unittest
-from nlp_common import create_nlp_instance
+from common.nlp import create_nlp_instance
 
 
 class TestSpacyHashtagSplit(unittest.TestCase):

@@ -4,7 +4,7 @@ import numpy as np
 from markov_engine import MarkovTrieDb, MarkovGenerator, MarkovFilters
 from config.ml import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
 from models.structure import StructureModelScheduler
-from nlp_common import CapitalizationMode
+from common.nlp import CapitalizationMode
 
 np.random.seed(int(time.time()))
 
