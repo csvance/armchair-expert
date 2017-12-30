@@ -1,6 +1,8 @@
-import discord
 import asyncio
 import re
+
+import discord
+
 from config.discord import *
 from connectors.connector_common import *
 
@@ -31,6 +33,9 @@ class DiscordClient(discord.Client):
 
     async def on_ready(self):
         self._ready = True
+        print(
+            "Discord Server Join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0"
+            % DISCORD_CLIENT_ID)
 
     async def on_message(self, message: discord.Message):
         # Prevent feedback loop

@@ -36,10 +36,9 @@ Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - python armchair_expert.py
 
 ## Discord
-- **Not Implemented Yet**
 - You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
-- Once you register it take note of the Client ID, Username, Bot ID, and Token
-- Copy discord.example.py to discord.py and configure it
+- Once you register it take note of the Client ID, Username, and Token
+- Copy discord.example.py to discord.py and fill in the relevant fields
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
 
