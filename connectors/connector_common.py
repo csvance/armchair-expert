@@ -103,6 +103,7 @@ class Connector(object):
         self._read_queue = Queue()
         self._frontends_event = connectors_event
         self._shutdown_event = Event()
+        self._muted = True
 
     def give_nlp(self, nlp):
         self._reply_generator.give_nlp(nlp)
@@ -114,7 +115,9 @@ class Connector(object):
     def run(self):
         while not self._shutdown_event.is_set():
             message = self._scheduler.recv(timeout=0.2)
-            if message is not None:
+            if self._muted:
+                self._scheduler.send(None)
+            elif message is not None:
                 # Receive the message and put it in a queue
                 self._read_queue.put(message)
                 # Notify main program to wakeup and check for messages
@@ -139,3 +142,12 @@ class Connector(object):
 
     def generate(self, message: str) -> str:
         return self._reply_generator.generate(message)
+
+    def mute(self):
+        self._muted = True
+
+    def unmute(self):
+        self._muted = False
+
+    def empty(self):
+        return self._read_queue.empty()

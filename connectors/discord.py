@@ -5,6 +5,8 @@ import discord
 
 from config.discord import *
 from connectors.connector_common import *
+from storage.discord import DiscordTrainingDataManager
+from common.discord import DiscordHelper
 
 
 class DiscordReplyGenerator(ConnectorReplyGenerator):
@@ -31,20 +33,6 @@ class DiscordClient(discord.Client):
         self._worker = worker
         self._ready = False
 
-    @staticmethod
-    def filter_content(message: discord.Message):
-        # Replace mentions with names
-        filtered_content = message.content
-        for mention in message.mentions:
-            if mention.nick is not None:
-                replace_name = mention.nick
-            else:
-                replace_name = mention.name
-            replace_id = mention.id
-            replace_tag = "<@%s>" % replace_id
-            filtered_content = filtered_content.replace(replace_tag, replace_name)
-        return filtered_content
-
     async def on_ready(self):
         self._ready = True
         print(
@@ -56,7 +44,18 @@ class DiscordClient(discord.Client):
         if str(message.author) == DISCORD_USERNAME:
             return
 
-        filtered_content = DiscordClient.filter_content(message)
+        filtered_content = DiscordHelper.filter_content(message)
+
+        # Learn from private messages
+        if message.server is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
+            DiscordTrainingDataManager().store(message)
+        # Learn from all server messages
+        elif message.server is not None and DISCORD_LEARN_FROM_ALL:
+            if str(message.channel) not in DISCORD_LEARN_CHANNEL_EXCEPTIONS:
+                DiscordTrainingDataManager().store(message)
+        # Learn from User
+        elif str(message.author) == DISCORD_LEARN_FROM_USER:
+            DiscordTrainingDataManager().store(message)
 
         # Reply to mentions
         for mention in message.mentions:

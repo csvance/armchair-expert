@@ -8,15 +8,16 @@ class TwitterApiCredentials(object):
 # --- "User" Stuff Section ---
 # ----------------------------
 
-CONSUMER_KEY = ""
-CONSUMER_SECRET = ""
-ACCESS_TOKEN = ""
-ACCESS_TOKEN_SECRET = ""
+TWITTER_CONSUMER_KEY = ""
+TWITTER_CONSUMER_SECRET = ""
+TWITTER_ACCESS_TOKEN = ""
+TWITTER_ACCESS_TOKEN_SECRET = ""
 
-TWITTER_CREDENTIALS = TwitterApiCredentials(consumer_key=CONSUMER_KEY, consumer_secret=CONSUMER_SECRET,
-                                            access_token=ACCESS_TOKEN, access_token_secret=ACCESS_TOKEN_SECRET)
+TWITTER_CREDENTIALS = TwitterApiCredentials(consumer_key=TWITTER_CONSUMER_KEY, consumer_secret=TWITTER_CONSUMER_SECRET,
+                                            access_token=TWITTER_ACCESS_TOKEN,
+                                            access_token_secret=TWITTER_ACCESS_TOKEN_SECRET)
 
-SCREEN_NAME = 'Sundial_o7'
+TWITTER_SCREEN_NAME = 'Sundial_o7'
 
 # Learn everything in our user timeline
 TWITTER_LEARN_TIMELINE = False
@@ -31,7 +32,11 @@ TWITTER_LEARN_FROM_USER_RETWEETS = False
 # --- Technical Stuff Section ---
 # -------------------------------
 
+# Remove learned URL from replies
 TWITTER_REMOVE_URL = True
 
 # Store training data here
 TWITTER_TRAINING_DB_PATH = 'db/twitter.db'
+
+# In seconds
+TWITTER_SCRAPE_FREQUENCY = 900

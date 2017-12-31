@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from config.discord import DISCORD_TRAINING_DB_PATH
-from connectors.discord import DiscordClient
+from common.discord import DiscordHelper
 from storage.storage_common import TrainingDataManager
 
 Base = declarative_base()
@@ -17,9 +17,9 @@ Base = declarative_base()
 class Message(Base):
     __tablename__ = "message"
     id = Column(Integer, index=True, primary_key=True)
-    server_id = Column(BigInteger, nullable=False, index=True)
+    server_id = Column(BigInteger, nullable=True, index=True)
     channel_id = Column(BigInteger, nullable=False, index=True)
-    user_id = Column(BigInteger, nullable=False)
+    user_id = Column(BigInteger, nullable=False, index=True)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     trained = Column(Integer, nullable=False, default=0)
     text = Column(BLOB, nullable=False)
@@ -55,7 +55,7 @@ class DiscordTrainingDataManager(TrainingDataManager):
     def store(self, data: DiscordMessage):
         message = data
 
-        filtered_content = DiscordClient.filter_content(message)
+        filtered_content = DiscordHelper.filter_content(message)
         message = Message(server_id=int(message.server.id), channel_id=int(message.channel.id),
                           user_id=int(message.author.id), timestamp=message.timestamp,
                           text=filtered_content.content.encode())

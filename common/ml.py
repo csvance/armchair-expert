@@ -1,4 +1,6 @@
 import pickle
+from typing import Tuple
+from spacy.tokens import Doc
 
 
 def pickle_save(key, data):
@@ -15,3 +17,13 @@ def one_hot(idx: int, size: int):
     return ret
 
 
+class MLDataPreprocessor(object):
+    def __init__(self):
+        self.data = []
+        self.labels = []
+
+    def get_preprocessed_data(self) -> Tuple:
+        pass
+
+    def preprocess(self, doc: Doc):
+        pass

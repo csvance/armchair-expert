@@ -2,7 +2,7 @@ from typing import Optional, List
 from enum import Enum, unique
 from common.ml import one_hot
 import re
-from spacy.tokens import Token
+from spacy.tokens import Token, Doc
 
 
 def create_nlp_instance():
@@ -183,3 +183,14 @@ class CapitalizationMode(Enum):
             ret_word = ret_word.lower()
 
         return ret_word
+
+
+class SpacyPreprocessor(object):
+    def __init__(self):
+        self.docs = []
+
+    def preprocess(self, doc: Doc):
+        self.docs.append(doc)
+
+    def get_preprocessed_data(self):
+        return self.docs

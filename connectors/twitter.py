@@ -1,12 +1,13 @@
 import re
 from multiprocessing import Queue, Event
+from threading import Thread
 from time import sleep
 from typing import List
 import tweepy
-
+from datetime import datetime
 from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
 from config.twitter import *
-from storage.twitter import TwitterTrainingDataManager
+from storage.twitter import TwitterTrainingDataManager, TwitterScraper
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
@@ -39,9 +40,13 @@ class TwitterReplyListener(tweepy.StreamListener):
 
     def on_direct_message(self, status):
         direct_message = status.direct_message
-        if direct_message['sender']['screen_name'] == SCREEN_NAME:
+        if direct_message['sender']['screen_name'] == TWITTER_SCREEN_NAME:
             return
         print("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
+
+        if TWITTER_LEARN_TIMELINE:
+            TwitterTrainingDataManager().store(status)
+
         self._worker.send(direct_message['text'])
         reply = self._worker.recv()
         if reply is not None:
@@ -53,9 +58,13 @@ class TwitterReplyListener(tweepy.StreamListener):
 
     # Reply to any mentions of the bot
     def on_status(self, status):
-        if status.author.screen_name != SCREEN_NAME:
+        if status.author.screen_name != TWITTER_SCREEN_NAME:
             self._worker.send(status.text)
             print("Mention(%s): %s" % (status.author.screen_name, status.text))
+
+            if TWITTER_LEARN_TIMELINE:
+                TwitterTrainingDataManager().store(status)
+
             reply = self._worker.recv()
             if reply is not None:
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
@@ -79,7 +88,8 @@ class TwitterWorker(ConnectorWorker):
         self._credentials = credentials
         self._user_stream = None
         self._api = None
-        self._db = None
+        self._scraper = None
+        self._scraper_thread = None
 
     def _start_user_stream(self, retweet_replies_to_ids: List[int]):
         auth = self._auth()
@@ -96,20 +106,35 @@ class TwitterWorker(ConnectorWorker):
 
         return auth
 
-    def run(self):
+    def _scraper_thread_main(self):
 
-        self._db = TwitterTrainingDataManager()
+        # Load Scraper
+        self._scraper = TwitterScraper(self._credentials, TWITTER_LEARN_FROM_USER)
+
+        last_scrape = datetime.now()
+        while True:
+            sleep(1)
+            if (datetime.now() - last_scrape).total_seconds() >= TWITTER_SCRAPE_FREQUENCY:
+                self._scraper.scrape()
+                last_scrape = datetime.now()
+
+    def run(self):
 
         # Load API instance
         auth = self._auth()
         self._api = tweepy.API(auth)
 
+        # Get user id's which we will always reply to
         retweet_replies_to_ids = []
-        for page in tweepy.Cursor(self._api.friends_ids, screen_name=SCREEN_NAME).pages():
+        for page in tweepy.Cursor(self._api.friends_ids, screen_name=TWITTER_SCREEN_NAME).pages():
             retweet_replies_to_ids.extend(page)
 
         # Start user stream handler
         self._start_user_stream(retweet_replies_to_ids)
+
+        # Run scraper thread
+        self._scraper_thread = Thread(target=self._scraper_thread_main)
+        self._scraper_thread.start()
 
         while True:
             sleep(0.2)

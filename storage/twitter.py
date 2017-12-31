@@ -3,6 +3,7 @@ from typing import List
 
 import tweepy
 from sqlalchemy import Column, Integer, DateTime, BigInteger, String, BLOB
+from sqlalchemy import func
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -24,7 +25,7 @@ class ScraperStatus(Base):
 class Tweet(Base):
     __tablename__ = "tweet"
     id = Column(Integer, index=True, primary_key=True)
-    tweet_id = Column(BigInteger, nullable=False, index=True, unique=True)
+    status_id = Column(BigInteger, nullable=False, index=True, unique=True)
     user_id = Column(BigInteger, nullable=False)
     in_reply_to_status_id = Column(BigInteger)
     in_reply_to_user_id = Column(BigInteger)
@@ -64,18 +65,28 @@ class TwitterTrainingDataManager(TrainingDataManager):
     def store(self, data: Status):
         status = data
 
-        tweet = Tweet(tweet_id=status.id, user_id=status.user.id, in_reply_to_user_id=status.in_reply_to_user_id,
-                      in_reply_to_status_id=status.in_reply_to_status_id, retweeted=int(status.retweeted),
-                      timestamp=status.created_at, text=status.text.encode())
-        self._session.add(tweet)
-        self._session.commit()
+        tweet = self._session.query(Tweet).filter(Tweet.status_id == status.id).first()
+        if tweet is None:
+            tweet = Tweet(status_id=status.id, user_id=status.user.id, in_reply_to_user_id=status.in_reply_to_user_id,
+                          in_reply_to_status_id=status.in_reply_to_status_id, retweeted=int(status.retweeted),
+                          timestamp=status.created_at, text=status.text.encode())
+            self._session.add(tweet)
+            self._session.commit()
 
 
 class TwitterScraper(object):
-    def __init__(self, credentials: TwitterApiCredentials, screen_name: str, since_id: int = None):
+    def __init__(self, credentials: TwitterApiCredentials, screen_name: str):
         self._credentials = credentials
         self.screen_name = screen_name
         self.session = Session()
+
+        row = self.session.query(func.max(Tweet.status_id)).first()
+        if row is not None:
+            since_id = row[0]
+        else:
+            since_id = 0
+
+        self._latest_tweet_processed_id = since_id
 
         self.scraper_status = self.session.query(ScraperStatus).filter(
             ScraperStatus.screen_name == self.screen_name).first()
@@ -90,28 +101,28 @@ class TwitterScraper(object):
 
         return auth
 
-    def scrape(self):
+    def scrape(self, wait_on_rate_limit=True):
 
         auth = self._auth()
-        api = tweepy.API(auth, wait_on_rate_limit=True)
-        latest_tweet_id = self.scraper_status.since_id
+        api = tweepy.API(auth, wait_on_rate_limit=wait_on_rate_limit)
 
         for tweet in tweepy.Cursor(api.user_timeline, screen_name=self.screen_name, count=100,
                                    lang="en", since_id=self.scraper_status.since_id).items():
-            tweet_row = self.session.query(Tweet).filter(Tweet.tweet_id == tweet.id).first()
+            tweet_row = self.session.query(Tweet).filter(Tweet.status_id == tweet.id).first()
             if tweet_row is None:
-                tweet_row = Tweet(tweet_id=tweet.id, user_id=tweet.author.id,
+                tweet_row = Tweet(status_id=tweet.id, user_id=tweet.author.id,
                                   in_reply_to_status_id=tweet.in_reply_to_status_id,
                                   in_reply_to_user_id=tweet.in_reply_to_user_id, retweeted=tweet.retweeted,
                                   timestamp=tweet.created_at, text=tweet.text.encode())
                 self.session.add(tweet_row)
 
+                # Store the highest ID so we can set it to since_id later
+                if self._latest_tweet_processed_id is None or tweet_row.status_id > self._latest_tweet_processed_id:
+                    self._latest_tweet_processed_id = tweet_row.status_id
+
                 # Normally it would be asinine to commit every insert, but we are rate limited by twitter anyway
                 self.session.commit()
 
-                if tweet_row.tweet_id > latest_tweet_id:
-                    latest_tweet_id = tweet_row.tweet_id
-
-        # Update scraper progress
-        self.scraper_status.since_id = latest_tweet_id
+        # Complete scraper progress
+        self.scraper_status.since_id = self._latest_tweet_processed_id
         self.session.commit()

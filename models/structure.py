@@ -5,20 +5,17 @@ import numpy as np
 from spacy.tokens import Token
 
 from common.nlp import Pos, CapitalizationMode
+from common.ml import MLDataPreprocessor
 from config.ml import CAPITALIZATION_COMPOUND_RULES
 from models.model_common import MLModelScheduler, MLModelWorker
 
 
-class StructurePreprocessor(object):
-    def __init__(self):
-        self.structure_data = []
-        self.structure_labels = []
-
+class StructurePreprocessor(MLDataPreprocessor):
     def get_preprocessed_data(self) -> Tuple:
         from keras.preprocessing.sequence import pad_sequences
         from keras.utils import np_utils
-        structure_data = pad_sequences(self.structure_data, StructureModel.SEQUENCE_LENGTH, padding='post')
-        structure_labels = np.array(np_utils.to_categorical(self.structure_labels,
+        structure_data = pad_sequences(self.data, StructureModel.SEQUENCE_LENGTH, padding='post')
+        structure_labels = np.array(np_utils.to_categorical(self.labels,
                                                             num_classes=StructureFeatureAnalyzer.NUM_FEATURES))
         return structure_data, structure_labels
 
@@ -40,8 +37,8 @@ class StructurePreprocessor(object):
                 # We only want the latest SEQUENCE_LENGTH items
                 sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
 
-                self.structure_data.append(sequence.copy())
-                self.structure_labels.append(label)
+                self.data.append(sequence.copy())
+                self.labels.append(label)
 
                 previous_item = item
 
@@ -54,8 +51,8 @@ class StructurePreprocessor(object):
             # We only want the latest SEQUENCE_LENGTH items
             sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
 
-            self.structure_data.append(sequence.copy())
-            self.structure_labels.append(label)
+            self.data.append(sequence.copy())
+            self.labels.append(label)
 
             previous_item = item
 
