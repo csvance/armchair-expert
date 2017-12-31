@@ -148,22 +148,20 @@ class ArmchairExpert(object):
         if messages is not None:
             DiscordTrainingDataManager().mark_trained(messages)
 
-        print("Training done!")
-
     def _main(self):
         self._set_status(AEStatus.RUNNING)
         while True:
-            if self._connectors_event.wait(timeout=0.2):
+            if self._connectors_event.wait(timeout=1):
                 self._connectors_event.clear()
 
-                for connector in self._connectors:
-                    while not connector.empty():
-                        message = connector.recv()
-                        if message is not None:
-                            reply = connector.generate(message)
-                            connector.send(reply)
-                        else:
-                            connector.send(None)
+            for connector in self._connectors:
+                while not connector.empty():
+                    message = connector.recv()
+                    if message is not None:
+                        reply = connector.generate(message)
+                        connector.send(reply)
+                    else:
+                        connector.send(None)
 
             if self._status == AEStatus.SHUTTING_DOWN:
                 self.shutdown()
