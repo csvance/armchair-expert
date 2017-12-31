@@ -94,6 +94,6 @@ ENV/
 config
 !config/*example.py
 !config/__init__.py
-*.db
+db
 lines.db-journal
 /private/

@@ -31,6 +31,20 @@ class DiscordClient(discord.Client):
         self._worker = worker
         self._ready = False
 
+    @staticmethod
+    def filter_content(message: discord.Message):
+        # Replace mentions with names
+        filtered_content = message.content
+        for mention in message.mentions:
+            if mention.nick is not None:
+                replace_name = mention.nick
+            else:
+                replace_name = mention.name
+            replace_id = mention.id
+            replace_tag = "<@%s>" % replace_id
+            filtered_content = filtered_content.replace(replace_tag, replace_name)
+        return filtered_content
+
     async def on_ready(self):
         self._ready = True
         print(
@@ -42,16 +56,7 @@ class DiscordClient(discord.Client):
         if str(message.author) == DISCORD_USERNAME:
             return
 
-        # Replace mentions with names
-        filtered_content = message.content
-        for mention in message.mentions:
-            if mention.nick is not None:
-                replace_name = mention.nick
-            else:
-                replace_name = mention.name
-            replace_id = mention.id
-            replace_tag = "<@%s>" % replace_id
-            filtered_content = filtered_content.replace(replace_tag, replace_name)
+        filtered_content = DiscordClient.filter_content(message)
 
         # Reply to mentions
         for mention in message.mentions:
@@ -90,6 +95,8 @@ class DiscordWorker(ConnectorWorker):
                 return
 
     def run(self):
+        from storage.discord import DiscordTrainingDataManager
+        self._db = DiscordTrainingDataManager()
         self._client = DiscordClient(self)
         self._client.loop.create_task(self._watchdog())
         self._client.run(self._credentials.token)

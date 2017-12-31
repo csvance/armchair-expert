@@ -2,16 +2,10 @@ import argparse
 import json
 import sys
 
-import numpy as np
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import np_utils
-
 from common.ml import pickle_save
-from common.nlp import create_nlp_instance, Pos, CapitalizationMode
-from config.ml import CAPITALIZATION_COMPOUND_RULES
+from common.nlp import create_nlp_instance
 from markov_engine import MarkovTrainer, MarkovTrieDb, MarkovFilters
-from models.structure import StructureFeatureAnalyzer
-from models.structure import StructureModel, PoSCapitalizationMode
+from models.structure import StructurePreprocessor
 
 if __name__ == '__main__':
 
@@ -34,9 +28,7 @@ if __name__ == '__main__':
         markov_trainer = MarkovTrainer(markov_db)
 
     if args.structure:
-        structure_data = []
-        structure_labels = []
-        structure_shifted = []
+        structure_preprocessor = StructurePreprocessor()
 
     # Create spacy instance
     nlp = create_nlp_instance()
@@ -77,41 +69,7 @@ if __name__ == '__main__':
                 word_docs.append(doc.to_bytes())
 
             if args.structure:
-                sequence = []
-
-                for sentence_idx, sentence in enumerate(doc.sents):
-                    for token_idx, token in enumerate(sentence):
-                        item = StructureFeatureAnalyzer.analyze(token, CapitalizationMode.from_token(token,
-                                                                                                     CAPITALIZATION_COMPOUND_RULES))
-                        label = item
-
-                        if len(sequence) == 0:
-                            # Offset data by one, making label point to the next data item
-                            sequence.append(PoSCapitalizationMode(Pos.NONE, CapitalizationMode.NONE).to_embedding())
-                        else:
-                            sequence.append(previous_item)
-
-                        # We only want the latest SEQUENCE_LENGTH items
-                        sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
-
-                        structure_data.append(sequence.copy())
-                        structure_labels.append(label)
-
-                        previous_item = item
-
-                    # Handle EOS after each sentence
-                    item = PoSCapitalizationMode(Pos.EOS, CapitalizationMode.NONE).to_embedding()
-                    label = item
-
-                    sequence.append(previous_item)
-
-                    # We only want the latest SEQUENCE_LENGTH items
-                    sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
-
-                    structure_data.append(sequence.copy())
-                    structure_labels.append(label)
-
-                    previous_item = item
+                structure_preprocessor.preprocess(doc)
 
     # Stats
     print("Average PoS per tweet: %f" % (tweet_length_sum / tweet_count))
@@ -122,11 +80,8 @@ if __name__ == '__main__':
 
     # Finish training capitalization data
     if args.structure:
-        structure_data = pad_sequences(structure_data, StructureModel.SEQUENCE_LENGTH, padding='post')
-        structure_labels = np_utils.to_categorical(structure_labels,
-                                                   num_classes=StructureFeatureAnalyzer.NUM_FEATURES)
-
-        pickle_save('structure_data', np.array(structure_data))
+        structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
+        pickle_save('structure_data', structure_data)
         pickle_save('structure_labels', structure_labels)
 
     print("%f%%" % 100.)

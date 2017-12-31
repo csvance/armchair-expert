@@ -6,6 +6,7 @@ import tweepy
 
 from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
 from config.twitter import *
+from storage.twitter import TwitterTrainingDataManager
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
@@ -78,6 +79,7 @@ class TwitterWorker(ConnectorWorker):
         self._credentials = credentials
         self._user_stream = None
         self._api = None
+        self._db = None
 
     def _start_user_stream(self, retweet_replies_to_ids: List[int]):
         auth = self._auth()
@@ -95,6 +97,8 @@ class TwitterWorker(ConnectorWorker):
         return auth
 
     def run(self):
+
+        self._db = TwitterTrainingDataManager()
 
         # Load API instance
         auth = self._auth()

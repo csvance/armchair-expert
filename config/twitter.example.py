@@ -18,5 +18,20 @@ TWITTER_CREDENTIALS = TwitterApiCredentials(consumer_key=CONSUMER_KEY, consumer_
 
 SCREEN_NAME = 'Sundial_o7'
 
+# Learn everything in our user timeline
+TWITTER_LEARN_TIMELINE = False
+
+# Learn from a specific user
+TWITTER_LEARN_FROM_USER = None
+
+# Learn from that users retweets?
+TWITTER_LEARN_FROM_USER_RETWEETS = False
+
+
 # --- Technical Stuff Section ---
 # -------------------------------
+
+TWITTER_REMOVE_URL = True
+
+# Store training data here
+TWITTER_TRAINING_DB_PATH = 'db/twitter.db'

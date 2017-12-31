@@ -1,11 +1,63 @@
 from multiprocessing import Queue
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from spacy.tokens import Token
 
-from models.model_common import MLModelScheduler, MLModelWorker
 from common.nlp import Pos, CapitalizationMode
+from config.ml import CAPITALIZATION_COMPOUND_RULES
+from models.model_common import MLModelScheduler, MLModelWorker
+
+
+class StructurePreprocessor(object):
+    def __init__(self):
+        self.structure_data = []
+        self.structure_labels = []
+
+    def get_preprocessed_data(self) -> Tuple:
+        from keras.preprocessing.sequence import pad_sequences
+        from keras.utils import np_utils
+        structure_data = pad_sequences(self.structure_data, StructureModel.SEQUENCE_LENGTH, padding='post')
+        structure_labels = np.array(np_utils.to_categorical(self.structure_labels,
+                                                            num_classes=StructureFeatureAnalyzer.NUM_FEATURES))
+        return structure_data, structure_labels
+
+    def preprocess(self, doc):
+        sequence = []
+        previous_item = None
+        for sentence_idx, sentence in enumerate(doc.sents):
+            for token_idx, token in enumerate(sentence):
+                item = StructureFeatureAnalyzer.analyze(
+                    token, CapitalizationMode.from_token(token, CAPITALIZATION_COMPOUND_RULES))
+                label = item
+
+                if len(sequence) == 0:
+                    # Offset data by one, making label point to the next data item
+                    sequence.append(PoSCapitalizationMode(Pos.NONE, CapitalizationMode.NONE).to_embedding())
+                else:
+                    sequence.append(previous_item)
+
+                # We only want the latest SEQUENCE_LENGTH items
+                sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
+
+                self.structure_data.append(sequence.copy())
+                self.structure_labels.append(label)
+
+                previous_item = item
+
+            # Handle EOS after each sentence
+            item = PoSCapitalizationMode(Pos.EOS, CapitalizationMode.NONE).to_embedding()
+            label = item
+
+            sequence.append(previous_item)
+
+            # We only want the latest SEQUENCE_LENGTH items
+            sequence = sequence[-StructureModel.SEQUENCE_LENGTH:]
+
+            self.structure_data.append(sequence.copy())
+            self.structure_labels.append(label)
+
+            previous_item = item
 
 
 class PoSCapitalizationMode(object):
@@ -106,7 +158,8 @@ class StructureModel(object):
 
 class StructureModelWorker(MLModelWorker):
     def __init__(self, read_queue: Queue, write_queue: Queue, use_gpu: bool = False):
-        MLModelWorker.__init__(self, name='SentenceStructureModelWorker', read_queue=read_queue, write_queue=write_queue,
+        MLModelWorker.__init__(self, name='SentenceStructureModelWorker', read_queue=read_queue,
+                               write_queue=write_queue,
                                use_gpu=use_gpu)
 
     def run(self):
