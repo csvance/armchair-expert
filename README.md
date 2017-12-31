@@ -1,5 +1,5 @@
 # About
-Armchair Expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
+armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
 
 ## Features
 - Uses NLP to select the most optimal subjects for which to generate a response
