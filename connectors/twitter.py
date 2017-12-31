@@ -118,9 +118,9 @@ class TwitterWorker(ConnectorWorker):
         while True:
             sleep(1)
             if (datetime.now() - last_scrape).total_seconds() >= TWITTER_SCRAPE_FREQUENCY:
-                self._logger.debug("Running scraper.")
+                self._logger.info("Running scraper.")
                 self._scraper.scrape(learn_retweets=TWITTER_LEARN_FROM_USER_RETWEETS)
-                self._logger.debug("Scraper done.")
+                self._logger.info("Scraper done.")
                 last_scrape = datetime.now()
 
     def run(self):
