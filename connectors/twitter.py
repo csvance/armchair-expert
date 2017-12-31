@@ -10,10 +10,11 @@ from config.twitter import *
 from storage.twitter import TwitterTrainingDataManager, TwitterScraper
 import logging
 from spacy.tokens import Doc
+from typing import Optional
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
-    def generate(self, message: str, doc: Doc = None):
+    def generate(self, message: str, doc: Doc = None) -> Optional[str]:
         reply = ConnectorReplyGenerator.generate(self, message, doc)
 
         if reply is None:

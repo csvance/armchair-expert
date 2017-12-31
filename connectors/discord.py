@@ -11,7 +11,7 @@ from spacy.tokens import Doc
 
 
 class DiscordReplyGenerator(ConnectorReplyGenerator):
-    def generate(self, message: str, doc: Doc = None):
+    def generate(self, message: str, doc: Doc = None) -> Optional[str]:
         reply = ConnectorReplyGenerator.generate(self, message, doc)
 
         if reply is None:
