@@ -119,7 +119,7 @@ class TwitterWorker(ConnectorWorker):
             sleep(1)
             if (datetime.now() - last_scrape).total_seconds() >= TWITTER_SCRAPE_FREQUENCY:
                 self._logger.debug("Running scraper.")
-                self._scraper.scrape()
+                self._scraper.scrape(learn_retweets=TWITTER_LEARN_FROM_USER_RETWEETS)
                 self._logger.debug("Scraper done.")
                 last_scrape = datetime.now()
 
@@ -137,9 +137,10 @@ class TwitterWorker(ConnectorWorker):
         # Start user stream handler
         self._start_user_stream(retweet_replies_to_ids)
 
-        # Run scraper thread
-        self._scraper_thread = Thread(target=self._scraper_thread_main)
-        self._scraper_thread.start()
+        if TWITTER_LEARN_FROM_USER is not None:
+            # Run scraper thread
+            self._scraper_thread = Thread(target=self._scraper_thread_main)
+            self._scraper_thread.start()
 
         while True:
             sleep(0.2)

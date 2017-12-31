@@ -101,7 +101,7 @@ class TwitterScraper(object):
 
         return auth
 
-    def scrape(self, wait_on_rate_limit=True):
+    def scrape(self, wait_on_rate_limit=True, learn_retweets=False):
 
         auth = self._auth()
         api = tweepy.API(auth, wait_on_rate_limit=wait_on_rate_limit)
@@ -110,15 +110,16 @@ class TwitterScraper(object):
                                    lang="en", since_id=self.scraper_status.since_id).items():
             tweet_row = self.session.query(Tweet).filter(Tweet.status_id == tweet.id).first()
             if tweet_row is None:
-                tweet_row = Tweet(status_id=tweet.id, user_id=tweet.author.id,
-                                  in_reply_to_status_id=tweet.in_reply_to_status_id,
-                                  in_reply_to_user_id=tweet.in_reply_to_user_id, retweeted=tweet.retweeted,
-                                  timestamp=tweet.created_at, text=tweet.text.encode())
-                self.session.add(tweet_row)
+                if not tweet.retweeted or (tweet.retweeted and learn_retweets):
+                    tweet_row = Tweet(status_id=tweet.id, user_id=tweet.author.id,
+                                      in_reply_to_status_id=tweet.in_reply_to_status_id,
+                                      in_reply_to_user_id=tweet.in_reply_to_user_id, retweeted=tweet.retweeted,
+                                      timestamp=tweet.created_at, text=tweet.text.encode())
+                    self.session.add(tweet_row)
 
                 # Store the highest ID so we can set it to since_id later
-                if self._latest_tweet_processed_id is None or tweet_row.status_id > self._latest_tweet_processed_id:
-                    self._latest_tweet_processed_id = tweet_row.status_id
+                if self._latest_tweet_processed_id is None or tweet.id > self._latest_tweet_processed_id:
+                    self._latest_tweet_processed_id = tweet.id
 
                 # Normally it would be asinine to commit every insert, but we are rate limited by twitter anyway
                 self.session.commit()
