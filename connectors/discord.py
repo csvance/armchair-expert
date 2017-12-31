@@ -2,7 +2,7 @@ import asyncio
 import re
 
 import discord
-
+import logging
 from config.discord import *
 from connectors.connector_common import *
 from storage.discord import DiscordTrainingDataManager
@@ -32,11 +32,12 @@ class DiscordClient(discord.Client):
         discord.Client.__init__(self)
         self._worker = worker
         self._ready = False
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     async def on_ready(self):
         self._ready = True
-        print(
-            "Discord Server Join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0"
+        self._logger.info(
+            "Server join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0"
             % DISCORD_CLIENT_ID)
 
     async def on_message(self, message: discord.Message):
@@ -60,20 +61,22 @@ class DiscordClient(discord.Client):
         # Reply to mentions
         for mention in message.mentions:
             if str(mention) == DISCORD_USERNAME:
+                self._logger.debug("Message: %s" % filtered_content)
                 self._worker.send(filtered_content)
                 reply = self._worker.recv()
-                if reply is None:
-                    return
-                await self.send_message(message.channel, reply)
+                self._logger.debug("Reply: %s" % reply)
+                if reply is not None:
+                    await self.send_message(message.channel, reply)
                 return
 
         # Reply to private messages
         if message.server is None:
+            self._logger.debug("Private Message: %s" % filtered_content)
             self._worker.send(filtered_content)
             reply = self._worker.recv()
-            if reply is None:
-                return
-            await self.send_message(message.channel, reply)
+            self._logger.debug("Reply: %s" % reply)
+            if reply is not None:
+                await self.send_message(message.channel, reply)
             return
 
 
@@ -84,12 +87,14 @@ class DiscordWorker(ConnectorWorker):
                                  shutdown_event=shutdown_event)
         self._credentials = credentials
         self._client = None
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     async def _watchdog(self):
         while True:
             await asyncio.sleep(0.2)
 
             if self._shutdown_event.is_set():
+                self._logger.info("Got shutdown signal.")
                 await self._client.close()
                 return
 

@@ -2,10 +2,12 @@ import signal
 import sys
 from enum import Enum, unique
 from multiprocessing import Event
+import logging
 
 from storage.discord import DiscordTrainingDataManager
 from common.nlp import create_nlp_instance, SpacyPreprocessor
 from config.ml import *
+from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
 from markov_engine import MarkovTrieDb, MarkovTrainer
 from models.structure import StructureModelScheduler, StructurePreprocessor
 from storage.twitter import TwitterTrainingDataManager
@@ -30,12 +32,14 @@ class ArmchairExpert(object):
         self._connectors_event = Event()
         self._twitter_connector = None
         self._discord_connector = None
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     def _set_status(self, status: AEStatus):
         self._status = status
-        print("armchair-expert status: %s" % str(self._status).split(".")[1])
+        self._logger.info("Status: %s" % str(self._status).split(".")[1])
 
     def start(self):
+
         self._set_status(AEStatus.STARTING_UP)
 
         # Initialize backends and models
@@ -63,6 +67,7 @@ class ArmchairExpert(object):
                                                       connectors_event=self._connectors_event,
                                                       credentials=TWITTER_CREDENTIALS)
             self._connectors.append(self._twitter_connector)
+            self._logger.info("Loaded Twitter Connector.")
         except ImportError:
             pass
 
@@ -75,10 +80,12 @@ class ArmchairExpert(object):
                                                       connectors_event=self._connectors_event,
                                                       credentials=DISCORD_CREDENTIALS)
             self._connectors.append(self._discord_connector)
+            self._logger.info("Loaded Discord Connector.")
         except ImportError:
             pass
 
         # Non forking initializations
+        self._logger.info("Loading spaCy model")
         self._nlp = create_nlp_instance()
 
         # Catch up on training now that everything is initialized but not yet started
@@ -95,18 +102,18 @@ class ArmchairExpert(object):
 
     def train(self):
 
-        print("Training new data...")
+        self._logger.info("Training new data.")
         structure_preprocessor = StructurePreprocessor()
         spacy_preprocessor = SpacyPreprocessor()
 
         tweets = None
         if self._twitter_connector is not None:
-            print("Training_Preprocessing(Twitter)")
+            self._logger.info("Training_Preprocessing(Twitter)")
             tweets = TwitterTrainingDataManager().new_training_data()
             for tweet_idx, tweet in enumerate(tweets):
                 # Print Progress
                 if tweet_idx % 100 == 0:
-                    print("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
+                    self._logger.info("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
 
                 doc = self._nlp(tweet.text.decode())
                 structure_preprocessor.preprocess(doc)
@@ -114,30 +121,30 @@ class ArmchairExpert(object):
 
         messages = None
         if self._discord_connector is not None:
-            print("Training_Preprocessing(Discord)")
+            self._logger.info("Training_Preprocessing(Discord)")
             messages = DiscordTrainingDataManager().new_training_data()
             for message_idx, message in enumerate(messages):
                 # Print Progress
                 if message_idx % 100 == 0:
-                    print("Training_Preprocessing(Discord): %f%%" % (tweet_idx / len(tweets) * 100))
+                    self._logger.info("Training_Preprocessing(Discord): %f%%" % (tweet_idx / len(tweets) * 100))
 
                 doc = self._nlp(message.text.decode())
                 structure_preprocessor.preprocess(doc)
                 spacy_preprocessor.preprocess(doc)
 
-        print("Training(Markov)")
+                self._logger.info("Training(Markov)")
         markov_trainer = MarkovTrainer(self._markov_model)
         docs = spacy_preprocessor.get_preprocessed_data()
         for doc_idx, doc in enumerate(docs):
             # Print Progress
             if doc_idx % 100 == 0:
-                print("Training(Markov): %f%%" % (tweet_idx / len(tweets) * 100))
+                self._logger.info("Training(Markov): %f%%" % (tweet_idx / len(tweets) * 100))
 
             markov_trainer.learn(doc)
         if len(docs) > 0:
             self._markov_model.save(MARKOV_DB_PATH)
 
-        print("Training(Structure)")
+            self._logger.info("Training(Structure)")
         structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
         if len(structure_data) > 0:
             self._structure_scheduler.train(structure_data, structure_labels, epochs=10)
@@ -147,6 +154,8 @@ class ArmchairExpert(object):
             TwitterTrainingDataManager().mark_trained(tweets)
         if messages is not None:
             DiscordTrainingDataManager().mark_trained(messages)
+
+        self._logger.info("Training done.")
 
     def _main(self):
         self._set_status(AEStatus.RUNNING)
@@ -189,6 +198,7 @@ def signal_handler(sig, frame):
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
+    logging.basicConfig(level=ARMCHAIR_EXPERT_LOGLEVEL)
 
     ae = ArmchairExpert()
     ae.start()

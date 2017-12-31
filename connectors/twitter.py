@@ -8,6 +8,7 @@ from datetime import datetime
 from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
 from config.twitter import *
 from storage.twitter import TwitterTrainingDataManager, TwitterScraper
+import logging
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
@@ -37,12 +38,13 @@ class TwitterReplyListener(tweepy.StreamListener):
         auth.set_access_token(credentials.access_token, credentials.access_token_secret)
         self._api = tweepy.API(auth)
         self._retweet_replies_to_ids = retweet_replies_to_ids
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     def on_direct_message(self, status):
         direct_message = status.direct_message
         if direct_message['sender']['screen_name'] == TWITTER_SCREEN_NAME:
             return
-        print("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
+        self._logger.debug("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
 
         if TWITTER_LEARN_TIMELINE:
             TwitterTrainingDataManager().store(status)
@@ -50,17 +52,17 @@ class TwitterReplyListener(tweepy.StreamListener):
         self._worker.send(direct_message['text'])
         reply = self._worker.recv()
         if reply is not None:
-            print("Direct Message Reply: %s" % reply)
+            self._logger.debug("Direct Message Reply: %s" % reply)
             try:
                 self._api.send_direct_message(user_id=direct_message['sender']['id'], text=reply)
             except tweepy.error.TweepError as e:
-                print("Error sending DM: %s" % e.reason)
+                self._logger.error("Error sending DM: %s" % e.reason)
 
     # Reply to any mentions of the bot
     def on_status(self, status):
         if status.author.screen_name != TWITTER_SCREEN_NAME:
             self._worker.send(status.text)
-            print("Mention(%s): %s" % (status.author.screen_name, status.text))
+            self._logger.debug("Mention(%s): %s" % (status.author.screen_name, status.text))
 
             if TWITTER_LEARN_TIMELINE:
                 TwitterTrainingDataManager().store(status)
@@ -68,13 +70,13 @@ class TwitterReplyListener(tweepy.StreamListener):
             reply = self._worker.recv()
             if reply is not None:
                 reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
-                print("Mention Reply: %s" % reply)
+                self._logger.debug("Mention Reply: %s" % reply)
                 try:
                     reply_status = self._api.update_status(reply, status.id)
                     if status.author.id in self._retweet_replies_to_ids:
                         self._api.retweet(reply_status.id)
                 except tweepy.error.TweepError as e:
-                    print("Error replying to mention: %s" % e.reason)
+                    self._logger.error("Error replying to mention: %s" % e.reason)
 
     def on_error(self, status):
         print(status)
@@ -90,6 +92,7 @@ class TwitterWorker(ConnectorWorker):
         self._api = None
         self._scraper = None
         self._scraper_thread = None
+        self._logger = logging.getLogger(self.__class__.__name__)
 
     def _start_user_stream(self, retweet_replies_to_ids: List[int]):
         auth = self._auth()
@@ -115,7 +118,9 @@ class TwitterWorker(ConnectorWorker):
         while True:
             sleep(1)
             if (datetime.now() - last_scrape).total_seconds() >= TWITTER_SCRAPE_FREQUENCY:
+                self._logger.debug("Running scraper.")
                 self._scraper.scrape()
+                self._logger.debug("Scraper done.")
                 last_scrape = datetime.now()
 
     def run(self):
@@ -140,6 +145,7 @@ class TwitterWorker(ConnectorWorker):
             sleep(0.2)
 
             if self._shutdown_event.is_set():
+                self._logger.info("Got shutdown signal.")
                 self._stop_user_stream()
                 return
 
