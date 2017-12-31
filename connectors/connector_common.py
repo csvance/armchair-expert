@@ -5,6 +5,7 @@ from typing import Optional
 from multiprocessing import Process, Queue, Event
 from threading import Thread
 from queue import Empty
+from spacy.tokens import Doc
 
 
 class ConnectorReplyGenerator(object):
@@ -17,10 +18,12 @@ class ConnectorReplyGenerator(object):
     def give_nlp(self, nlp):
         self._nlp = nlp
 
-    def generate(self, message: str) -> Optional[str]:
+    def generate(self, message: str, doc: Doc = None) -> Optional[str]:
 
-        filtered_message = MarkovFilters.filter_input(message)
-        doc = self._nlp(filtered_message)
+        if doc is None:
+            filtered_message = MarkovFilters.filter_input(message)
+            doc = self._nlp(filtered_message)
+
         subjects = []
         for token in doc:
             markov_word = self._markov_model.select(token.text)

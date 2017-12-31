@@ -7,11 +7,12 @@ from config.discord import *
 from connectors.connector_common import *
 from storage.discord import DiscordTrainingDataManager
 from common.discord import DiscordHelper
+from spacy.tokens import Doc
 
 
 class DiscordReplyGenerator(ConnectorReplyGenerator):
-    def generate(self, message: str):
-        reply = ConnectorReplyGenerator.generate(self, message)
+    def generate(self, message: str, doc: Doc = None):
+        reply = ConnectorReplyGenerator.generate(self, message, doc)
 
         if reply is None:
             return None

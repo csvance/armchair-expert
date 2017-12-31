@@ -8,7 +8,7 @@ from storage.discord import DiscordTrainingDataManager
 from common.nlp import create_nlp_instance, SpacyPreprocessor
 from config.ml import *
 from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
-from markov_engine import MarkovTrieDb, MarkovTrainer
+from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
 from storage.twitter import TwitterTrainingDataManager
 
@@ -159,6 +159,7 @@ class ArmchairExpert(object):
 
     def _main(self):
         self._set_status(AEStatus.RUNNING)
+
         while True:
             if self._connectors_event.wait(timeout=1):
                 self._connectors_event.clear()
@@ -167,7 +168,9 @@ class ArmchairExpert(object):
                 while not connector.empty():
                     message = connector.recv()
                     if message is not None:
-                        reply = connector.generate(message)
+                        # Reply
+                        doc = self._nlp(MarkovFilters.filter_input(message))
+                        reply = connector.generate(message, doc=doc)
                         connector.send(reply)
                     else:
                         connector.send(None)

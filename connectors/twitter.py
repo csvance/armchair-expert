@@ -9,11 +9,12 @@ from connectors.connector_common import ConnectorWorker, ConnectorScheduler, Con
 from config.twitter import *
 from storage.twitter import TwitterTrainingDataManager, TwitterScraper
 import logging
+from spacy.tokens import Doc
 
 
 class TwitterReplyGenerator(ConnectorReplyGenerator):
-    def generate(self, message: str):
-        reply = ConnectorReplyGenerator.generate(self, message)
+    def generate(self, message: str, doc: Doc = None):
+        reply = ConnectorReplyGenerator.generate(self, message, doc)
 
         if reply is None:
             return None
