@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Tuple
 
 import tweepy
 from sqlalchemy import Column, Integer, DateTime, BigInteger, String, BLOB
@@ -47,20 +47,8 @@ Session = scoped_session(session_factory)
 
 class TwitterTrainingDataManager(TrainingDataManager):
     def __init__(self):
+        TrainingDataManager.__init__(self, Tweet)
         self._session = Session()
-
-    def new_training_data(self) -> List[Tweet]:
-        return self._session.query(Tweet).filter(Tweet.trained == 0).all()
-
-    def mark_trained(self, data: List):
-        for tweet in data:
-            tweet.trained = 1
-        self._session.commit()
-
-    def untrain_all(self):
-        for tweet in self._session.query(Tweet).filter(Tweet.trained == 1).all():
-            tweet.trained = 0
-        self._session.commit()
 
     def store(self, data: Status):
         status = data

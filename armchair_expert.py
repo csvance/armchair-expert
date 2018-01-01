@@ -11,6 +11,7 @@ from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
 from storage.twitter import TwitterTrainingDataManager
+from storage.imported import ImportTrainingDataManager
 
 
 @unique
@@ -106,6 +107,17 @@ class ArmchairExpert(object):
         structure_preprocessor = StructurePreprocessor()
         spacy_preprocessor = SpacyPreprocessor()
 
+        self._logger.info("Training_Preprocessing(Import)")
+        imported_messages = ImportTrainingDataManager().new_training_data()
+        for message_idx, message in enumerate(imported_messages):
+            # Print Progress
+            if message_idx % 100 == 0:
+                self._logger.info("Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
+
+            doc = self._nlp(message[0].decode())
+            structure_preprocessor.preprocess(doc)
+            spacy_preprocessor.preprocess(doc)
+
         tweets = None
         if self._twitter_connector is not None:
             self._logger.info("Training_Preprocessing(Twitter)")
@@ -115,45 +127,51 @@ class ArmchairExpert(object):
                 if tweet_idx % 100 == 0:
                     self._logger.info("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
 
-                doc = self._nlp(tweet.text.decode())
+                doc = self._nlp(tweet[0].decode())
                 structure_preprocessor.preprocess(doc)
                 spacy_preprocessor.preprocess(doc)
 
-        messages = None
+        discord_messages = None
         if self._discord_connector is not None:
             self._logger.info("Training_Preprocessing(Discord)")
-            messages = DiscordTrainingDataManager().new_training_data()
-            for message_idx, message in enumerate(messages):
+            discord_messages = DiscordTrainingDataManager().new_training_data()
+            for message_idx, message in enumerate(discord_messages):
                 # Print Progress
                 if message_idx % 100 == 0:
-                    self._logger.info("Training_Preprocessing(Discord): %f%%" % (tweet_idx / len(tweets) * 100))
+                    self._logger.info(
+                        "Training_Preprocessing(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
 
-                doc = self._nlp(message.text.decode())
+                doc = self._nlp(message[0].decode())
                 structure_preprocessor.preprocess(doc)
                 spacy_preprocessor.preprocess(doc)
 
-                self._logger.info("Training(Markov)")
+        self._logger.info("Training(Markov)")
         markov_trainer = MarkovTrainer(self._markov_model)
         docs = spacy_preprocessor.get_preprocessed_data()
         for doc_idx, doc in enumerate(docs):
             # Print Progress
             if doc_idx % 100 == 0:
-                self._logger.info("Training(Markov): %f%%" % (tweet_idx / len(tweets) * 100))
+                self._logger.info("Training(Markov): %f%%" % (doc_idx / len(docs) * 100))
 
             markov_trainer.learn(doc)
         if len(docs) > 0:
             self._markov_model.save(MARKOV_DB_PATH)
 
-            self._logger.info("Training(Structure)")
+        self._logger.info("Training(Structure)")
         structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
         if len(structure_data) > 0:
-            self._structure_scheduler.train(structure_data, structure_labels, epochs=10)
+            epochs = min(int(len(structure_data) * (10 / 30000)), 1)
+            self._logger.info("Training(Structure): %d epochs" % epochs)
+
+            self._structure_scheduler.train(structure_data, structure_labels, epochs=epochs)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
 
         if tweets is not None:
-            TwitterTrainingDataManager().mark_trained(tweets)
-        if messages is not None:
-            DiscordTrainingDataManager().mark_trained(messages)
+            TwitterTrainingDataManager().mark_trained()
+        if discord_messages is not None:
+            DiscordTrainingDataManager().mark_trained()
+        if len(imported_messages) > 0:
+            ImportTrainingDataManager().mark_trained()
 
         self._logger.info("Training done.")
 
