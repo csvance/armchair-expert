@@ -1,6 +1,6 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from enum import Enum, unique
-from common.ml import one_hot
+from common.ml import one_hot, MLDataPreprocessor
 import re
 from spacy.tokens import Token, Doc
 
@@ -185,12 +185,13 @@ class CapitalizationMode(Enum):
         return ret_word
 
 
-class SpacyPreprocessor(object):
+class SpacyPreprocessor(MLDataPreprocessor):
     def __init__(self):
-        self.docs = []
+        MLDataPreprocessor.__init__(self, 'SpacyPreprocessor')
 
-    def preprocess(self, doc: Doc):
-        self.docs.append(doc)
+    def preprocess(self, doc: Doc) -> bool:
+        self.data.append(doc)
+        return True
 
-    def get_preprocessed_data(self):
-        return self.docs
+    def get_preprocessed_data(self) -> Tuple[List, List]:
+        return self.data, self.labels

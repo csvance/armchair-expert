@@ -2,15 +2,19 @@ from multiprocessing import Queue
 from typing import List, Tuple
 
 import numpy as np
-from spacy.tokens import Token
+from spacy.tokens import Token, Doc
 
-from common.nlp import Pos, CapitalizationMode
 from common.ml import MLDataPreprocessor
-from config.ml import CAPITALIZATION_COMPOUND_RULES
+from common.nlp import Pos, CapitalizationMode
+from config.ml import CAPITALIZATION_COMPOUND_RULES, STRUCTURE_MODEL_TRAINING_MAX_SIZE, \
+    STRUCTURE_MODEL_TRAINING_BATCH_SIZE
 from models.model_common import MLModelScheduler, MLModelWorker
 
 
 class StructurePreprocessor(MLDataPreprocessor):
+    def __init__(self):
+        MLDataPreprocessor.__init__(self, 'StructurePreprocessor')
+
     def get_preprocessed_data(self) -> Tuple:
         from keras.preprocessing.sequence import pad_sequences
         from keras.utils import np_utils
@@ -19,10 +23,16 @@ class StructurePreprocessor(MLDataPreprocessor):
                                                             num_classes=StructureFeatureAnalyzer.NUM_FEATURES))
         return structure_data, structure_labels
 
-    def preprocess(self, doc):
+    def preprocess(self, doc: Doc) -> bool:
+        if len(self.data) >= STRUCTURE_MODEL_TRAINING_MAX_SIZE:
+            return False
+
         sequence = []
         previous_item = None
         for sentence_idx, sentence in enumerate(doc.sents):
+            if len(self.data) >= STRUCTURE_MODEL_TRAINING_MAX_SIZE:
+                return False
+
             for token_idx, token in enumerate(sentence):
                 item = StructureFeatureAnalyzer.analyze(
                     token, CapitalizationMode.from_token(token, CAPITALIZATION_COMPOUND_RULES))
@@ -55,6 +65,7 @@ class StructurePreprocessor(MLDataPreprocessor):
             self.labels.append(label)
 
             previous_item = item
+        return True
 
 
 class PoSCapitalizationMode(object):
@@ -113,7 +124,7 @@ class StructureModel(object):
             set_session(tf.Session(config=config))
 
     def train(self, data, labels, epochs=1):
-        self.model.fit(data, labels, epochs=epochs, batch_size=64)
+        self.model.fit(data, labels, epochs=epochs, batch_size=STRUCTURE_MODEL_TRAINING_BATCH_SIZE)
 
     def predict(self) -> List[PoSCapitalizationMode]:
         from keras.preprocessing.sequence import pad_sequences

@@ -12,7 +12,7 @@ Base = declarative_base()
 
 
 class ImportedMessage(Base):
-    __tablename__ = "genericmessage"
+    __tablename__ = "importedmessage"
     id = Column(Integer, index=True, primary_key=True)
     trained = Column(Integer, nullable=False, default=0)
     text = Column(BLOB, nullable=False)

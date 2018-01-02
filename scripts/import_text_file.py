@@ -13,8 +13,8 @@ def main():
     data_manager = ImportTrainingDataManager()
 
     lines = data.split("\n")
-    for line_idx, line in enumerate(lines):
 
+    for line_idx, line in enumerate(lines):
         if line_idx % 1000 == 0:
             print("Import: %f%%" % (line_idx / len(lines) * 100))
 

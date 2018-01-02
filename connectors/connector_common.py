@@ -143,8 +143,8 @@ class Connector(object):
         self._scheduler.shutdown()
         self._thread.join()
 
-    def generate(self, message: str) -> str:
-        return self._reply_generator.generate(message)
+    def generate(self, message: str, doc: Doc=None) -> str:
+        return self._reply_generator.generate(message, doc)
 
     def mute(self):
         self._muted = True

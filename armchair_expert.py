@@ -1,16 +1,16 @@
+import logging
 import signal
 import sys
 from enum import Enum, unique
 from multiprocessing import Event
-import logging
 
 from common.nlp import create_nlp_instance, SpacyPreprocessor
-from config.ml import *
 from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
+from config.ml import USE_GPU, PREPROCESS_CACHE_DIR, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, \
+    STRUCTURE_MODEL_TRAINING_EPOCHS
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
-
-
+from storage.imported import ImportTrainingDataManager
 
 
 @unique
@@ -106,52 +106,63 @@ class ArmchairExpert(object):
         structure_preprocessor = StructurePreprocessor()
         spacy_preprocessor = SpacyPreprocessor()
 
-        self._logger.info("Training_Preprocessing(Import)")
-        from storage.imported import ImportTrainingDataManager
-        imported_messages = ImportTrainingDataManager().new_training_data()
-        for message_idx, message in enumerate(imported_messages):
-            # Print Progress
-            if message_idx % 100 == 0:
-                self._logger.info("Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
+        try:
+            structure_preprocessor.load_cache(PREPROCESS_CACHE_DIR)
+            spacy_preprocessor.load_cache(PREPROCESS_CACHE_DIR)
+        except FileNotFoundError:
+            structure_preprocessor = StructurePreprocessor()
+            spacy_preprocessor = SpacyPreprocessor()
 
-            doc = self._nlp(message[0].decode())
-            structure_preprocessor.preprocess(doc)
-            spacy_preprocessor.preprocess(doc)
-
-        tweets = None
-        if self._twitter_connector is not None:
-            self._logger.info("Training_Preprocessing(Twitter)")
-            from storage.twitter import TwitterTrainingDataManager
-
-            tweets = TwitterTrainingDataManager().new_training_data()
-            for tweet_idx, tweet in enumerate(tweets):
-                # Print Progress
-                if tweet_idx % 100 == 0:
-                    self._logger.info("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
-
-                doc = self._nlp(tweet[0].decode())
-                structure_preprocessor.preprocess(doc)
-                spacy_preprocessor.preprocess(doc)
-
-        discord_messages = None
-        if self._discord_connector is not None:
-            self._logger.info("Training_Preprocessing(Discord)")
-            from storage.discord import DiscordTrainingDataManager
-
-            discord_messages = DiscordTrainingDataManager().new_training_data()
-            for message_idx, message in enumerate(discord_messages):
+            self._logger.info("Training_Preprocessing(Import)")
+            imported_messages = ImportTrainingDataManager().new_training_data()
+            for message_idx, message in enumerate(imported_messages):
                 # Print Progress
                 if message_idx % 100 == 0:
                     self._logger.info(
-                        "Training_Preprocessing(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
+                        "Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
 
                 doc = self._nlp(message[0].decode())
                 structure_preprocessor.preprocess(doc)
                 spacy_preprocessor.preprocess(doc)
 
+            tweets = None
+            if self._twitter_connector is not None:
+                self._logger.info("Training_Preprocessing(Twitter)")
+                from storage.twitter import TwitterTrainingDataManager
+
+                tweets = TwitterTrainingDataManager().new_training_data()
+                for tweet_idx, tweet in enumerate(tweets):
+                    # Print Progress
+                    if tweet_idx % 100 == 0:
+                        self._logger.info("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
+
+                    doc = self._nlp(tweet[0].decode())
+                    structure_preprocessor.preprocess(doc)
+                    spacy_preprocessor.preprocess(doc)
+
+            discord_messages = None
+            if self._discord_connector is not None:
+                self._logger.info("Training_Preprocessing(Discord)")
+                from storage.discord import DiscordTrainingDataManager
+
+                discord_messages = DiscordTrainingDataManager().new_training_data()
+                for message_idx, message in enumerate(discord_messages):
+                    # Print Progress
+                    if message_idx % 100 == 0:
+                        self._logger.info(
+                            "Training_Preprocessing(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
+
+                    doc = self._nlp(message[0].decode())
+                    structure_preprocessor.preprocess(doc)
+                    spacy_preprocessor.preprocess(doc)
+
+            # Cache Preprocessed Data
+            structure_preprocessor.save_cache(PREPROCESS_CACHE_DIR)
+            spacy_preprocessor.save_cache(PREPROCESS_CACHE_DIR)
+
         self._logger.info("Training(Markov)")
         markov_trainer = MarkovTrainer(self._markov_model)
-        docs = spacy_preprocessor.get_preprocessed_data()
+        docs, _ = spacy_preprocessor.get_preprocessed_data()
         for doc_idx, doc in enumerate(docs):
             # Print Progress
             if doc_idx % 100 == 0:
@@ -164,18 +175,27 @@ class ArmchairExpert(object):
         self._logger.info("Training(Structure)")
         structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
         if len(structure_data) > 0:
-            epochs = min(int(len(structure_data) * (10 / 30000)), 1)
-            self._logger.info("Training(Structure): %d epochs" % epochs)
-
-            self._structure_scheduler.train(structure_data, structure_labels, epochs=epochs)
+            self._structure_scheduler.train(structure_data, structure_labels, epochs=STRUCTURE_MODEL_TRAINING_EPOCHS)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
 
-        if tweets is not None:
+        # Mark data as trained
+        if self._twitter_connector is not None:
+            from storage.twitter import TwitterTrainingDataManager
             TwitterTrainingDataManager().mark_trained()
-        if discord_messages is not None:
+        if self._discord_connector is not None:
+            from storage.discord import DiscordTrainingDataManager
             DiscordTrainingDataManager().mark_trained()
-        if len(imported_messages) > 0:
-            ImportTrainingDataManager().mark_trained()
+        ImportTrainingDataManager().mark_trained()
+
+        # Delete cached data
+        try:
+            structure_preprocessor.wipe_cache(PREPROCESS_CACHE_DIR)
+        except FileNotFoundError:
+            pass
+        try:
+            spacy_preprocessor.wipe_cache(PREPROCESS_CACHE_DIR)
+        except FileNotFoundError:
+            pass
 
         self._logger.info("Training done.")
 
