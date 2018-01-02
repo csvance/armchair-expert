@@ -34,4 +34,3 @@ class ImportTrainingDataManager(TrainingDataManager):
         message = data
         imported_message = ImportedMessage(text=message.encode())
         self._session.add(imported_message)
-        self._session.commit()

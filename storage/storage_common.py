@@ -18,5 +18,9 @@ class TrainingDataManager(object):
     def mark_untrained(self):
         self._session.execute('UPDATE ' + self._table_type.__tablename__ + ' SET TRAINED = 0')
 
+    def commit(self):
+        self._session.commit()
+
     def store(self, data):
         pass
+
