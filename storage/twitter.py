@@ -70,7 +70,7 @@ class TwitterScraper(object):
 
         row = self.session.query(func.max(Tweet.status_id)).first()
         if row is not None:
-            since_id = row[0]
+            since_id = row[0] if row[0] is not None else 0
         else:
             since_id = 0
 
