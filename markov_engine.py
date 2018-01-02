@@ -547,7 +547,10 @@ class MarkovFilters(object):
         if text is None:
             return None
         smoothed = text
+        smoothed = re.sub(r'([$]) ', r'\1', smoothed)
         smoothed = re.sub(r' ([.,?!%])', r'\1', smoothed)
+        smoothed = re.sub(r' ([\']) ', r'\1', smoothed)
+
         return smoothed
 
 
