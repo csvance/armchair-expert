@@ -118,7 +118,8 @@ class ArmchairExpert(object):
             # Print Progress
             if message_idx % 100 == 0:
                 self._logger.info(
-                    "Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
+                    "Training_Preprocessing(Import): %f%%" % (
+                            message_idx / min(STRUCTURE_MODEL_TRAINING_MAX_SIZE, len(imported_messages)) * 100))
 
             doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
             if not structure_preprocessor.preprocess(doc):
@@ -134,7 +135,8 @@ class ArmchairExpert(object):
                 # Print Progress
                 if tweet_idx % 100 == 0:
                     self._logger.info(
-                        "Training_Preprocessing_Structure(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
+                        "Training_Preprocessing_Structure(Twitter): %f%%" % (
+                                tweet_idx / min(STRUCTURE_MODEL_TRAINING_MAX_SIZE, len(tweets)) * 100))
 
                 doc = self._nlp(MarkovFilters.filter_input(tweet[0].decode()))
                 if not structure_preprocessor.preprocess(doc):
@@ -150,7 +152,8 @@ class ArmchairExpert(object):
                 # Print Progress
                 if message_idx % 100 == 0:
                     self._logger.info(
-                        "Training_Preprocessing_Structure(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
+                        "Training_Preprocessing_Structure(Discord): %f%%" % (
+                                message_idx / min(STRUCTURE_MODEL_TRAINING_MAX_SIZE, len(discord_messages)) * 100))
 
                 doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
                 if not structure_preprocessor.preprocess(doc):
