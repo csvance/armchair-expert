@@ -4,14 +4,13 @@ from enum import Enum, unique
 from multiprocessing import Event
 import logging
 
-from storage.discord import DiscordTrainingDataManager
 from common.nlp import create_nlp_instance, SpacyPreprocessor
 from config.ml import *
 from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
-from storage.twitter import TwitterTrainingDataManager
-from storage.imported import ImportTrainingDataManager
+
+
 
 
 @unique
@@ -108,6 +107,7 @@ class ArmchairExpert(object):
         spacy_preprocessor = SpacyPreprocessor()
 
         self._logger.info("Training_Preprocessing(Import)")
+        from storage.imported import ImportTrainingDataManager
         imported_messages = ImportTrainingDataManager().new_training_data()
         for message_idx, message in enumerate(imported_messages):
             # Print Progress
@@ -121,6 +121,8 @@ class ArmchairExpert(object):
         tweets = None
         if self._twitter_connector is not None:
             self._logger.info("Training_Preprocessing(Twitter)")
+            from storage.twitter import TwitterTrainingDataManager
+
             tweets = TwitterTrainingDataManager().new_training_data()
             for tweet_idx, tweet in enumerate(tweets):
                 # Print Progress
@@ -134,6 +136,8 @@ class ArmchairExpert(object):
         discord_messages = None
         if self._discord_connector is not None:
             self._logger.info("Training_Preprocessing(Discord)")
+            from storage.discord import DiscordTrainingDataManager
+
             discord_messages = DiscordTrainingDataManager().new_training_data()
             for message_idx, message in enumerate(discord_messages):
                 # Print Progress
