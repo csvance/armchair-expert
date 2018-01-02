@@ -94,8 +94,14 @@ class TwitterScraper(object):
         auth = self._auth()
         api = tweepy.API(auth, wait_on_rate_limit=wait_on_rate_limit)
 
-        for tweet in tweepy.Cursor(api.user_timeline, screen_name=self.screen_name, count=100,
-                                   lang="en", since_id=self.scraper_status.since_id).items():
+        if self.scraper_status.since_id == 0:
+            tweets = tweepy.Cursor(api.user_timeline, screen_name=self.screen_name, count=100,
+                                   lang="en").items()
+        else:
+            tweets = tweepy.Cursor(api.user_timeline, screen_name=self.screen_name, count=100,
+                                   lang="en", since_id=self.scraper_status.since_id).items()
+
+        for tweet in tweets:
             tweet_row = self.session.query(Tweet).filter(Tweet.status_id == tweet.id).first()
             if tweet_row is None:
                 if not tweet.retweeted or (tweet.retweeted and learn_retweets):
