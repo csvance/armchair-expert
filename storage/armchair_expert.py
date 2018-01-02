@@ -49,6 +49,7 @@ class InputTextStatManager(object):
     def reset(self):
         self._session.execute("DELETE FROM inputtextstat")
         self.commit()
+        self._rows = {}
 
     def probabilities(self) -> Tuple[List, List]:
 
