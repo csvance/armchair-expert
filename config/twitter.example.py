@@ -28,6 +28,12 @@ TWITTER_LEARN_FROM_USER = None
 # Learn from that users retweets?
 TWITTER_LEARN_FROM_USER_RETWEETS = False
 
+# Reply to mentions
+TWITTER_REPLY_MENTIONS = True
+
+# Reply to anything on timeline
+TWITTER_REPLY_TIMELINE = False
+
 
 # --- Technical Stuff Section ---
 # -------------------------------
