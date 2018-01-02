@@ -1,3 +1,4 @@
+import argparse
 import logging
 import signal
 import sys
@@ -6,12 +7,13 @@ from multiprocessing import Event
 
 from common.nlp import create_nlp_instance, SpacyPreprocessor
 from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
-from config.ml import USE_GPU, PREPROCESS_CACHE_DIR, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, \
-    STRUCTURE_MODEL_TRAINING_EPOCHS
+from config.ml import USE_GPU, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, \
+    STRUCTURE_MODEL_TRAINING_EPOCHS, STRUCTURE_MODEL_TRAINING_MAX_SIZE
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
+from storage.armchair_expert import InputTextStatManager
 from storage.imported import ImportTrainingDataManager
-from storage.armchair_expert import SentenceStatsManager
+
 
 @unique
 class AEStatus(Enum):
@@ -38,24 +40,26 @@ class ArmchairExpert(object):
         self._status = status
         self._logger.info("Status: %s" % str(self._status).split(".")[1])
 
-    def start(self):
+    def start(self, retrain_structure: bool = False, retrain_markov: bool = False):
 
         self._set_status(AEStatus.STARTING_UP)
 
         # Initialize backends and models
         self._markov_model = MarkovTrieDb()
-        try:
-            self._markov_model.load(MARKOV_DB_PATH)
-        except FileNotFoundError:
-            pass
+        if not retrain_markov:
+            try:
+                self._markov_model.load(MARKOV_DB_PATH)
+            except FileNotFoundError:
+                pass
 
         self._structure_scheduler = StructureModelScheduler(USE_GPU)
         self._structure_scheduler.start()
-        try:
-            open(STRUCTURE_MODEL_PATH, 'rb')
-            self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
-        except FileNotFoundError:
-            pass
+        if not retrain_structure is None:
+            try:
+                open(STRUCTURE_MODEL_PATH, 'rb')
+                self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
+            except FileNotFoundError:
+                pass
 
         # Initialize connectors
         try:
@@ -89,7 +93,7 @@ class ArmchairExpert(object):
         self._nlp = create_nlp_instance()
 
         # Catch up on training now that everything is initialized but not yet started
-        self.train()
+        self.train(retrain_structure=retrain_structure, retrain_markov=retrain_markov)
 
         # Give the connectors the NLP object and start them
         for connector in self._connectors:
@@ -100,67 +104,120 @@ class ArmchairExpert(object):
         # Handle events
         self._main()
 
-    def train(self):
-
-        self._logger.info("Training new data.")
+    def _preprocess_structure_data(self):
         structure_preprocessor = StructurePreprocessor()
-        spacy_preprocessor = SpacyPreprocessor()
 
-        try:
-            structure_preprocessor.load_cache(PREPROCESS_CACHE_DIR)
-            spacy_preprocessor.load_cache(PREPROCESS_CACHE_DIR)
-        except FileNotFoundError:
-            structure_preprocessor = StructurePreprocessor()
-            spacy_preprocessor = SpacyPreprocessor()
+        self._logger.info("Training_Preprocessing_Structure(Import)")
+        imported_messages = ImportTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+        for message_idx, message in enumerate(imported_messages):
+            # Print Progress
+            if message_idx % 100 == 0:
+                self._logger.info(
+                    "Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
 
-            self._logger.info("Training_Preprocessing(Import)")
-            imported_messages = ImportTrainingDataManager().new_training_data()
-            for message_idx, message in enumerate(imported_messages):
+            doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
+            if not structure_preprocessor.preprocess(doc):
+                return structure_preprocessor
+
+        tweets = None
+        if self._twitter_connector is not None:
+            self._logger.info("Training_Preprocessing_Structure(Twitter)")
+            from storage.twitter import TwitterTrainingDataManager
+
+            tweets = TwitterTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+            for tweet_idx, tweet in enumerate(tweets):
+                # Print Progress
+                if tweet_idx % 100 == 0:
+                    self._logger.info(
+                        "Training_Preprocessing_Structure(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
+
+                doc = self._nlp(MarkovFilters.filter_input(tweet[0].decode()))
+                if not structure_preprocessor.preprocess(doc):
+                    return structure_preprocessor
+
+        discord_messages = None
+        if self._discord_connector is not None:
+            self._logger.info("Training_Preprocessing_Structure(Discord)")
+            from storage.discord import DiscordTrainingDataManager
+
+            discord_messages = DiscordTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+            for message_idx, message in enumerate(discord_messages):
                 # Print Progress
                 if message_idx % 100 == 0:
                     self._logger.info(
-                        "Training_Preprocessing(Import): %f%%" % (message_idx / len(imported_messages) * 100))
+                        "Training_Preprocessing_Structure(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
 
-                doc = self._nlp(message[0].decode())
-                structure_preprocessor.preprocess(doc)
+                doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
+                if not structure_preprocessor.preprocess(doc):
+                    return structure_preprocessor
+
+        return structure_preprocessor
+
+    def _preprocess_markov_data(self, all_training_data: bool = False):
+        spacy_preprocessor = SpacyPreprocessor()
+
+        self._logger.info("Training_Preprocessing_Markov(Import)")
+        if not all_training_data:
+            imported_messages = ImportTrainingDataManager().new_training_data()
+        else:
+            imported_messages = ImportTrainingDataManager().all_training_data()
+        for message_idx, message in enumerate(imported_messages):
+            # Print Progress
+            if message_idx % 100 == 0:
+                self._logger.info(
+                    "Training_Preprocessing_Markov(Import): %f%%" % (message_idx / len(imported_messages) * 100))
+
+            doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
+            spacy_preprocessor.preprocess(doc)
+
+        tweets = None
+        if self._twitter_connector is not None:
+            self._logger.info("Training_Preprocessing_Markov(Twitter)")
+            from storage.twitter import TwitterTrainingDataManager
+
+            if not all_training_data:
+                tweets = TwitterTrainingDataManager().new_training_data()
+            else:
+                tweets = TwitterTrainingDataManager().all_training_data()
+            for tweet_idx, tweet in enumerate(tweets):
+                # Print Progress
+                if tweet_idx % 100 == 0:
+                    self._logger.info("Training_Preprocessing_Markov(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
+
+                doc = self._nlp(MarkovFilters.filter_input(tweet[0].decode()))
                 spacy_preprocessor.preprocess(doc)
 
-            tweets = None
-            if self._twitter_connector is not None:
-                self._logger.info("Training_Preprocessing(Twitter)")
-                from storage.twitter import TwitterTrainingDataManager
+        discord_messages = None
+        if self._discord_connector is not None:
+            self._logger.info("Training_Preprocessing_Markov(Discord)")
+            from storage.discord import DiscordTrainingDataManager
 
-                tweets = TwitterTrainingDataManager().new_training_data()
-                for tweet_idx, tweet in enumerate(tweets):
-                    # Print Progress
-                    if tweet_idx % 100 == 0:
-                        self._logger.info("Training Preprocessing(Twitter): %f%%" % (tweet_idx / len(tweets) * 100))
-
-                    doc = self._nlp(tweet[0].decode())
-                    structure_preprocessor.preprocess(doc)
-                    spacy_preprocessor.preprocess(doc)
-
-            discord_messages = None
-            if self._discord_connector is not None:
-                self._logger.info("Training_Preprocessing(Discord)")
-                from storage.discord import DiscordTrainingDataManager
-
+            if not all_training_data:
                 discord_messages = DiscordTrainingDataManager().new_training_data()
-                for message_idx, message in enumerate(discord_messages):
-                    # Print Progress
-                    if message_idx % 100 == 0:
-                        self._logger.info(
-                            "Training_Preprocessing(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
+            else:
+                discord_messages = DiscordTrainingDataManager().all_training_data()
 
-                    doc = self._nlp(message[0].decode())
-                    structure_preprocessor.preprocess(doc)
-                    spacy_preprocessor.preprocess(doc)
+            for message_idx, message in enumerate(discord_messages):
+                # Print Progress
+                if message_idx % 100 == 0:
+                    self._logger.info(
+                        "Training_Preprocessing_Markov(Discord): %f%%" % (message_idx / len(discord_messages) * 100))
 
-            # Cache Preprocessed Data
-            structure_preprocessor.save_cache(PREPROCESS_CACHE_DIR)
-            spacy_preprocessor.save_cache(PREPROCESS_CACHE_DIR)
+                doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
+                spacy_preprocessor.preprocess(doc)
+
+        return spacy_preprocessor
+
+    def _train_markov(self, retrain: bool = False):
+
+        spacy_preprocessor = self._preprocess_markov_data(all_training_data=retrain)
 
         self._logger.info("Training(Markov)")
+        input_text_stats_manager = InputTextStatManager()
+        if retrain:
+            # Reset stats if we are retraining
+            input_text_stats_manager.reset()
+
         markov_trainer = MarkovTrainer(self._markov_model)
         docs, _ = spacy_preprocessor.get_preprocessed_data()
         for doc_idx, doc in enumerate(docs):
@@ -169,8 +226,22 @@ class ArmchairExpert(object):
                 self._logger.info("Training(Markov): %f%%" % (doc_idx / len(docs) * 100))
 
             markov_trainer.learn(doc)
+
+            sents = 0
+            for sent in doc.sents:
+                sents += 1
+            input_text_stats_manager.log_length(length=sents)
+
         if len(docs) > 0:
             self._markov_model.save(MARKOV_DB_PATH)
+            input_text_stats_manager.commit()
+
+    def _train_structure(self, retrain: bool = False):
+
+        if not retrain:
+            return
+
+        structure_preprocessor = self._preprocess_structure_data()
 
         self._logger.info("Training(Structure)")
         structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
@@ -178,17 +249,11 @@ class ArmchairExpert(object):
             self._structure_scheduler.train(structure_data, structure_labels, epochs=STRUCTURE_MODEL_TRAINING_EPOCHS)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
 
-        # Update statistics
-        self._logger.info("Updating statistics")
-        sentence_stats_manager = SentenceStatsManager()
-        docs, _ = spacy_preprocessor.get_preprocessed_data()
-        for doc in docs:
-            sents = 0
-            for sent in doc.sents:
-                sents += 1
-            sentence_stats_manager.log_length(length=sents)
+    def train(self, retrain_structure: bool = False, retrain_markov: bool = False):
 
-        sentence_stats_manager.commit()
+        self._logger.info("Training begin")
+        self._train_markov(retrain_markov)
+        self._train_structure(retrain_structure)
 
         # Mark data as trained
         if self._twitter_connector is not None:
@@ -199,17 +264,7 @@ class ArmchairExpert(object):
             DiscordTrainingDataManager().mark_trained()
         ImportTrainingDataManager().mark_trained()
 
-        # Delete cached data
-        try:
-            structure_preprocessor.wipe_cache(PREPROCESS_CACHE_DIR)
-        except FileNotFoundError:
-            pass
-        try:
-            spacy_preprocessor.wipe_cache(PREPROCESS_CACHE_DIR)
-        except FileNotFoundError:
-            pass
-
-        self._logger.info("Training done.")
+        self._logger.info("Training end")
 
     def _main(self):
         self._set_status(AEStatus.RUNNING)
@@ -257,5 +312,12 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     logging.basicConfig(level=ARMCHAIR_EXPERT_LOGLEVEL)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--retrain-markov', help='Retrain the markov word engine with all training data',
+                        action='store_true')
+    parser.add_argument('--retrain-structure', help='Retrain the structure RNN with all available training data',
+                        action='store_true')
+    args = parser.parse_args()
+
     ae = ArmchairExpert()
-    ae.start()
+    ae.start(retrain_structure=args.retrain_structure, retrain_markov=args.retrain_markov)

@@ -12,7 +12,6 @@ USE_GPU = True
 MARKOV_DB_PATH = 'weights/markov.json.zlib'
 REACTION_MODEL_PATH = "weights/aol-reaction-model.h5"
 STRUCTURE_MODEL_PATH = "weights/structure-model.h5"
-PREPROCESS_CACHE_PATH = "cache/"
 
 MARKOV_GENERATE_SUBJECT_MAX = 2
 # Greatest to least

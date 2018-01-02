@@ -27,7 +27,7 @@ session_factory.configure(bind=engine)
 Session = scoped_session(session_factory)
 
 
-class SentenceStatsManager(object):
+class InputTextStatManager(object):
     def __init__(self):
         self._session = Session()
         self._rows = {}
@@ -46,17 +46,21 @@ class SentenceStatsManager(object):
     def commit(self):
         self._session.commit()
 
+    def reset(self):
+        self._session.execute("DELETE FROM inputtextstat")
+        self.commit()
+
     def probabilities(self) -> Tuple[List, List]:
 
         sigma = 0
-        for row in self._rows:
-            sigma += row.count
+        for key in self._rows:
+            sigma += self._rows[key].count
 
         choices = []
         p_values = []
 
-        for row in self._rows:
-            choices.append(row.length)
-            p_values.append(row.count / sigma)
+        for key in self._rows:
+            choices.append(self._rows[key].length)
+            p_values.append(self._rows[key].count / sigma)
 
         return choices, p_values

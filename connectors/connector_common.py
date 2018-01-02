@@ -6,7 +6,7 @@ from multiprocessing import Process, Queue, Event
 from threading import Thread
 from queue import Empty
 from spacy.tokens import Doc
-from storage.armchair_expert import SentenceStatsManager
+from storage.armchair_expert import InputTextStatManager
 import numpy as np
 
 class ConnectorReplyGenerator(object):
@@ -34,10 +34,13 @@ class ConnectorReplyGenerator(object):
             return None
 
         def structure_generator():
-            sentence_stats_manager = SentenceStatsManager()
+            sentence_stats_manager = InputTextStatManager()
             while True:
                 choices, p_values = sentence_stats_manager.probabilities()
-                num_sentences = np.random.choice(choices, p=p_values)
+                if len(choices) > 0:
+                    num_sentences = np.random.choice(choices, p=p_values)
+                else:
+                    num_sentences = np.random.randint(1, 5)
                 yield self._structure_scheduler.predict(num_sentences=num_sentences)
 
         generator = MarkovGenerator(structure_generator=structure_generator(), subjects=subjects)

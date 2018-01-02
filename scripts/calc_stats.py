@@ -1,13 +1,15 @@
-from config.ml import PREPROCESS_CACHE_DIR
-from common.nlp import SpacyPreprocessor
-from storage.armchair_expert import SentenceStatsManager
+from storage.armchair_expert import InputTextStatManager
+from storage.twitter import TwitterTrainingDataManager
+from common.nlp import create_nlp_instance, SpacyPreprocessor
 
+nlp = create_nlp_instance()
 
 spacy_preprocessor = SpacyPreprocessor()
-spacy_preprocessor.load_cache(PREPROCESS_CACHE_DIR)
+for message in TwitterTrainingDataManager().all_training_data():
+    spacy_preprocessor.preprocess(nlp(message[0].decode()))
 
 # Update statistics
-sentence_stats_manager = SentenceStatsManager()
+sentence_stats_manager = InputTextStatManager()
 docs, _ = spacy_preprocessor.get_preprocessed_data()
 for doc in docs:
     sents = 0
