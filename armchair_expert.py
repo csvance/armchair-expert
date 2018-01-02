@@ -118,7 +118,7 @@ class ArmchairExpert(object):
             # Print Progress
             if message_idx % 100 == 0:
                 self._logger.info(
-                    "Training_Preprocessing(Import): %f%%" % (
+                    "Training_Preprocessing_Structure(Import): %f%%" % (
                             message_idx / min(STRUCTURE_MODEL_TRAINING_MAX_SIZE, len(imported_messages)) * 100))
 
             doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
