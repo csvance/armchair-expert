@@ -11,7 +11,7 @@ from config.ml import USE_GPU, PREPROCESS_CACHE_DIR, STRUCTURE_MODEL_PATH, MARKO
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
 from storage.imported import ImportTrainingDataManager
-
+from storage.armchair_expert import SentenceStatsManager
 
 @unique
 class AEStatus(Enum):
@@ -177,6 +177,18 @@ class ArmchairExpert(object):
         if len(structure_data) > 0:
             self._structure_scheduler.train(structure_data, structure_labels, epochs=STRUCTURE_MODEL_TRAINING_EPOCHS)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
+
+        # Update statistics
+        self._logger.info("Updating statistics")
+        sentence_stats_manager = SentenceStatsManager()
+        docs, _ = spacy_preprocessor.get_preprocessed_data()
+        for doc in docs:
+            sents = 0
+            for sent in doc.sents:
+                sents += 1
+            sentence_stats_manager.log_length(length=sents)
+
+        sentence_stats_manager.commit()
 
         # Mark data as trained
         if self._twitter_connector is not None:

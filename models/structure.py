@@ -126,7 +126,7 @@ class StructureModel(object):
     def train(self, data, labels, epochs=1):
         self.model.fit(data, labels, epochs=epochs, batch_size=STRUCTURE_MODEL_TRAINING_BATCH_SIZE)
 
-    def predict(self) -> List[PoSCapitalizationMode]:
+    def predict(self, num_sentences: int) -> List[PoSCapitalizationMode]:
         from keras.preprocessing.sequence import pad_sequences
 
         predictions = []
@@ -134,7 +134,6 @@ class StructureModel(object):
         # Start the sequence with NONE / NONE
         sequence = [[0]]
 
-        num_sentences = np.random.randint(1, 5)
         eos_count = 0
 
         while eos_count < num_sentences:
@@ -175,7 +174,7 @@ class StructureModelWorker(MLModelWorker):
         MLModelWorker.run(self)
 
     def predict(self, *data) -> List[PoSCapitalizationMode]:
-        return self._model.predict()
+        return self._model.predict(num_sentences=data[0][0])
 
     def train(self, *data):
         return self._model.train(data=data[0][0], labels=data[0][1], epochs=data[0][2])
@@ -193,8 +192,8 @@ class StructureModelScheduler(MLModelScheduler):
         self._worker = StructureModelWorker(read_queue=self._write_queue, write_queue=self._read_queue,
                                             use_gpu=use_gpu)
 
-    def predict(self):
-        return self._predict()
+    def predict(self, num_sentences: int):
+        return self._predict(num_sentences)
 
     def train(self, data, labels, epochs=1):
         return self._train(data, labels, epochs)
