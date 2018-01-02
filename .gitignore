@@ -91,7 +91,7 @@ ENV/
 .ropeproject
 
 .idea
-config
+config/*.py
 !config/*example.py
 !config/__init__.py
 db
