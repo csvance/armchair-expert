@@ -19,10 +19,8 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 ## Setup & Training
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
-- You will need to train armchair-expert with your data before using it (tweets, chatlogs, etc)
-- An example of pre-processing input data and using it to train is in the scripts folder
-- https://github.com/csvance/armchair-expert/blob/master/scripts/preprocess_data_twitter.py
-- https://github.com/csvance/armchair-expert/blob/master/scripts/train_preprocessed_data.py
+- I would suggest import some data for training before starting the bot, an example of this is in scripts/import_text_file.py
+- Every time the bot starts it will train on all new data it acquired since it started up last
 
 # Connectors
 ## Twitter
