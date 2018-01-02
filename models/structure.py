@@ -17,10 +17,8 @@ class StructurePreprocessor(MLDataPreprocessor):
 
     def get_preprocessed_data(self) -> Tuple:
         from keras.preprocessing.sequence import pad_sequences
-        from keras.utils import np_utils
         structure_data = pad_sequences(self.data, StructureModel.SEQUENCE_LENGTH, padding='post')
-        structure_labels = np.array(np_utils.to_categorical(self.labels,
-                                                            num_classes=StructureFeatureAnalyzer.NUM_FEATURES))
+        structure_labels = np.array(self.labels)
         return structure_data, structure_labels
 
     def preprocess(self, doc: Doc) -> bool:
@@ -115,7 +113,8 @@ class StructureModel(object):
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=True))
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=False))
         model.add(Dense(StructureFeatureAnalyzer.NUM_FEATURES, activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer='adam')
+        model.summary()
+        model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
         self.model = model
 
         if use_gpu:
