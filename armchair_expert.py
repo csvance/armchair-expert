@@ -54,12 +54,14 @@ class ArmchairExpert(object):
 
         self._structure_scheduler = StructureModelScheduler(USE_GPU)
         self._structure_scheduler.start()
+        structure_model_trained = None
         if not retrain_structure is None:
             try:
                 open(STRUCTURE_MODEL_PATH, 'rb')
                 self._structure_scheduler.load(STRUCTURE_MODEL_PATH)
+                structure_model_trained = True
             except FileNotFoundError:
-                pass
+                structure_model_trained = False
 
         # Initialize connectors
         try:
@@ -93,7 +95,10 @@ class ArmchairExpert(object):
         self._nlp = create_nlp_instance()
 
         # Catch up on training now that everything is initialized but not yet started
-        self.train(retrain_structure=retrain_structure, retrain_markov=retrain_markov)
+        if retrain_structure or not structure_model_trained:
+            self.train(retrain_structure=True, retrain_markov=retrain_markov)
+        else:
+            self.train(retrain_structure=False, retrain_markov=retrain_markov)
 
         # Give the connectors the NLP object and start them
         for connector in self._connectors:
