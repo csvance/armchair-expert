@@ -11,3 +11,6 @@ ARMCHAIR_EXPERT_LOGLEVEL = logging.INFO
 
 # Store training data here
 IMPORT_TRAINING_DB_PATH = 'db/import.db'
+
+# Store statistics here
+STATISTICS_DB_PATH = 'db/statistics.db'
