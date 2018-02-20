@@ -120,6 +120,8 @@ class TwitterWorker(ConnectorWorker):
 
         # Load Scraper
         self._scraper = TwitterScraper(self._credentials, TWITTER_LEARN_FROM_USER)
+        # Initial Scrape
+        self._scraper.scrape(learn_retweets=TWITTER_LEARN_FROM_USER_RETWEETS)
 
         last_scrape = datetime.now()
         while True:

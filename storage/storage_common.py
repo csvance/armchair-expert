@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from sqlalchemy import desc, asc
 
 
 class TrainingDataManager(object):
@@ -9,11 +10,15 @@ class TrainingDataManager(object):
     def new_training_data(self) -> List[Tuple[bytes]]:
         return self._session.query(self._table_type.text).filter(self._table_type.trained == 0).all()
 
-    def all_training_data(self, limit: int = None) -> List[Tuple[bytes]]:
-        if limit is None:
-            return self._session.query(self._table_type.text).all()
-        else:
-            return self._session.query(self._table_type.text).limit(limit).all()
+    def all_training_data(self, limit: int = None, order_by: str = None, order='desc') -> List[Tuple[bytes]]:
+        query = self._session.query(self._table_type.text)
+        if order_by and order == 'desc':
+            query = query.order_by(desc(order_by))
+        elif order_by and order == 'asc':
+            query = query.order_by(asc(order_by))
+        if limit:
+            query = query.limit(limit)
+        return query.all()
 
     def mark_trained(self):
         self._session.execute('UPDATE ' + self._table_type.__tablename__ + ' SET TRAINED = 1')

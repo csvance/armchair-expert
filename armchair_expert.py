@@ -113,12 +113,13 @@ class ArmchairExpert(object):
         structure_preprocessor = StructurePreprocessor()
 
         self._logger.info("Training_Preprocessing_Structure(Import)")
-        imported_messages = ImportTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+        imported_messages = ImportTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE,
+                                                                          order_by='id', order='desc')
         for message_idx, message in enumerate(imported_messages):
             # Print Progress
             if message_idx % 100 == 0:
                 self._logger.info(
-                    "Training_Preprocessing(Import): %f%%" % (
+                    "Training_Preprocessing_Structure(Import): %f%%" % (
                             message_idx / min(STRUCTURE_MODEL_TRAINING_MAX_SIZE, len(imported_messages)) * 100))
 
             doc = self._nlp(MarkovFilters.filter_input(message[0].decode()))
@@ -130,7 +131,8 @@ class ArmchairExpert(object):
             self._logger.info("Training_Preprocessing_Structure(Twitter)")
             from storage.twitter import TwitterTrainingDataManager
 
-            tweets = TwitterTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+            tweets = TwitterTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE,
+                                                                    order_by='timestamp', order='desc')
             for tweet_idx, tweet in enumerate(tweets):
                 # Print Progress
                 if tweet_idx % 100 == 0:
@@ -147,7 +149,8 @@ class ArmchairExpert(object):
             self._logger.info("Training_Preprocessing_Structure(Discord)")
             from storage.discord import DiscordTrainingDataManager
 
-            discord_messages = DiscordTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE)
+            discord_messages = DiscordTrainingDataManager().all_training_data(limit=STRUCTURE_MODEL_TRAINING_MAX_SIZE,
+                                                                              order_by='timestamp', order='desc')
             for message_idx, message in enumerate(discord_messages):
                 # Print Progress
                 if message_idx % 100 == 0:
