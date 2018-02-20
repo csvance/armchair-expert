@@ -88,7 +88,7 @@ class DiscordWorker(ConnectorWorker):
                                  shutdown_event=shutdown_event)
         self._credentials = credentials
         self._client = None
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = None
 
     async def _watchdog(self):
         while True:
@@ -101,6 +101,7 @@ class DiscordWorker(ConnectorWorker):
 
     def run(self):
         from storage.discord import DiscordTrainingDataManager
+        self._logger = logging.getLogger(self.__class__.__name__)
         self._db = DiscordTrainingDataManager()
         self._client = DiscordClient(self)
         self._client.loop.create_task(self._watchdog())

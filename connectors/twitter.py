@@ -99,7 +99,7 @@ class TwitterWorker(ConnectorWorker):
         self._api = None
         self._scraper = None
         self._scraper_thread = None
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = None
 
     def _start_user_stream(self, retweet_replies_to_ids: List[int]):
         auth = self._auth()
@@ -131,6 +131,8 @@ class TwitterWorker(ConnectorWorker):
                 last_scrape = datetime.now()
 
     def run(self):
+
+        self._logger = logging.getLogger(self.__class__.__name__)
 
         # Load API instance
         auth = self._auth()
