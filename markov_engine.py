@@ -472,6 +472,7 @@ class MarkovGenerator(object):
                     weighted_random_word_choice_idx = np.random.choice(choices, p=p_values)
                     argmax_word_choice_idx = np.argmax(p_values)
 
+                    # Weighted random
                     word_choice_idx = np.random.choice([weighted_random_word_choice_idx, argmax_word_choice_idx],
                                                        p=[MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE,
                                                           MARKOV_WORD_CHOICE_ARGMAX_P_VALUE])
