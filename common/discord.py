@@ -7,9 +7,12 @@ class DiscordHelper(object):
         # Replace mentions with names
         filtered_content = message.content
         for mention in message.mentions:
-            if mention.nick is not None:
-                replace_name = mention.nick
-            else:
+            try:
+                if mention.nick is not None:
+                    replace_name = mention.nick
+                else:
+                    replace_name = mention.name
+            except AttributeError:
                 replace_name = mention.name
             replace_id = mention.id
             replace_tag = "<@%s>" % replace_id
