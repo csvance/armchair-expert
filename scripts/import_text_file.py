@@ -1,4 +1,5 @@
 import argparse
+import sys
 from storage.imported import ImportTrainingDataManager
 
 
@@ -10,7 +11,17 @@ def main():
                         action='store_true')
     args = parser.parse_args()
 
-    data = open(args.datafile, 'r').read()
+    try:
+        data = open(args.datafile, 'r').read()
+    except UnicodeDecodeError:
+        print("WARNING: Non UTF8 characters detected!")
+        print("If the file is not in UTF-8 format, behavior may be completely non functional.")
+        c = input("Continue anyway? (y/n): ")
+        if c != "y":
+            print("Terminating.")
+            sys.exit(0)
+        data = open(args.datafile, 'rb').read()
+        data = data.decode('utf-8', errors='ignore')
 
     data_manager = ImportTrainingDataManager()
 
