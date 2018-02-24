@@ -14,7 +14,7 @@ def main():
     try:
         data = open(args.datafile, 'r').read()
     except UnicodeDecodeError:
-        print("WARNING: Non UTF8 characters detected!")
+        print("WARNING: Non UTF-8 characters detected!")
         print("If the file is not in UTF-8 format, behavior may be completely non functional.")
         c = input("Continue anyway? (y/n): ")
         if c != "y":
