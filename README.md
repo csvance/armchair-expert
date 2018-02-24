@@ -14,7 +14,6 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - numpy
 - tweepy
 - discord
-- zlib
 - sqlalchemy
 
 ## Setup & Training
