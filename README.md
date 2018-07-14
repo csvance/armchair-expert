@@ -1,5 +1,5 @@
 # About
-armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways. 
+armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. It regurgitates what it learns from you in unintentionally hilarious ways.
 
 ## Features
 - Uses NLP to select the most optimal subjects for which to generate a response
@@ -10,15 +10,15 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - python 3.6+
 - keras (Tensorflow backend)
 - spaCy 2.0.0+
-- spaymoji
+- spacymoji
 - numpy
 - tweepy
-- discord
+- discord.py
 - sqlalchemy
 
 ## Setup & Training
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
-- I would suggest import some data for training before starting the bot. Here is one example: https://github.com/csvance/armchair-expert/blob/master/scripts/import_text_file.py 
+- I would suggest import some data for training before starting the bot. Here is one example: https://github.com/csvance/armchair-expert/blob/master/scripts/import_text_file.py
 - Every time the bot starts it will train on all new data it acquired since it started up last
 
 # Connectors
@@ -36,4 +36,3 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Copy discord.example.py to discord.py and fill in the relevant fields
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
-
