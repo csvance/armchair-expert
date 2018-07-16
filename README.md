@@ -28,13 +28,13 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - You will need to create an application on the twitter devleoper site on your bot's twitter account https://apps.twitter.com
 - After creating it, assign it permissions to do direct messages (this isn't default)
 - Create an access token for your account
-- Copy twitter.example.py to twitter.py
+- Copy config/twitter.example.py to config/twitter.py
 - Fill in the tokens and secrets along with your handle
 - python armchair_expert.py
 
 ## Discord
 - You will need to register a bot with Discord: https://discordapp.com/developers/applications/me#top
 - Once you register it take note of the Client ID, Username, and Token
-- Copy discord.example.py to discord.py and fill in the relevant fields
+- Copy config/discord.example.py to config/discord.py and fill in the relevant fields
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
