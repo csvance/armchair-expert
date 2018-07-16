@@ -7,6 +7,7 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence
 
 ## Requirements
+- 3+ GB of RAM
 - python 3.6+
 - keras (Tensorflow backend)
 - spaCy 2.0.0+
