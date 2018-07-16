@@ -17,6 +17,8 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - sqlalchemy
 
 ## Setup & Training
+- Copy config/armchair_expert.example.py to config/armchair_expert.py
+- Copy config/ml.example.py to config/ml.py
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 - I would suggest import some data for training before starting the bot. Here is one example: https://github.com/csvance/armchair-expert/blob/master/scripts/import_text_file.py
 - Every time the bot starts it will train on all new data it acquired since it started up last
