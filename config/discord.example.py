@@ -22,7 +22,8 @@ DISCORD_LEARN_CHANNEL_EXCEPTIONS = []
 # Learn from direct messages
 DISCORD_LEARN_FROM_DIRECT_MESSAGE = False
 
-# Learn from user
+# Always learn from a specific user no matter what other flags are set
+# This should be set to a string containing a username like "SomeGuy#1234"
 DISCORD_LEARN_FROM_USER = None
 
 # --- Technical Stuff Section ---
