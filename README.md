@@ -3,7 +3,7 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 ## Features
 - Uses NLP to select the most optimal subjects for which to generate a response
-- Learns new words in realtime like a typical Markov chain, but uses an RNN to structure and capitalize the output
+- Uses a Recurrent Neural Network (RNN) to structure and capitalize the output, mimicking sentence structure and capitalization of learned text
 - Uses an n-gram markov chain which is positionally aware of the distances between different words, creating a more coherent sentence
 
 ## Requirements
@@ -23,6 +23,7 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Make sure you have the spacy 'en' dataset downloaded: 'python -m spacy download en'
 - I would suggest import some data for training before starting the bot. Here is one example: https://github.com/csvance/armchair-expert/blob/master/scripts/import_text_file.py
 - Every time the bot starts it will train on all new data it acquired since it started up last
+- The bots sentence structure model is only trained once on initial startup. To train it with the most recent acquired data, start the bot with the --retrain-structure flag. If you are noticing the bot is not generating sentences which the structure of learned material, this will help.
 
 # Connectors
 ## Twitter
