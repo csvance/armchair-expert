@@ -52,3 +52,4 @@ class DiscordTrainingDataManager(TrainingDataManager):
                                  user_id=int(message.author.id), timestamp=message.timestamp,
                                  text=filtered_content.encode())
         self._session.add(message)
+        self._session.commit()
