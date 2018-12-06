@@ -258,7 +258,11 @@ class ArmchairExpert(object):
         if len(structure_data) > 0:
 
             # This works well enough!
-            epochs = int(6/250000 * len(structure_data) )
+            epochs = int(6/250000 * len(structure_data))
+
+            # Floor / Ceilling for training
+            epochs = max(5, epochs)
+            epochs = min(60, epochs)
 
             self._structure_scheduler.train(structure_data, structure_labels, epochs=epochs)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
