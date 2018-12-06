@@ -25,15 +25,12 @@ MARKOV_GENERATION_WEIGHT_RATING = 10
 # bi-gram window function size
 MARKOV_WINDOW_SIZE = 4
 
-# Chance whether to use a weighted random or argmax when selecting a word
-# These should add up to 1.0
-MARKOV_WORD_CHOICE_WEIGHTED_RANDOM_P_VALUE = 0.75
-MARKOV_WORD_CHOICE_ARGMAX_P_VALUE = 0.25
-
 # These should always be marked as a "compound" word which will always use its original capitalization
 CAPITALIZATION_COMPOUND_RULES = ['RT']
 
 # Maximum number of sequences to train the structure model on
 STRUCTURE_MODEL_TRAINING_MAX_SIZE = 250000
-STRUCTURE_MODEL_TRAINING_EPOCHS = 10
-STRUCTURE_MODEL_TRAINING_BATCH_SIZE = 128
+
+# Lower values make things more predictable, higher ones more random
+STRUCTURE_MODEL_TEMPERATURE = 0.7
+MARKOV_MODEL_TEMPERATURE = 0.7

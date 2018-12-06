@@ -7,8 +7,7 @@ from multiprocessing import Event
 
 from common.nlp import create_nlp_instance, SpacyPreprocessor
 from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
-from config.ml import USE_GPU, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, \
-    STRUCTURE_MODEL_TRAINING_EPOCHS, STRUCTURE_MODEL_TRAINING_MAX_SIZE
+from config.ml import USE_GPU, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, STRUCTURE_MODEL_TRAINING_MAX_SIZE
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
 from storage.armchair_expert import InputTextStatManager
@@ -257,7 +256,11 @@ class ArmchairExpert(object):
         self._logger.info("Training(Structure)")
         structure_data, structure_labels = structure_preprocessor.get_preprocessed_data()
         if len(structure_data) > 0:
-            self._structure_scheduler.train(structure_data, structure_labels, epochs=STRUCTURE_MODEL_TRAINING_EPOCHS)
+
+            # This works well enough!
+            epochs = int(6/250000 * len(structure_data) )
+
+            self._structure_scheduler.train(structure_data, structure_labels, epochs=epochs)
             self._structure_scheduler.save(STRUCTURE_MODEL_PATH)
 
     def train(self, retrain_structure: bool = False, retrain_markov: bool = False):

@@ -1,7 +1,18 @@
 import pickle
 from typing import Tuple
 from spacy.tokens import Doc
+import numpy as np
 import os
+
+
+def temp(p, temperature=1.0):
+    preds = np.asarray(p).astype('float64')
+    preds = np.log(preds) / temperature
+    exp_preds = np.exp(preds)
+    preds = exp_preds / np.sum(exp_preds)
+    probas = np.random.multinomial(1, preds, 1)
+    index = np.argmax(probas)
+    return index
 
 
 def one_hot(idx: int, size: int):

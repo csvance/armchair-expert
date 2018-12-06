@@ -12,6 +12,8 @@ from spacy.tokens import Doc
 
 class DiscordReplyGenerator(ConnectorReplyGenerator):
     def generate(self, message: str, doc: Doc = None) -> Optional[str]:
+
+        message = message.replace(DISCORD_USERNAME.split('#')[0], '')
         reply = ConnectorReplyGenerator.generate(self, message, doc)
 
         if reply is None:
