@@ -11,7 +11,7 @@ import tweepy
 from spacy.tokens import Doc
 
 from config.twitter import *
-from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector
+from connectors.connector_common import ConnectorWorker, ConnectorScheduler, ConnectorReplyGenerator, Connector, ConnectorRecvMessage
 from storage.twitter import TwitterTrainingDataManager, TwitterScraper
 
 
@@ -51,10 +51,17 @@ class TwitterReplyListener(tweepy.StreamListener):
             return
         self._logger.debug("Direct Message(%s): %s" % (direct_message['sender']['screen_name'], direct_message['text']))
 
+        learn = False
         if TWITTER_LEARN_TIMELINE:
             TwitterTrainingDataManager().store(status)
+            learn = True
 
-        self._worker.send(direct_message['text'])
+        # real-time learning
+        if learn:
+            self._worker.send(ConnectorRecvMessage(direct_message['text'], learn=True, reply=False))
+            self._worker.recv()
+
+        self._worker.send(ConnectorRecvMessage(direct_message['text']))
         reply = self._worker.recv()
         if reply is not None:
             self._logger.debug("Direct Message Reply: %s" % reply)
@@ -63,27 +70,37 @@ class TwitterReplyListener(tweepy.StreamListener):
             except tweepy.error.TweepError as e:
                 self._logger.error("Error sending DM: %s" % e.reason)
 
+
     def on_status(self, status):
         # Don't process messages from ourselves
-        if status.author.screen_name != TWITTER_SCREEN_NAME:
-            if TWITTER_LEARN_TIMELINE:
-                TwitterTrainingDataManager().store(status)
+        if status.author.screen_name == TWITTER_SCREEN_NAME:
+            return
 
-            if (TWITTER_REPLY_MENTIONS and status.in_reply_to_screen_name == TWITTER_SCREEN_NAME) \
-                    or TWITTER_REPLY_TIMELINE:
-                self._worker.send(status.text)
-                self._logger.debug("Mention(%s): %s" % (status.author.screen_name, status.text))
+        learn = False
+        if TWITTER_LEARN_TIMELINE:
+            TwitterTrainingDataManager().store(status)
+            learn = True
 
-                reply = self._worker.recv()
-                if reply is not None:
-                    reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
-                    self._logger.debug("Mention Reply: %s" % reply)
-                    try:
-                        reply_status = self._api.update_status(reply, status.id)
-                        if status.author.id in self._retweet_replies_to_ids:
-                            self._api.retweet(reply_status.id)
-                    except tweepy.error.TweepError as e:
-                        self._logger.error("Error replying to mention: %s" % e.reason)
+        # real-time learning
+        if learn:
+            self._worker.send(ConnectorRecvMessage(status.text, learn=True, reply=False))
+            self._worker.recv()
+
+        if (TWITTER_REPLY_MENTIONS and status.in_reply_to_screen_name == TWITTER_SCREEN_NAME) \
+                or TWITTER_REPLY_TIMELINE:
+            self._worker.send(ConnectorRecvMessage(status.text))
+            self._logger.debug("Mention(%s): %s" % (status.author.screen_name, status.text))
+            reply = self._worker.recv()
+            if reply is not None:
+                reply = ("@%s %s" % (status.author.screen_name, reply))[:280]
+                self._logger.debug("Mention Reply: %s" % reply)
+                try:
+                    reply_status = self._api.update_status(reply, status.id)
+                    if status.author.id in self._retweet_replies_to_ids:
+                        self._api.retweet(reply_status.id)
+                except tweepy.error.TweepError as e:
+                    self._logger.error("Error replying to mention: %s" % e.reason)
+
 
     def on_error(self, status):
         print(status)

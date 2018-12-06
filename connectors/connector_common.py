@@ -1,13 +1,21 @@
 from markov_engine import MarkovTrieDb, MarkovFilters, MarkovGenerator
 from models.structure import StructureModelScheduler
 from common.nlp import CapitalizationMode
-from typing import Optional
+from typing import Optional, List
 from multiprocessing import Process, Queue, Event
 from threading import Thread
 from queue import Empty
 from spacy.tokens import Doc
 from storage.armchair_expert import InputTextStatManager
 import numpy as np
+
+
+class ConnectorRecvMessage(object):
+    def __init__(self, text: str, learn: bool=False, reply=True):
+        self.text = text
+        self.learn = learn
+        self.reply = reply
+
 
 class ConnectorReplyGenerator(object):
     def __init__(self, markov_model: MarkovTrieDb,
@@ -19,7 +27,7 @@ class ConnectorReplyGenerator(object):
     def give_nlp(self, nlp):
         self._nlp = nlp
 
-    def generate(self, message: str, doc: Doc = None) -> Optional[str]:
+    def generate(self, message: str, doc: Doc = None, ignore_topics: List[str] = []) -> Optional[str]:
 
         if doc is None:
             filtered_message = MarkovFilters.filter_input(message)
@@ -27,11 +35,13 @@ class ConnectorReplyGenerator(object):
 
         subjects = []
         for token in doc:
+            if(token.text in ignore_topics):
+                continue
             markov_word = self._markov_model.select(token.text)
             if markov_word is not None:
                 subjects.append(markov_word)
         if len(subjects) == 0:
-            return None
+            return "I wasn't trained on that!"
 
         def structure_generator():
             sentence_stats_manager = InputTextStatManager()
@@ -48,7 +58,7 @@ class ConnectorReplyGenerator(object):
         reply_words = []
         sentences = generator.generate(db=self._markov_model)
         if sentences is None:
-            return None
+            return "Huh?"
         for sentence in sentences:
             for word_idx, word in enumerate(sentence):
                 if not word.compound:
@@ -71,7 +81,7 @@ class ConnectorWorker(Process):
         self._shutdown_event = shutdown_event
         self._frontend = None
 
-    def send(self, message: str):
+    def send(self, message: ConnectorRecvMessage):
         return self._write_queue.put(message)
 
     def recv(self) -> Optional[str]:
@@ -88,7 +98,7 @@ class ConnectorScheduler(object):
         self._shutdown_event = shutdown_event
         self._worker = None
 
-    def recv(self, timeout: Optional[float]) -> Optional[str]:
+    def recv(self, timeout: Optional[float]) -> Optional[ConnectorRecvMessage]:
         try:
             return self._read_queue.get(timeout=timeout)
         except Empty:
@@ -139,7 +149,7 @@ class Connector(object):
     def send(self, message: str):
         self._write_queue.put(message)
 
-    def recv(self) -> Optional[str]:
+    def recv(self) -> Optional[ConnectorRecvMessage]:
         if not self._read_queue.empty():
             return self._read_queue.get()
         return None

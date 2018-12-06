@@ -13,9 +13,7 @@ from spacy.tokens import Doc
 class DiscordReplyGenerator(ConnectorReplyGenerator):
     def generate(self, message: str, doc: Doc = None) -> Optional[str]:
 
-        # We don't want our username / nickname to be the subject when mentioned
-        message = message.replace(DISCORD_USERNAME.split('#')[0], '')
-        reply = ConnectorReplyGenerator.generate(self, message, doc)
+        reply = ConnectorReplyGenerator.generate(self, message, doc, ignore_topics=[DISCORD_USERNAME.split('#')[0]])
 
         if reply is None:
             return None
@@ -51,22 +49,31 @@ class DiscordClient(discord.Client):
 
         filtered_content = DiscordHelper.filter_content(message)
 
+        learn = False
         # Learn from private messages
         if message.server is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
             DiscordTrainingDataManager().store(message)
+            learn = True
         # Learn from all server messages
         elif message.server is not None and DISCORD_LEARN_FROM_ALL:
             if str(message.channel) not in DISCORD_LEARN_CHANNEL_EXCEPTIONS:
                 DiscordTrainingDataManager().store(message)
+                learn = True
         # Learn from User
         elif str(message.author) == DISCORD_LEARN_FROM_USER:
             DiscordTrainingDataManager().store(message)
+            learn = True
+
+        # real-time learning
+        if learn:
+            self._worker.send(ConnectorRecvMessage(filtered_content, learn=True, reply=False))
+            self._worker.recv()
 
         # Reply to mentions
         for mention in message.mentions:
             if str(mention) == DISCORD_USERNAME:
                 self._logger.debug("Message: %s" % filtered_content)
-                self._worker.send(filtered_content)
+                self._worker.send(ConnectorRecvMessage(filtered_content))
                 reply = self._worker.recv()
                 self._logger.debug("Reply: %s" % reply)
                 if reply is not None:
@@ -76,7 +83,7 @@ class DiscordClient(discord.Client):
         # Reply to private messages
         if message.server is None:
             self._logger.debug("Private Message: %s" % filtered_content)
-            self._worker.send(filtered_content)
+            self._worker.send(ConnectorRecvMessage(filtered_content))
             reply = self._worker.recv()
             self._logger.debug("Reply: %s" % reply)
             if reply is not None:

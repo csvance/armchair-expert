@@ -291,10 +291,13 @@ class ArmchairExpert(object):
                 while not connector.empty():
                     message = connector.recv()
                     if message is not None:
-                        # Reply
-                        doc = self._nlp(MarkovFilters.filter_input(message))
-                        reply = connector.generate(message, doc=doc)
-                        connector.send(reply)
+                        doc = self._nlp(MarkovFilters.filter_input(message.text))
+                        if message.learn:
+                            MarkovTrainer(self._markov_model).learn(doc)
+                            connector.send(None)
+                        if message.reply:
+                            reply = connector.generate(message, doc=doc)
+                            connector.send(reply)
                     else:
                         connector.send(None)
 
