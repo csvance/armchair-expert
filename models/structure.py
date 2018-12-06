@@ -4,10 +4,10 @@ from typing import List, Tuple
 import numpy as np
 from spacy.tokens import Token, Doc
 
-from common.ml import MLDataPreprocessor
+from common.ml import MLDataPreprocessor, temp
 from common.nlp import Pos, CapitalizationMode
 from config.ml import CAPITALIZATION_COMPOUND_RULES, STRUCTURE_MODEL_TRAINING_MAX_SIZE, \
-    STRUCTURE_MODEL_TRAINING_BATCH_SIZE
+    STRUCTURE_MODEL_TEMPERATURE
 from models.model_common import MLModelScheduler, MLModelWorker
 
 
@@ -110,7 +110,6 @@ class StructureModel(object):
         model.add(
             Embedding(StructureFeatureAnalyzer.NUM_FEATURES, StructureFeatureAnalyzer.NUM_FEATURES,
                       input_length=StructureModel.SEQUENCE_LENGTH))
-        model.add(LSTM(latent_dim, dropout=0.2, return_sequences=True))
         model.add(LSTM(latent_dim, dropout=0.2, return_sequences=False))
         model.add(Dense(StructureFeatureAnalyzer.NUM_FEATURES, activation='softmax'))
         model.summary()
@@ -123,7 +122,7 @@ class StructureModel(object):
             set_session(tf.Session(config=config))
 
     def train(self, data, labels, epochs=1):
-        self.model.fit(data, labels, epochs=epochs, batch_size=STRUCTURE_MODEL_TRAINING_BATCH_SIZE)
+        self.model.fit(data, labels, epochs=epochs, batch_size=128)
 
     def predict(self, num_sentences: int) -> List[PoSCapitalizationMode]:
         from keras.preprocessing.sequence import pad_sequences
@@ -138,9 +137,9 @@ class StructureModel(object):
         while eos_count < num_sentences:
             padded_sequence = pad_sequences(sequence, maxlen=StructureModel.SEQUENCE_LENGTH, padding='post')
 
-            prediction = self.model.predict(padded_sequence, batch_size=1)
-            index = np.random.choice(range(0, StructureFeatureAnalyzer.NUM_FEATURES),
-                                     p=prediction[0])
+            prediction = self.model.predict(padded_sequence, batch_size=1)[0]
+
+            index = temp(prediction, STRUCTURE_MODEL_TEMPERATURE)
 
             if PoSCapitalizationMode.from_embedding(index).pos == Pos.EOS:
                 eos_count += 1
