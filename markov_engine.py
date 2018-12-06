@@ -12,7 +12,7 @@ from spacy.tokens import Doc, Span, Token
 from config.ml import MARKOV_WINDOW_SIZE, MARKOV_GENERATION_WEIGHT_COUNT, MARKOV_GENERATION_WEIGHT_RATING, \
     MARKOV_GENERATE_SUBJECT_POS_PRIORITY, MARKOV_GENERATE_SUBJECT_MAX, \
     CAPITALIZATION_COMPOUND_RULES, MARKOV_MODEL_TEMPERATURE
-from common.ml import one_hot
+from common.ml import one_hot, temp
 from common.nlp import Pos, CapitalizationMode
 
 
