@@ -13,6 +13,7 @@ from spacy.tokens import Doc
 class DiscordReplyGenerator(ConnectorReplyGenerator):
     def generate(self, message: str, doc: Doc = None) -> Optional[str]:
 
+        # We don't want our username / nickname to be the subject when mentioned
         message = message.replace(DISCORD_USERNAME.split('#')[0], '')
         reply = ConnectorReplyGenerator.generate(self, message, doc)
 
