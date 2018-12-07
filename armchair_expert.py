@@ -258,7 +258,7 @@ class ArmchairExpert(object):
         if len(structure_data) > 0:
 
             # This works well enough!
-            epochs = int(6/250000 * len(structure_data))
+            epochs = 60 - int(len(structure_data) / (125000/27))
 
             # Floor / Ceilling for training
             epochs = max(5, epochs)
