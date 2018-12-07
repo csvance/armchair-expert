@@ -49,7 +49,7 @@ class ArmchairExpert(object):
             try:
                 self._markov_model.load(MARKOV_DB_PATH)
             except FileNotFoundError:
-                pass
+                retrain_markov = True
 
         self._structure_scheduler = StructureModelScheduler(USE_GPU)
         self._structure_scheduler.start()
