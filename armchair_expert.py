@@ -10,8 +10,7 @@ from config.armchair_expert import ARMCHAIR_EXPERT_LOGLEVEL
 from config.ml import USE_GPU, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, STRUCTURE_MODEL_TRAINING_MAX_SIZE
 from markov_engine import MarkovTrieDb, MarkovTrainer, MarkovFilters
 from models.structure import StructureModelScheduler, StructurePreprocessor
-from storage.armchair_expert import InputTextStatManager
-from storage.imported import ImportTrainingDataManager
+import storage
 
 
 @unique

@@ -44,18 +44,18 @@ class DiscordClient(discord.Client):
 
     async def on_message(self, message: discord.Message):
         # Prevent feedback loop
-        if str(message.author) == DISCORD_USERNAME:
+        if message.author == self.user:
             return
 
         filtered_content = DiscordHelper.filter_content(message)
 
         learn = False
         # Learn from private messages
-        if message.server is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
+        if message.guild is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
             DiscordTrainingDataManager().store(message)
             learn = True
         # Learn from all server messages
-        elif message.server is not None and DISCORD_LEARN_FROM_ALL:
+        elif message.guild is not None and DISCORD_LEARN_FROM_ALL:
             if str(message.channel) not in DISCORD_LEARN_CHANNEL_EXCEPTIONS:
                 DiscordTrainingDataManager().store(message)
                 learn = True
@@ -77,18 +77,8 @@ class DiscordClient(discord.Client):
                 reply = self._worker.recv()
                 self._logger.debug("Reply: %s" % reply)
                 if reply is not None:
-                    await self.send_message(message.channel, reply)
+                    await message.channel.send(reply)
                 return
-
-        # Reply to private messages
-        if message.server is None:
-            self._logger.debug("Private Message: %s" % filtered_content)
-            self._worker.send(ConnectorRecvMessage(filtered_content))
-            reply = self._worker.recv()
-            self._logger.debug("Reply: %s" % reply)
-            if reply is not None:
-                await self.send_message(message.channel, reply)
-            return
 
 
 class DiscordWorker(ConnectorWorker):
@@ -115,7 +105,7 @@ class DiscordWorker(ConnectorWorker):
         self._db = DiscordTrainingDataManager()
         self._client = DiscordClient(self)
         self._client.loop.create_task(self._watchdog())
-        self._client.run(self._credentials.token)
+        self._client.run(self._credentials.token,bot=False)
 
 
 class DiscordScheduler(ConnectorScheduler):
@@ -130,3 +120,4 @@ class DiscordFrontend(Connector):
                  credentials: DiscordApiCredentials):
         Connector.__init__(self, reply_generator=reply_generator, connectors_event=connectors_event)
         self._scheduler = DiscordScheduler(self._shutdown_event, credentials)
+

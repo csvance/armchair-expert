@@ -1,16 +1,15 @@
 import datetime
 from typing import List, Tuple
-
-from discord import Message
+import discord
+import sqlalchemy
 
 from sqlalchemy import Column, Integer, DateTime, BigInteger, BLOB
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from config.discord import DISCORD_TRAINING_DB_PATH
-from common.discord import DiscordHelper
-from storage.storage_common import TrainingDataManager
+
+import storage
 
 Base = declarative_base()
 

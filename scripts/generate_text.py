@@ -5,7 +5,7 @@ from markov_engine import MarkovTrieDb, MarkovGenerator, MarkovFilters
 from config.ml import MARKOV_DB_PATH, STRUCTURE_MODEL_PATH, USE_GPU
 from models.structure import StructureModelScheduler
 from common.nlp import CapitalizationMode
-
+from config.ml import USE_GPU, STRUCTURE_MODEL_PATH, MARKOV_DB_PATH, STRUCTURE_MODEL_TRAINING_MAX_SIZE
 
 def main():
     np.random.seed(int(time.time()))

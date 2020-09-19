@@ -10,12 +10,13 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - 3+ GB of RAM
 - python 3.6+
 - keras (Tensorflow backend)
-- spaCy 2.0.0+
+- spacy
 - spacymoji
 - numpy
 - tweepy
 - discord.py
 - sqlalchemy
+- theano
 
 ## Setup & Training
 - Copy config/armchair_expert.example.py to config/armchair_expert.py
