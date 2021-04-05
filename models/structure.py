@@ -102,7 +102,7 @@ class StructureModel(object):
         from keras.models import Sequential
         from keras.layers import Dense, Embedding
         from keras.layers import LSTM
-        from keras.backend import set_session
+        from tensorflow.compat.v1.keras.backend import set_session
 
         latent_dim = StructureModel.SEQUENCE_LENGTH * 8
 
@@ -117,9 +117,9 @@ class StructureModel(object):
         self.model = model
 
         if use_gpu:
-            config = tf.ConfigProto()
+            config = tf.compat.v1.ConfigProto()
             config.gpu_options.allow_growth = True
-            set_session(tf.Session(config=config))
+            set_session(tf.compat.v1.Session(config=config))
 
     def train(self, data, labels, epochs=1):
         self.model.fit(data, labels, epochs=epochs, batch_size=128)

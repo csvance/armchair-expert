@@ -138,7 +138,7 @@ class MarkovWordProjectionCollection(object):
 
         distance_magnitudes = self.distances * self.magnitudes
         sums = np.sum(distance_magnitudes, axis=0)
-        p_values = distance_magnitudes / sums
+        p_values = distance_magnitudes / sums #error?
 
         return p_values
 
