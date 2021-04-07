@@ -7,10 +7,9 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Learns new words in real-time with an n-gram markov chain, which is positionally aware of the distances between different words, creating a more coherent sentence
 
 ## Requirements
-- 3+ GB of RAM
-- python 3.6+
+- python3
 - keras (Tensorflow backend)
-- spaCy 2.0.0+
+- spaCy
 - spacymoji
 - numpy
 - tweepy
@@ -42,3 +41,9 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - Copy config/discord.example.py to config/discord.py and fill in the relevant fields
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
+
+## Todo
+- make requirments.txt
+- fix learning and db.storage
+- fix twitter
+- finish discord
