@@ -42,7 +42,7 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 - python armchair_expert.py
 - When the bot starts you should see a message print to the console containing a link which will allow you to join the bot to a server.
 
-## Todo
+# Todo
 - make requirments.txt
 - fix learning and db.storage
 - fix twitter
