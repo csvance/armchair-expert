@@ -44,6 +44,6 @@ armchair-expert is a chatbot inspired by old Markov chain IRC bots like PyBorg. 
 
 # Todo
 - make requirments.txt
-- fix learning and db.storage
+- fix learning and db.storage / remove "huh" and "i havent been taught on that" to estimate response or delay reply
 - fix twitter
 - finish discord
