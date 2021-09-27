@@ -46,10 +46,10 @@ class DiscordTrainingDataManager(TrainingDataManager):
 
         filtered_content = DiscordHelper.filter_content(message)
 
-        server_id = int(message.server.id) if message.server is not None else None
+        server_id = int(message.guild.id) if message.guild is not None else None
 
         message = DiscordMessage(server_id=server_id, channel_id=int(message.channel.id),
-                                 user_id=int(message.author.id), timestamp=message.timestamp,
+                                 user_id=int(message.author.id), timestamp=message.created_at,
                                  text=filtered_content.encode())
         self._session.add(message)
         self._session.commit()

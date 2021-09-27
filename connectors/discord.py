@@ -42,7 +42,7 @@ class DiscordClient(discord.Client):
             "Server join URL: https://discordapp.com/oauth2/authorize?&client_id=%d&scope=bot&permissions=0"
             % DISCORD_CLIENT_ID)
 
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message):
         # Prevent feedback loop
         if str(message.author) == DISCORD_USERNAME:
             return
@@ -51,12 +51,12 @@ class DiscordClient(discord.Client):
 
         learn = False
         # Learn from private messages
-        if message.server is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
+        if message.guild is None and DISCORD_LEARN_FROM_DIRECT_MESSAGE:
             DiscordTrainingDataManager().store(message)
             learn = True
         # Learn from all server messages
-        elif message.server is not None and DISCORD_LEARN_FROM_ALL:
-            if str(message.channel) not in DISCORD_LEARN_CHANNEL_EXCEPTIONS:
+        elif message.guild is not None and DISCORD_LEARN_FROM_ALL:
+            if str(message.guild) not in DISCORD_LEARN_CHANNEL_EXCEPTIONS:
                 DiscordTrainingDataManager().store(message)
                 learn = True
         # Learn from User
@@ -77,17 +77,17 @@ class DiscordClient(discord.Client):
                 reply = self._worker.recv()
                 self._logger.debug("Reply: %s" % reply)
                 if reply is not None:
-                    await self.send_message(message.channel, reply)
+                    await message.channel.send(reply)
                 return
 
         # Reply to private messages
-        if message.server is None:
+        if message.guild is None:
             self._logger.debug("Private Message: %s" % filtered_content)
             self._worker.send(ConnectorRecvMessage(filtered_content))
             reply = self._worker.recv()
             self._logger.debug("Reply: %s" % reply)
             if reply is not None:
-                await self.send_message(message.channel, reply)
+                await message.author.send(reply)
             return
 
 
